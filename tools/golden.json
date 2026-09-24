@@ -1,0 +1,21 @@
+{
+  "__daten__": "punkte=721 hr=691 cad=721 power=721 runden=3 distanz=6.001",
+  "Speed_Overlay.setting": "42a0748b92520b97  29726",
+  "Route_Overlay.setting": "c4d3389ff4c7b476  109771",
+  "Elevation_Overlay.setting": "70a902226bbbb05d  198995",
+  "HR_Overlay.setting": "abfb1cfe24349b2e  47375",
+  "Incline_Overlay.setting": "d4f3135b96a0a553  26148",
+  "Mile_Marker_Overlay.setting": "598f42c19d6597e3  28639",
+  "Cadence_Overlay.setting": "118efea119772ef1  25554",
+  "Power_Overlay.setting": "47eb85446056afd4  26260",
+  "Lap_Marker_Overlay.setting": "5daa67ee5dc777c4  4472",
+  "Speed_Overlay_AE.jsx": "db4debf96b2da35c  26554",
+  "Route_Overlay_AE.jsx": "8d499a01c7148e8b  28229",
+  "Elevation_Overlay_AE.jsx": "45d847c286be7a4b  40165",
+  "HR_Overlay_AE.jsx": "0a12e1b464295a90  14589",
+  "Incline_Overlay_AE.jsx": "2ffe384ea222fb66  23833",
+  "Mile_Marker_Overlay_AE.jsx": "98fd58985bccc666  14796",
+  "Cadence_Overlay_AE.jsx": "52b1ccb3c38a4648  12633",
+  "Power_Overlay_AE.jsx": "bfd4a28dc4f8a857  13342",
+  "Lap_Marker_Overlay_AE.jsx": "7517ee2682bb5a26  5495"
+}
