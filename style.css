@@ -61,7 +61,7 @@ a[href^="http"]:not([class]):hover::after{opacity:1}
 .studio-nav a:hover,.studio-nav a:focus-visible{color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
 .studio-nav a:hover::before{opacity:1}
 .studio-nav a span{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em}
-.privacy-note{margin-top:10px;padding:15px 14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 78%,transparent);box-shadow:var(--shadow)}
+.privacy-note{margin-top:auto;padding:15px 14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 78%,transparent);box-shadow:var(--shadow)}
 .privacy-note strong{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:-.01em}.privacy-note p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
 .privacy-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px color-mix(in srgb,var(--success) 14%,transparent)}
 .studio-tagline{margin:18px 14px 0;color:var(--text-soft);font-size:18px;font-weight:650;letter-spacing:-.03em;line-height:1.18}
@@ -225,12 +225,14 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .legal-updated{margin-top:38px;color:var(--faint);font-family:var(--mono);font-size:11px}
 .legal-note{padding:11px 13px;border-left:3px solid var(--orange);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--orange) 9%,transparent)}
 .todo{padding:1px 6px;border-radius:5px;background:color-mix(in srgb,var(--orange) 22%,transparent);color:var(--orange);font-weight:600}
-.studio-nav-help{display:flex;align-items:center;gap:13px;min-height:50px;margin-top:auto;padding:0 14px;border-radius:13px;color:var(--muted);font-weight:550;text-decoration:none;transition:color .18s,background .18s,transform .18s}
-.studio-nav-help:hover,.studio-nav-help:focus-visible{color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
-.studio-nav-help span{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em}
+
 .legal-head-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .legal .lead{margin-bottom:30px;color:var(--text-soft);font-size:16px;line-height:1.7}
 .help h2{display:flex;align-items:center;gap:12px;margin-top:42px}
 .help .step{display:inline-grid;place-items:center;width:30px;height:30px;flex:none;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:11px;font-weight:600}
 .help h3{margin-top:22px;color:var(--accent)}
 .hint-box{margin:14px 0 0;padding:11px 14px;border-left:3px solid var(--success);border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--success) 8%,transparent)}
+.header-info{display:grid;place-items:center;width:40px;height:40px;flex:none;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--surface) 84%,transparent);color:var(--muted);text-decoration:none;transition:color .16s,border-color .16s,background .16s}
+.header-info:hover,.header-info:focus-visible{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.header-info .ico{width:21px;height:21px}
+@media (max-width:420px){.header-info{width:34px;height:34px}.header-info .ico{width:18px;height:18px}}
