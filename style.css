@@ -200,7 +200,11 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .map-note{max-width:360px;margin:0;color:var(--muted);font-size:10px;line-height:1.55}
 .map-hint{display:flex;align-items:center;gap:6px;margin:8px 0 0;color:var(--muted);font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;line-height:1.5}
 .map-hint::before{flex:none;width:5px;height:5px;border-radius:50%;background:var(--success);content:''}
-.site-footer{margin:34px 0 0;padding:18px 0 0;border-top:1px solid var(--border);text-align:left}
+.site-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin:34px 0 0;padding:18px 0 0;border-top:1px solid var(--border);text-align:left}
+.footer-text{min-width:0}
+.footer-github{display:inline-flex;flex:none;color:var(--muted);transition:color .16s}
+.footer-github:hover{color:var(--accent)}
+.footer-github svg{display:block;width:22px;height:22px}
 .attrib-line{margin:0;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:.02em}
 .attrib-link{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent)}
 .attrib-link:hover{color:var(--accent);text-decoration-color:var(--accent)}

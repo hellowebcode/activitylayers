@@ -110,6 +110,7 @@ var UI_DE={
   'HR Overlay':'HF-Overlay',
   'Incline Overlay':'Steigungs-Overlay',
   'Mile Marker Overlay':'Distanzmarker-Overlay',
+  'Source code on GitHub':'Quelltext auf GitHub',
   'Cadence overlay style':'Trittfrequenz-Overlay-Stil',
   'Power overlay style':'Leistungs-Overlay-Stil',
   'Lap Marker overlay style':'Rundenmarken-Overlay-Stil',
