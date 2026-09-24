@@ -21,12 +21,12 @@ kopiert.
 | `style.css`, `script.js` | Oberfläche und gesamte Logik |
 | `vendor/fonts/` | Inter und IBM Plex Mono, lokal ausgeliefert |
 | `vendor/jszip.min.js` | ZIP-Erzeugung für den Sammel-Download |
+| `vendor/leaflet/` | Kartenvorschau, lokal ausgeliefert |
 
 ## Externe Ressourcen
 
-Beim Laden der Seite werden keine externen Ressourcen angefordert. Die einzige
-Anfrage nach außen sind die Kartenkacheln von OpenStreetMap in der
-Kartenvorschau – diese ist niemals Bestandteil eines Exports.
+Beim Laden der Seite werden keine externen Ressourcen angefordert. Die einzige Anfrage nach außen sind die Kartenkacheln von OpenStreetMap in der
+interaktiven Kartenvorschau – diese ist niemals Bestandteil eines Exports.
 
 ## Deployment
 
