@@ -2736,7 +2736,7 @@ function aeKf(kfs,dec){
   var d=(dec==null)?3:dec, o=[], m=Math.pow(10,d);
   for(var i=0;i<kfs.length;i++){
     var v=kfs[i][1];
-    o.push('['+kfs[i][0]+','+(v instanceof Array?aeXY(v):(Math.round(v*m)/m))+']');
+    o.push('['+kfs[i][0]+','+(Array.isArray(v)?aeXY(v):(Math.round(v*m)/m))+']');
   }
   return aeList(o);
 }

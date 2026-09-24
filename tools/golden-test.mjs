@@ -108,8 +108,10 @@ const sandbox = {
   NodeFilter: { SHOW_ALL:0xFFFFFFFF, SHOW_ELEMENT:1, SHOW_TEXT:4, FILTER_ACCEPT:1, FILTER_REJECT:2, FILTER_SKIP:3 },
   Node: { ELEMENT_NODE:1, TEXT_NODE:3 },
   Image: class {},
-  Math, Date, JSON, parseInt, parseFloat, isNaN, isFinite, String, Number, Boolean,
-  Array, Object, Uint8Array, Float64Array, Int32Array, ArrayBuffer, DataView, Error, RegExp,
+  // Bewusst KEINE Intrinsics wie Array oder Object hineinreichen: Die vm hat eigene,
+  // sonst schlaegt instanceof fuer dort erzeugte Objekte fehl und der Test misst
+  // seinen eigenen Aufbau statt des Programms.
+  parseInt, parseFloat, isNaN, isFinite,
 };
 sandbox.globalThis = sandbox;
 sandbox.self = sandbox;
@@ -146,6 +148,32 @@ const GENERATOREN = [
   ['Lap_Marker_Overlay_AE.jsx',    'buildLapJsx'],
 ];
 
+/* Gleiche Pruefsummen bedeuten nicht korrekte Ergebnisse: Eine Ausgabe kann
+   stabil falsch sein. Deshalb wird jede Ausgabe zusaetzlich auf offensichtlichen
+   Unsinn geprueft. */
+function inhaltspruefung(name, text) {
+  const maengel = [];
+  // Zeichenketten herausnehmen, in denen die Suchbegriffe legitim vorkommen
+  // duerfen - etwa typeof app === "undefined" im Kopf jedes AE-Skripts.
+  const rein = text.replace(/"undefined"/g, '""');
+  const zaehle = (muster) => (rein.match(muster) || []).length;
+  for (const wort of ['NaN', 'undefined', 'Infinity', '[object Object]']) {
+    const n = zaehle(new RegExp(wort.replace(/[[\]]/g, '\\$&'), 'g'));
+    if (n) maengel.push(n + 'x ' + wort);
+  }
+  if (name.endsWith('.setting')) {
+    if (!/^\{/.test(text.trim())) maengel.push('beginnt nicht mit der Lua-Tabelle');
+    const auf = zaehle(/\{/g), zu = zaehle(/\}/g);
+    if (auf !== zu) maengel.push('Klammern unausgeglichen (' + auf + '/' + zu + ')');
+    if (!/KeyFrames = \{/.test(text)) maengel.push('keine Keyframes');
+  } else {
+    if (!/^\/\//.test(text.trim())) maengel.push('kein Kommentarkopf');
+    if (!/app\.beginUndoGroup/.test(text)) maengel.push('kein Undo-Block');
+    if (!/\[\[\d+,/.test(text)) maengel.push('keine Keyframe-Liste');
+  }
+  return maengel;
+}
+
 function pruefsumme(s) { return crypto.createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 16); }
 
 function lauf() {
@@ -165,7 +193,10 @@ function lauf() {
     if (typeof f !== 'function') { ergebnis[name] = 'FUNKTION FEHLT'; continue; }
     let out;
     try { out = f(); } catch (e) { ergebnis[name] = 'FEHLER: ' + e.message; continue; }
-    ergebnis[name] = out === null ? 'null' : pruefsumme(out) + '  ' + out.length;
+    if (out === null) { ergebnis[name] = 'null'; continue; }
+    const maengel = inhaltspruefung(name, out);
+    if (maengel.length) { ergebnis[name] = 'INHALT: ' + maengel.join(', '); continue; }
+    ergebnis[name] = pruefsumme(out) + '  ' + out.length;
   }
   return ergebnis;
 }
