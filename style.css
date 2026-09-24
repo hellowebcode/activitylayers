@@ -185,16 +185,13 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 .map-box{position:relative;overflow:hidden;border-radius:12px}
-.map-box canvas{display:block;width:100%;height:260px;border-radius:12px;background:var(--accent-soft)}
-.map-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;border-radius:12px;background:var(--accent-soft);text-align:center}
+#mapCanvas{width:100%;height:320px;border-radius:12px;background:var(--accent-soft);z-index:0}
+.leaflet-container{font-family:var(--sans);background:var(--accent-soft)}
+.leaflet-control-attribution{font-size:9px!important;background:color-mix(in srgb,var(--surface) 86%,transparent)!important;color:var(--muted)!important}
+.leaflet-control-attribution a{color:var(--accent)!important}
+.map-overlay{position:absolute;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;padding:18px;border-radius:12px;background:var(--accent-soft);text-align:center}
 .map-overlay[hidden]{display:none}
-.map-load{min-height:40px;padding:0 16px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:11px;background:var(--surface);color:var(--accent);font-size:12px;font-weight:650;transition:background .16s,transform .16s}
-.map-load:hover{background:var(--accent);color:#fff;transform:translateY(-1px)}
-.map-load:disabled{opacity:.6;cursor:default;transform:none}
 .map-note{max-width:360px;margin:0;color:var(--muted);font-size:10px;line-height:1.55}
-.map-attrib{position:absolute;right:7px;bottom:6px;padding:2px 7px;border-radius:6px;background:color-mix(in srgb,var(--surface) 86%,transparent);color:var(--muted);font-size:9px;text-decoration:none}
-.map-attrib:hover{color:var(--accent)}
-.map-attrib[hidden]{display:none}
 .map-hint{display:flex;align-items:center;gap:6px;margin:8px 0 0;color:var(--muted);font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;line-height:1.5}
 .map-hint::before{flex:none;width:5px;height:5px;border-radius:50%;background:var(--success);content:''}
 .site-footer{margin:34px 0 0;padding:18px 0 0;border-top:1px solid var(--border);text-align:left}

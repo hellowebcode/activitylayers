@@ -6,6 +6,7 @@
 <meta name="description" content="Turn GPX and FIT recordings into six animated overlays for DaVinci Resolve and After Effects — speed, route, elevation, heart rate, incline and distance. Runs entirely in your browser, no upload.">
 <title>Activity Layers — GPX &amp; FIT overlays for DaVinci Resolve &amp; After Effects</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="style.css">
 <script src="vendor/jszip.min.js"></script>
 <!--
@@ -365,9 +366,8 @@
   <div class="preview-wrap" id="mapPreviewWrap" style="display:none">
     <div class="preview-label">Map preview</div>
     <div class="map-box">
-      <canvas id="mapCanvas" height="260"></canvas>
+      <div id="mapCanvas"></div>
       <div class="map-overlay" id="mapOverlay"><p class="map-note" id="mapNote">Loading map…</p></div>
-      <a class="map-attrib" id="mapAttrib" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" hidden>&copy; OpenStreetMap contributors</a>
     </div>
     <p class="map-hint">Visualisation only — this map is never part of an export. The six overlays above are unaffected.</p>
   </div>
@@ -428,6 +428,7 @@
     <span>Buy me a Coffee</span>
   </button>
 </div>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

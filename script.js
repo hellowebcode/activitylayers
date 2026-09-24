@@ -123,7 +123,6 @@ var UI_DE={
   'How does it work':'Wie funktioniert das',
   'Map preview':'Kartenvorschau',
   'Loading map…':'Karte wird geladen …',
-  '© OpenStreetMap contributors':'© OpenStreetMap-Mitwirkende',
   'DaVinci Resolve · Fusion · After Effects':'DaVinci Resolve · Fusion · After Effects',
   'DaVinci Resolve — Fusion .setting files':'DaVinci Resolve — Fusion-.setting-Dateien',
   'After Effects — .jsx scripts (File > Scripts > Run Script File…)':'After Effects — .jsx-Skripte (Datei > Skripten > Skriptdatei ausführen …)',
@@ -811,62 +810,12 @@ function drawRoute(){
   ctx.strokeStyle='#f97316'; ctx.lineWidth=2; ctx.stroke();
 }
 
-var MAP_TILE=256, MAP_MAX_TILES=24, mapLoaded=false;
+var mapInstance=null, mapRouteLayer=null, mapLoaded=false, lastMapTrackId=null;
 
-function clampTile(v,n){
-  if(!isFinite(v)) return 0;
-  var max=Math.max(0,n-1);
-  return Math.min(Math.max(Math.round(v),-max),2*max);
-}
-function lonToTileX(lon,z){ return (lon+180)/360*Math.pow(2,z); }
-function latToTileY(lat,z){
-  var r=lat*Math.PI/180;
-  return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z);
-}
-
-function pickMapZoom(bounds,W,H){
-  for(var z=17;z>=1;z--){
-    var x0=lonToTileX(bounds.minLon,z), x1=lonToTileX(bounds.maxLon,z);
-    var y0=latToTileY(bounds.maxLat,z), y1=latToTileY(bounds.minLat,z);
-    var wPx=(x1-x0)*MAP_TILE, hPx=(y1-y0)*MAP_TILE;
-    if(wPx>W-24||hPx>H-24) continue;
-    var tiles=(Math.floor(x1)-Math.floor(x0)+1)*(Math.floor(y1)-Math.floor(y0)+1);
-    if(tiles<=MAP_MAX_TILES) return z;
-  }
-  return 1;
-}
 function trackBounds(){
   var la=rawPoints.map(function(p){return p.lat;}), lo=rawPoints.map(function(p){return p.lon;});
   return{minLat:Math.min.apply(null,la),maxLat:Math.max.apply(null,la),
          minLon:Math.min.apply(null,lo),maxLon:Math.max.apply(null,lo)};
-}
-function loadTile(url){
-  return new Promise(function(res){
-    var img=new Image();
-    img.crossOrigin='anonymous';
-    img.onload=function(){res(img);};
-    img.onerror=function(){res(null);};
-    img.src=url;
-  });
-}
-function drawMapRoute(ctx,z,ox,oy){
-  ctx.beginPath();
-  for(var i=0;i<rawPoints.length;i++){
-    var x=lonToTileX(rawPoints[i].lon,z)*MAP_TILE-ox;
-    var y=latToTileY(rawPoints[i].lat,z)*MAP_TILE-oy;
-    if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-  ctx.lineJoin='round'; ctx.lineCap='round';
-  ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=5; ctx.stroke();
-  ctx.strokeStyle='#f97316'; ctx.lineWidth=2.5; ctx.stroke();
-  function marker(p,fill){
-    var x=lonToTileX(p.lon,z)*MAP_TILE-ox, y=latToTileY(p.lat,z)*MAP_TILE-oy;
-    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2);
-    ctx.fillStyle=fill; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
-  }
-  marker(rawPoints[0],'#16a34a');
-  marker(rawPoints[rawPoints.length-1],'#dc2626');
 }
 
 function jumpToSettings(){
@@ -882,65 +831,53 @@ var lastMapTrackId=null;
 function resetMapPreview(){
   var wrap=document.getElementById('mapPreviewWrap');
   if(!wrap) return;
-
-  var id=rawPoints.length?(rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time):null;
-  if(mapLoaded && id===lastMapTrackId) return;
-  lastMapTrackId=id;
   wrap.style.display=rawPoints.length?'block':'none';
+  var id=rawPoints.length?(rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time):null;
+  if(mapLoaded&&id===lastMapTrackId) return;
+  lastMapTrackId=id;
   mapLoaded=false;
-  document.getElementById('mapOverlay').hidden=false;
-  document.getElementById('mapNote').textContent=translateStaticValue('Loading map…',uiLanguage);
-  document.getElementById('mapAttrib').hidden=true;
-  var c=document.getElementById('mapCanvas');
-  var ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height);
+  var ov=document.getElementById('mapOverlay');
+  if(ov) ov.hidden=false;
+  var note=document.getElementById('mapNote');
+  if(note) note.textContent=translateStaticValue('Loading map…',uiLanguage);
   if(rawPoints.length) showMapPreview();
 }
 
-async function showMapPreview(){
-  if(!rawPoints.length) return;
-  var c=document.getElementById('mapCanvas');
-  var W=c.offsetWidth||620, H=260;
-  document.getElementById('mapNote').textContent=localizeRuntimeText('Loading map…');
-  var b=trackBounds(), z=pickMapZoom(b,W,H);
-  var ctx=setupHiDPICanvas(c,W,H);
-
-  var cx=(lonToTileX(b.minLon,z)+lonToTileX(b.maxLon,z))/2*MAP_TILE;
-  var cy=(latToTileY(b.minLat,z)+latToTileY(b.maxLat,z))/2*MAP_TILE;
-  var ox=cx-W/2, oy=cy-H/2;
-  var n=Math.pow(2,z);
-  if(!isFinite(ox)||!isFinite(oy)||!isFinite(n)){
-    document.getElementById('mapNote').textContent=localizeRuntimeText('Map could not be loaded');
-    return;
-  }
-  var tx0=Math.floor(ox/MAP_TILE), tx1=Math.floor((ox+W)/MAP_TILE);
-  var ty0=Math.floor(oy/MAP_TILE), ty1=Math.floor((oy+H)/MAP_TILE);
-  tx0=clampTile(tx0,n); tx1=clampTile(tx1,n);
-  ty0=clampTile(ty0,n); ty1=clampTile(ty1,n);
-  if(tx1<tx0||ty1<ty0||(tx1-tx0+1)*(ty1-ty0+1)>MAP_MAX_TILES){
-    document.getElementById('mapNote').textContent=localizeRuntimeText('Map could not be loaded');
-    return;
-  }
-  var jobs=[];
-  for(var tx=tx0;tx<=tx1&&jobs.length<MAP_MAX_TILES;tx++) for(var ty=ty0;ty<=ty1&&jobs.length<MAP_MAX_TILES;ty++){
-    if(ty<0||ty>=n) continue;
-    var wx=((tx%n)+n)%n;
-    jobs.push({x:tx,y:ty,url:'https://tile.openstreetmap.org/'+z+'/'+wx+'/'+ty+'.png'});
-  }
-  var imgs=await Promise.all(jobs.map(function(j){return loadTile(j.url);}));
-  ctx.clearRect(0,0,W,H);
-  var ok=0;
-  for(var i=0;i<jobs.length;i++){
-    if(!imgs[i]) continue;
-    ok++;
-    ctx.drawImage(imgs[i], Math.round(jobs[i].x*MAP_TILE-ox), Math.round(jobs[i].y*MAP_TILE-oy), MAP_TILE, MAP_TILE);
-  }
-  drawMapRoute(ctx,z,ox,oy);
-  if(ok){
+function showMapPreview(){
+  if(!rawPoints.length||typeof L==='undefined') return;
+  var el=document.getElementById('mapCanvas');
+  if(!el) return;
+  var note=document.getElementById('mapNote');
+  if(note) note.textContent=localizeRuntimeText('Loading map…');
+  try{
+    if(!mapInstance){
+      mapInstance=L.map(el,{zoomControl:true,scrollWheelZoom:true,attributionControl:true});
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        maxZoom:19,minZoom:2,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener nofollow">OpenStreetMap</a> contributors'
+      }).addTo(mapInstance);
+    }
+    if(mapRouteLayer){ mapInstance.removeLayer(mapRouteLayer); mapRouteLayer=null; }
+    var pts=[];
+    for(var i=0;i<rawPoints.length;i++){
+      if(validLatLon(rawPoints[i].lat,rawPoints[i].lon)) pts.push([rawPoints[i].lat,rawPoints[i].lon]);
+    }
+    if(pts.length<2) throw new Error('no valid coordinates');
+    mapRouteLayer=L.layerGroup([
+      L.polyline(pts,{color:'#ffffff',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}),
+      L.polyline(pts,{color:'#f97316',weight:3,lineJoin:'round',lineCap:'round'}),
+      L.circleMarker(pts[0],{radius:6,color:'#fff',weight:2,fillColor:'#16a34a',fillOpacity:1}),
+      L.circleMarker(pts[pts.length-1],{radius:6,color:'#fff',weight:2,fillColor:'#dc2626',fillOpacity:1})
+    ]).addTo(mapInstance);
+    var b=trackBounds();
+    mapInstance.fitBounds([[b.minLat,b.minLon],[b.maxLat,b.maxLon]],{padding:[24,24]});
+    setTimeout(function(){ if(mapInstance) mapInstance.invalidateSize(); },60);
     mapLoaded=true;
-    document.getElementById('mapOverlay').hidden=true;
-    document.getElementById('mapAttrib').hidden=false;
-  } else {
-    document.getElementById('mapNote').textContent=localizeRuntimeText('Map could not be loaded');
+    var ov=document.getElementById('mapOverlay');
+    if(ov) ov.hidden=true;
+  }catch(e){
+    console.error(e);
+    if(note) note.textContent=localizeRuntimeText('Map could not be loaded');
   }
 }
 
