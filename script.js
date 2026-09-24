@@ -237,6 +237,7 @@ function localizeRuntimeText(message){
   if(message.indexOf('Ready — ')===0) return 'Bereit — '+message.slice(8).replace(' points · ',' Punkte · ');
   if(message.indexOf('Downloaded ')===0) return message.slice(11)+' heruntergeladen';
   if(message.indexOf('FIT parse error: ')===0) return 'FIT-Verarbeitungsfehler: '+message.slice(17);
+  if(message.indexOf('File too large: ')===0) return 'Datei zu groß: '+message.slice(16).replace(' — the limit is ',' — das Maximum sind ');
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
@@ -444,9 +445,15 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
 function setStatus(msg,cls){statusEl.textContent=localizeRuntimeText(msg);statusEl.className='status'+(cls?' '+cls:'');}
 function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).disabled=!on;});document.getElementById('btnDownloadAll').disabled=!on;}
 
+var MAX_FILE_BYTES=32*1024*1024;
+
 function handleFile(file){
   var name=file.name.toLowerCase();
   if(!name.endsWith('.gpx')&&!name.endsWith('.fit')){setStatus('Please upload a .gpx or .fit file','err');return;}
+  if(file.size>MAX_FILE_BYTES){
+    setStatus('File too large: '+Math.round(file.size/1048576)+' MB — the limit is '+Math.round(MAX_FILE_BYTES/1048576)+' MB','err');
+    return;
+  }
   currentFilename=file.name.replace(/\.[^.]+$/,'');
   setStatus('Reading '+file.name+'...');
   var reader=new FileReader();
@@ -511,14 +518,18 @@ function parseFIT(buffer,name){
       var lat=rec[0],lon=rec[1];
       var alt=rec[2]!==undefined?rec[2]:rec[78];
       var spd=rec[6]!==undefined?rec[6]:rec[73];
-      var hr=rec[3];
+      var hr=rec[3], cad=rec[4], pwr=rec[7];
       if(ts!==undefined&&ts!==0xFFFFFFFF&&lat!==undefined&&lat!==0x7FFFFFFF&&lon!==undefined&&lon!==0x7FFFFFFF){
         var latDeg=(lat|0)*(180/Math.pow(2,31)), lonDeg=(lon|0)*(180/Math.pow(2,31));
         if(!validLatLon(latDeg,lonDeg)) return;
+        var eleM=(alt!==undefined&&alt!==0xFFFF&&alt!==0xFFFFFFFF)?(alt/5-500):null;
+        if(eleM!==null&&!validElevation(eleM)) eleM=null;
         points.push({time:(ts+FIT_EPOCH)*1000,lat:latDeg,lon:lonDeg,
-          ele:(alt!==undefined&&alt!==0xFFFF)?(alt/5-500):null,
+          ele:eleM,
           speed:(spd!==undefined&&spd!==0xFFFF&&spd!==0xFFFFFFFF)?spd/1000:null,
-          hr:(hr!==undefined&&hr!==0xFF&&hr!==0xFFFF)?hr:null});
+          hr:(hr!==undefined&&hr!==0xFF&&hr!==0xFFFF)?hr:null,
+          cad:(cad!==undefined&&cad!==0xFF)?cad:null,
+          power:(pwr!==undefined&&pwr!==0xFFFF&&pwr!==0xFFFFFFFF)?pwr:null});
       }
     }
     while(pos<dataEnd){
@@ -575,6 +586,22 @@ function getSpeedFromPoint(pt){
   return null;
 }
 
+function getExtNumber(pt,names,lo,hi){
+  var kids=pt.childNodes;
+  for(var i=0;i<kids.length;i++){
+    if(kids[i].localName==='extensions'){
+      var all=kids[i].getElementsByTagName('*');
+      for(var j=0;j<all.length;j++){
+        if(names.indexOf(all[j].localName.toLowerCase())>=0){
+          var v=parseFloat(all[j].textContent);
+          if(!isNaN(v)&&isFinite(v)&&v>=lo&&v<=hi) return v;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function parseGPX(text,name){
   try{
     var parser=new DOMParser(),doc=parser.parseFromString(text,'application/xml');
@@ -589,7 +616,10 @@ function parseGPX(text,name){
       var t=timeEl?new Date(timeEl.textContent).getTime():null;
       if(t&&isFinite(t)&&validLatLon(lat,lon)){
         var ele=eleEl?parseFloat(eleEl.textContent):null;
-        rawPoints.push({time:t,lat:lat,lon:lon,ele:(ele!==null&&isFinite(ele))?ele:null,speed:getSpeedFromPoint(pt),hr:null});
+        rawPoints.push({time:t,lat:lat,lon:lon,ele:(ele!==null&&validElevation(ele))?ele:null,speed:getSpeedFromPoint(pt),
+          hr:getExtNumber(pt,['hr','heartrate'],1,255),
+          cad:getExtNumber(pt,['cad','cadence'],0,254),
+          power:getExtNumber(pt,['power','pwr'],0,3000)});
       } else skipped++;
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});
@@ -602,6 +632,10 @@ function parseGPX(text,name){
     reprocess();
     jumpToSettings();
   }catch(e){console.error(e);setStatus('Error: '+e.message,'err');}
+}
+
+function validElevation(e){
+  return typeof e==='number'&&isFinite(e)&&e>=-500&&e<=20000;
 }
 
 function validLatLon(lat,lon){
@@ -1094,13 +1128,18 @@ function drawElev(){
 }
 
 function sanitizeFilename(s){
-
-  return s.replace(/[:]/g,'-').replace(/[<>"/\\|?*]/g,'').replace(/\s+/g,' ').trim();
+  s=String(s).replace(/[\x00-\x1F\x7F]/g,'').replace(/[‪-‮⁦-⁩]/g,'');
+  s=s.replace(/[:]/g,'-').replace(/[<>"/\\|?*]/g,'').replace(/\s+/g,' ').trim();
+  s=s.replace(/^\.+/,'').replace(/\.+$/,'').trim();
+  if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(s)) s='_'+s;
+  return s;
 }
 function makeFilename(suffix,ext){
   var dur=document.getElementById('statDur').textContent||'';
   var base=currentFilename||'overlay';
-  return sanitizeFilename(base+' - '+dur+' - '+suffix)+'.'+ext;
+  if(base.length>80) base=base.slice(0,80);
+  var nm=sanitizeFilename(base+' - '+dur+' - '+suffix);
+  return (nm||'overlay')+'.'+ext;
 }
 
 function buildKeyframeList(dataArr, valueFn){
