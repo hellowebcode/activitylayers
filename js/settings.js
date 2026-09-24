@@ -62,6 +62,9 @@ var CONTROL_IDS=[
   'tempSize',
   'shadowOffset',
   'smooth',
+  'compPreset',
+  'compW',
+  'compH',
   'sv1',
   'sv2',
   'trackColor',
@@ -76,7 +79,8 @@ var btnIds=['btnSetting','btnRouteSetting','btnElevSetting','btnHRSetting','btnI
   'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
 var syncCalcResult={offset:null,drift:null};
 
-var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0'};
+var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0',
+               compPreset:'1920x1080',compW:'1920',compH:'1080'};
 var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColor:'#fca300',shadowColor:'#000000'};
 var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#aa0000',gaugeNumberColor:'#ffffff',gaugeUnitColor:'#6d6d7e'};
 var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFill:'1',elevFillColor:'#ffffff',elevDotColor:'#38bdf8',elevShadowColor:'#000000',elevShadowOffset:'4'};
@@ -233,6 +237,40 @@ document.getElementById('syncApply').addEventListener('click',function(){
   if(rawPoints.length) reprocess();
   setStatus('Sync applied — offset: '+syncCalcResult.offset+'s, drift: '+syncCalcResult.drift,'ok');
 });
+
+// Leinwandgroesse: die Auswahl fuellt die beiden Zahlenfelder, eine Eingabe
+// von Hand stellt die Auswahl auf "Custom".
+var COMP_DESIGN_W=1920, COMP_DESIGN_H=1080;
+function leinwandMass(id,vorgabe){
+  var el=document.getElementById(id);
+  var n=el?parseInt(el.value,10):NaN;
+  if(!isFinite(n)) return vorgabe;
+  return Math.max(64,Math.min(16384,Math.round(n)));
+}
+function leinwandAuswahlAngleichen(){
+  var sel=document.getElementById('compPreset');
+  if(!sel) return;
+  var mass=leinwandMass('compW',COMP_DESIGN_W)+'x'+leinwandMass('compH',COMP_DESIGN_H);
+  var treffer=false;
+  for(var i=0;i<sel.options.length;i++) if(sel.options[i].value===mass) treffer=true;
+  sel.value=treffer?mass:'custom';
+}
+(function(){
+  var sel=document.getElementById('compPreset');
+  if(!sel) return;
+  sel.addEventListener('change',function(){
+    if(this.value==='custom') return;
+    var t=this.value.split('x');
+    document.getElementById('compW').value=t[0];
+    document.getElementById('compH').value=t[1];
+    speichereEinstellungen();
+  });
+  ['compW','compH'].forEach(function(id){
+    document.getElementById(id).addEventListener('input',leinwandAuswahlAngleichen);
+    document.getElementById(id).addEventListener('change',leinwandAuswahlAngleichen);
+  });
+  leinwandAuswahlAngleichen();
+})();
 
 document.getElementById('resetVideo').addEventListener('click',function(){applyDefaults(DEF_VIDEO);syncUnitOptions();if(rawPoints.length)reprocess();});
 document.getElementById('resetRoute').addEventListener('click',function(){applyDefaults(DEF_ROUTE);});

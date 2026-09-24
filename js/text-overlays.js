@@ -34,6 +34,9 @@ function buildLapKeyframes(){
 }
 
 function buildTextOverlaySetting(cfg){
+  // cfg ist hier das uebergebene Beschreibungsobjekt, nicht die Funktion cfg();
+  // die Leinwand kommt deshalb direkt aus den Bedienelementen.
+  var W=leinwandMass('compW',COMP_DESIGN_W), H=leinwandMass('compH',COMP_DESIGN_H);
   var L=[];
   L.push('{');
   L.push('\tTools = ordered() {');
@@ -64,8 +67,8 @@ function buildTextOverlaySetting(cfg){
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
   L.push('\t\t\t\t\t\tBorderWidth = Input { Value = -0.181, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -82,8 +85,8 @@ function buildTextOverlaySetting(cfg){
   L.push('\t\t\t\t\t\t\tSourceOp = "Rectangle1",');
   L.push('\t\t\t\t\t\t\tSource = "Mask",');
   L.push('\t\t\t\t\t\t},');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftAlpha = Input { Value = 0.433, }');
@@ -92,8 +95,8 @@ function buildTextOverlaySetting(cfg){
   L.push('\t\t\t\t},');
   L.push('\t\t\t\tText2 = TextPlus {');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
@@ -235,10 +238,10 @@ function buildLapSetting(){
 function buildCadenceJsx(){
   var c=cfg();
   if(!cadData.length) return null;
-  var size=(parseFloat(c.cadSize)||0.07)*AE_H;
+  var size=(parseFloat(c.cadSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(cadData,function(p){return p.cad;});
   var L=[aeHead('Cadence Overlay')];
-  L.push('  var num=textLayer("Cadence","0",[250,880],'+aeNum(size)+','+aeCol(c.cadColor)+',false);');
+  L.push('  var num=textLayer("Cadence","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
   L.push(aeTail());
   return L.join('\n');
@@ -247,12 +250,12 @@ function buildCadenceJsx(){
 function buildPaceJsx(){
   var c=cfg();
   if(!paceData.length) return null;
-  var size=(parseFloat(c.paceSize)||0.07)*AE_H;
+  var size=(parseFloat(c.paceSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(paceData,function(p){return Math.round(p.sec);});
   var ausdruck='var t=v; var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
                'm+":"+(s<10?"0":"")+s+" '+paceLabel(c)+'";';
   var L=[aeHead('Pace Overlay')];
-  L.push('  var num=textLayer("Pace","0:00",[250,880],'+aeNum(size)+','+aeCol(c.paceColor)+',false);');
+  L.push('  var num=textLayer("Pace","0:00",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.paceColor)+',false);');
   L.push('  driveText(num,"Pace",'+aeKf(kf,0)+','+aeStr(ausdruck)+');');
   L.push(aeTail());
   return L.join('\n');
@@ -261,10 +264,10 @@ function buildPaceJsx(){
 function buildTempJsx(){
   var c=cfg();
   if(!tempData.length) return null;
-  var size=(parseFloat(c.tempSize)||0.07)*AE_H;
+  var size=(parseFloat(c.tempSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(tempData,function(p){return p.temp;});
   var L=[aeHead('Temperature Overlay')];
-  L.push('  var num=textLayer("Temperature","0",[250,880],'+aeNum(size)+','+aeCol(c.tempColor)+',false);');
+  L.push('  var num=textLayer("Temperature","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.tempColor)+',false);');
   L.push('  driveText(num,"Temperature",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().temp+'";')+');');
   L.push(aeTail());
   return L.join('\n');
@@ -273,7 +276,7 @@ function buildTempJsx(){
 function buildPowerJsx(){
   var c=cfg();
   if(!powerData.length) return null;
-  var size=(parseFloat(c.powerSize)||0.07)*AE_H;
+  var size=(parseFloat(c.powerSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(powerData,function(p){return p.power;});
   var L=[aeHead('Power Overlay')];
   var zonen = c.powerZones ? zonenDeckkraft(powerData,function(p){return p.power;},
@@ -282,12 +285,12 @@ function buildPowerJsx(){
   if(zonen){
     var farben=[c.powerColor,c.powerColor2,c.powerColor3];
     for(var z=0;z<3;z++){
-      L.push('  var z'+z+'=textLayer("Power zone '+(z+1)+'","0",[250,880],'+aeNum(size)+','+aeCol(farben[z])+',false);');
+      L.push('  var z'+z+'=textLayer("Power zone '+(z+1)+'","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(farben[z])+',false);');
       L.push('  driveText(z'+z+',"Power zone '+(z+1)+'",'+aeKf(kf,0)+','+ausdruck+');');
       L.push('  keys(tf(z'+z+',"ADBE Opacity"),'+aeKf(zonen[z],0)+');');
     }
   } else {
-    L.push('  var num=textLayer("Power","0",[250,880],'+aeNum(size)+','+aeCol(c.powerColor)+',false);');
+    L.push('  var num=textLayer("Power","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.powerColor)+',false);');
     L.push('  driveText(num,"Power",'+aeKf(kf,0)+','+ausdruck+');');
   }
   L.push(aeTail());
@@ -298,13 +301,13 @@ function buildLapJsx(){
   var c=cfg();
   var k=buildLapKeyframes();
   if(!k) return null;
-  var size=(parseFloat(c.lapSize)||0.06)*AE_H;
+  var size=(parseFloat(c.lapSize)||0.06)*AE_H*aeFaktor(c);
   var expr='var n=Math.floor(effect("Lap Number")(1).value); '+
            'var t=effect("Lap Time")(1).value; '+
            'var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
            '"'+overlayLabels().lap+' "+n+"   "+m+":"+(s<10?"0":"")+s;';
   var L=[aeHead('Lap Marker Overlay')];
-  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+',[250,880],'+aeNum(size)+','+aeCol(c.lapColor)+',false);');
+  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+','+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.lapColor)+',false);');
   L.push('  slider(lap,"Lap Number",'+aeKf(k.num,0)+');');
   L.push('  slider(lap,"Lap Time",'+aeKf(k.sec,2)+');');
   L.push('  lap.property("ADBE Text Properties").property("ADBE Text Document").expression = '+aeStr(expr)+';');

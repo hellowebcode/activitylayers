@@ -26,6 +26,9 @@ function cfg(){
   }
   el=document.getElementById('statDur');
   c.statDur=el?el.textContent:'';
+  // Die Leinwand geht in jede Ausgabe ein, deshalb hier einmal geprueft.
+  c.W=leinwandMass('compW',COMP_DESIGN_W);
+  c.H=leinwandMass('compH',COMP_DESIGN_H);
   return c;
 }
 
@@ -158,6 +161,7 @@ function buildDisplacementKeyframes(ptsArr){
 
 function buildSetting(){
   var c=cfg();
+  var W=c.W, H=c.H;
   var maxSpd=parseFloat(c.maxSpeed)||9;
   var unit=c.unit,u=unitDisplay(unit),ms=maxSpd.toFixed(2);
   var speedKF=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);});
@@ -191,8 +195,8 @@ function buildSetting(){
   L.push('\t\t\t\tEllipse2 = EllipseMask {');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, }');
@@ -202,8 +206,8 @@ function buildSetting(){
   L.push('\t\t\t\tBackground2 = Background {');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tEffectMask = Input { SourceOp = "Ellipse2", Source = "Mask", },');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftRed = Input { Value = '+f(bgRgb[0])+', },');
@@ -220,8 +224,8 @@ function buildSetting(){
   L.push('\t\t\t\t\t\tSolid = Input { Value = 0, },');
   L.push('\t\t\t\t\t\tWritePosition = Input { Value = 0.62, },');
   L.push('\t\t\t\t\t\tWriteLength = Input { Value = -0.75, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -233,8 +237,8 @@ function buildSetting(){
   L.push('\t\t\t\tBackground1 = Background {');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tEffectMask = Input { SourceOp = "Ellipse1", Source = "Mask", },');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftRed = Input { Value = '+f(ringRgb[0])+', },');
@@ -274,8 +278,8 @@ function buildSetting(){
   L.push('\t\t\t\tBackground3 = Background {');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tEffectMask = Input { SourceOp = "CurrentSpeed", Source = "Mask", },');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftRed = Input { Value = '+f(arcRgb[0])+', },');
@@ -294,8 +298,8 @@ function buildSetting(){
   L.push('\t\t\t\t},');
   L.push('\t\t\t\tText1 = TextPlus {');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
@@ -324,8 +328,8 @@ function buildSetting(){
   L.push('\t\t\t\t},');
   L.push('\t\t\t\tText2 = TextPlus {');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
@@ -367,7 +371,7 @@ var HEART_TOP_KNOTS_LUA="0, 1, 2, 3, 3.167, 3.334, 3.501, 4.334, 5.334, 6.334, 7
 var HEART_BOTTOM_POINTS_LUA="\t\t\t\t\t\t\t\t\t{ X = 0.0010816087218038, Y = -0.395655450921847 },\n\t\t\t\t\t\t\t\t\t{ X = 0.00534821860936223, Y = -0.392429196462928 },\n\t\t\t\t\t\t\t\t\t{ X = 0.00900033857279558, Y = -0.389755531989182 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0168629124906222, Y = -0.38468079741403 },\n\t\t\t\t\t\t\t\t\t{ X = 0.094025917841622, Y = -0.329963759440417 },\n\t\t\t\t\t\t\t\t\t{ X = 0.15846540374158, Y = -0.284113610047877 },\n\t\t\t\t\t\t\t\t\t{ X = 0.283575149132274, Y = -0.178045485198976 },\n\t\t\t\t\t\t\t\t\t{ X = 0.342422970013915, Y = -0.11639257791489 },\n\t\t\t\t\t\t\t\t\t{ X = 0.361889691278553, Y = -0.0936574972151565 },\n\t\t\t\t\t\t\t\t\t{ X = 0.3839249462985, Y = -0.0655649906709188 },\n\t\t\t\t\t\t\t\t\t{ X = 0.39846223428313, Y = -0.0468113975576662 },\n\t\t\t\t\t\t\t\t\t{ X = 0.419493441881502, Y = -0.0144730890999548 },\n\t\t\t\t\t\t\t\t\t{ X = 0.423790140208051, Y = -0.00972410673903212 },\n\t\t\t\t\t\t\t\t\t{ X = 0.414066033469019, Y = -0.00972410673903212 },\n\t\t\t\t\t\t\t\t\t{ X = 0.382632293080054, Y = -0.0101763907734057 },\n\t\t\t\t\t\t\t\t\t{ X = 0.374345615742667, Y = -0.00986643984281426 },\n\t\t\t\t\t\t\t\t\t{ X = 0.369426068038064, Y = -0.00273252569950616 },\n\t\t\t\t\t\t\t\t\t{ X = 0.364792713567839, Y = 0.00607202680066998 },\n\t\t\t\t\t\t\t\t\t{ X = 0.360631281407035, Y = 0.0140284757118928 },\n\t\t\t\t\t\t\t\t\t{ X = 0.358249581239531, Y = 0.0191059463986601 },\n\t\t\t\t\t\t\t\t\t{ X = 0.354716289782244, Y = 0.0130600921273032 },\n\t\t\t\t\t\t\t\t\t{ X = 0.348146984924623, Y = 0.000314070351758788 },\n\t\t\t\t\t\t\t\t\t{ X = 0.344168760469012, Y = -0.00748534338358453 },\n\t\t\t\t\t\t\t\t\t{ X = 0.342336683417085, Y = -0.00916038525963148 },\n\t\t\t\t\t\t\t\t\t{ X = 0.34123743718593, Y = -0.0102072864321608 },\n\t\t\t\t\t\t\t\t\t{ X = 0.336212311557789, Y = -0.0107307370184255 },\n\t\t\t\t\t\t\t\t\t{ X = 0.329983249581239, Y = -0.0104166666666667 },\n\t\t\t\t\t\t\t\t\t{ X = 0.326057370184255, Y = -0.0105737018425461 },\n\t\t\t\t\t\t\t\t\t{ X = 0.294702680067002, Y = -0.0102072864321608 },\n\t\t\t\t\t\t\t\t\t{ X = 0.289415829145729, Y = -0.0103119765494137 },\n\t\t\t\t\t\t\t\t\t{ X = 0.28821189279732, Y = -0.0147613065326633 },\n\t\t\t\t\t\t\t\t\t{ X = 0.287060301507538, Y = -0.0217755443886097 },\n\t\t\t\t\t\t\t\t\t{ X = 0.276329564489112, Y = -0.0979899497487437 },\n\t\t\t\t\t\t\t\t\t{ X = 0.27339824120603, Y = -0.122592127303183 },\n\t\t\t\t\t\t\t\t\t{ X = 0.27250837520938, Y = -0.128768844221106 },\n\t\t\t\t\t\t\t\t\t{ X = 0.267221524288107, Y = -0.13463149078727 },\n\t\t\t\t\t\t\t\t\t{ X = 0.259788525963149, Y = -0.134893216080402 },\n\t\t\t\t\t\t\t\t\t{ X = 0.253611809045226, Y = -0.133375209380235 },\n\t\t\t\t\t\t\t\t\t{ X = 0.250680485762144, Y = -0.125575795644891 },\n\t\t\t\t\t\t\t\t\t{ X = 0.248586683417085, Y = -0.104742462311558 },\n\t\t\t\t\t\t\t\t\t{ X = 0.237227805695142, Y = -0.000366415410385235 },\n\t\t\t\t\t\t\t\t\t{ X = 0.22660175879397, Y = 0.0904522613065326 },\n\t\t\t\t\t\t\t\t\t{ X = 0.224926716917923, Y = 0.104166666666667 },\n\t\t\t\t\t\t\t\t\t{ X = 0.221838358458961, Y = 0.0866834170854272 },\n\t\t\t\t\t\t\t\t\t{ X = 0.215556951423786, Y = 0.0324015912897823 },\n\t\t\t\t\t\t\t\t\t{ X = 0.207659902770553, Y = -0.031416763044217 },\n\t\t\t\t\t\t\t\t\t{ X = 0.203098827470687, Y = -0.0390494137353434 },\n\t\t\t\t\t\t\t\t\t{ X = 0.193729061976549, Y = -0.0405150753768845 },\n\t\t\t\t\t\t\t\t\t{ X = 0.18498743718593, Y = -0.0280569514237856 },\n\t\t\t\t\t\t\t\t\t{ X = 0.179020100502513, Y = -0.0192106365159129 },\n\t\t\t\t\t\t\t\t\t{ X = 0.170958961474037, Y = -0.00544388609715241 },\n\t\t\t\t\t\t\t\t\t{ X = 0.168708123953099, Y = -0.000994556113902867 },\n\t\t\t\t\t\t\t\t\t{ X = 0.16750418760469, Y = -0.00528685092127301 },\n\t\t\t\t\t\t\t\t\t{ X = 0.163578308207705, Y = -0.0108877721943048 },\n\t\t\t\t\t\t\t\t\t{ X = 0.152585845896147, Y = -0.0105213567839196 },\n\t\t\t\t\t\t\t\t\t{ X = 0.124005443886097, Y = -0.0108877721943049 },\n\t\t\t\t\t\t\t\t\t{ X = 0.118561557788945, Y = -0.00800879396984927 },\n\t\t\t\t\t\t\t\t\t{ X = 0.110448073701842, Y = 0.00837520938023451 },\n\t\t\t\t\t\t\t\t\t{ X = 0.107307370184255, Y = 0.0145519262981575 },\n\t\t\t\t\t\t\t\t\t{ X = 0.105056532663317, Y = 0.0182160804020101 },\n\t\t\t\t\t\t\t\t\t{ X = 0.102701005025126, Y = 0.0125628140703518 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0931742043551089, Y = -0.00528685092127301 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0914991624790621, Y = -0.00779941373534337 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0873115577889448, Y = -0.0111494974874372 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0654836683417085, Y = -0.0100502512562814 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0436034338358459, Y = -0.0101549413735343 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0393634840871022, Y = -0.00942211055276382 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0369032663316583, Y = -0.0128245393634841 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0363274706867671, Y = -0.019001256281407 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0317734505862647, Y = -0.0525020938023451 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0235552763819096, Y = -0.110134003350084 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0207286432160805, Y = -0.127198492462312 },\n\t\t\t\t\t\t\t\t\t{ X = 0.0157558626465661, Y = -0.135207286432161 },\n\t\t\t\t\t\t\t\t\t{ X = 0.00664782244556117, Y = -0.135416666666667 },\n\t\t\t\t\t\t\t\t\t{ X = 0.00141331658291455, Y = -0.12944932998325 },\n\t\t\t\t\t\t\t\t\t{ X = -0.00206219690002298, Y = -0.121840912429824 },\n\t\t\t\t\t\t\t\t\t{ X = -0.00314070351758794, Y = -0.0956867671691792 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0226130653266332, Y = 0.0904522613065326 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0266061226258616, Y = 0.111660995777615 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0301507537688442, Y = 0.0820770519262981 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0450440447109334, Y = -0.0323117921385743 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0465985639203494, Y = -0.0386779184247538 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0600710637352876, Y = -0.0403064623584277 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0640683988452143, Y = -0.0312754459989636 },\n\t\t\t\t\t\t\t\t\t{ X = -0.074023895468993, Y = -0.0159563567255791 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0802798134576949, Y = -0.00536679250869793 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0832408024280109, Y = -0.000703234880450043 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0865719150196165, Y = -0.00743948478791912 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0893108298171589, Y = -0.0103264490339774 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0952327395162113, Y = -0.0101095417236688 },\n\t\t\t\t\t\t\t\t\t{ X = -0.128321859501073, Y = -0.0104004737582353 },\n\t\t\t\t\t\t\t\t\t{ X = -0.133207491302095, Y = -0.00884595454881937 },\n\t\t\t\t\t\t\t\t\t{ X = -0.136834702790732, Y = -0.00255385298689764 },\n\t\t\t\t\t\t\t\t\t{ X = -0.141061671440943, Y = 0.00477061417811925 },\n\t\t\t\t\t\t\t\t\t{ X = -0.144903397734843, Y = 0.012769264934488 },\n\t\t\t\t\t\t\t\t\t{ X = -0.14749426308387, Y = 0.0186172181508624 },\n\t\t\t\t\t\t\t\t\t{ X = -0.15030720260567, Y = 0.0123251165889408 },\n\t\t\t\t\t\t\t\t\t{ X = -0.155470862048843, Y = 0.00224295509108357 },\n\t\t\t\t\t\t\t\t\t{ X = -0.160004441483455, Y = -0.00581094085424533 },\n\t\t\t\t\t\t\t\t\t{ X = -0.162225183211193, Y = -0.00966022651565624 },\n\t\t\t\t\t\t\t\t\t{ X = -0.167554963357762, Y = -0.010548523206751 },\n\t\t\t\t\t\t\t\t\t{ X = -0.188503801760545, Y = -0.0103897620005463 },\n\t\t\t\t\t\t\t\t\t{ X = -0.207746478491014, Y = -0.0107546996326667 },\n\t\t\t\t\t\t\t\t\t{ X = -0.216263231919461, Y = -0.0100303501369458 },\n\t\t\t\t\t\t\t\t\t{ X = -0.217595676956103, Y = -0.0163224516988674 },\n\t\t\t\t\t\t\t\t\t{ X = -0.218335924198682, Y = -0.0270560367162632 },\n\t\t\t\t\t\t\t\t\t{ X = -0.227218891109631, Y = -0.0860537419498113 },\n\t\t\t\t\t\t\t\t\t{ X = -0.233066844326005, Y = -0.126397216670368 },\n\t\t\t\t\t\t\t\t\t{ X = -0.235065511880968, Y = -0.134836035235769 },\n\t\t\t\t\t\t\t\t\t{ X = -0.251721074838996, Y = -0.135650307202606 },\n\t\t\t\t\t\t\t\t\t{ X = -0.254904137982086, Y = -0.122473906284699 },\n\t\t\t\t\t\t\t\t\t{ X = -0.277185579983715, Y = 0.0844251980161374 },\n\t\t\t\t\t\t\t\t\t{ X = -0.28088681619661, Y = 0.104337848841513 },\n\t\t\t\t\t\t\t\t\t{ X = -0.283403656821378, Y = 0.0846472721889111 },\n\t\t\t\t\t\t\t\t\t{ X = -0.296135909393737, Y = -0.0160263528018358 },\n\t\t\t\t\t\t\t\t\t{ X = -0.298627157061256, Y = -0.0305037920772282 },\n\t\t\t\t\t\t\t\t\t{ X = -0.300429343400696, Y = -0.0384558442519801 },\n\t\t\t\t\t\t\t\t\t{ X = -0.313087571248797, Y = -0.0403064623584277 },\n\t\t\t\t\t\t\t\t\t{ X = -0.318713450292398, Y = -0.0309793471019321 },\n\t\t\t\t\t\t\t\t\t{ X = -0.334184617662299, Y = -0.00751350951217705 },\n\t\t\t\t\t\t\t\t\t{ X = -0.337293656081131, Y = -0.000111037086386878 },\n\t\t\t\t\t\t\t\t\t{ X = -0.339588422533126, Y = -0.00544081723295586 },\n\t\t\t\t\t\t\t\t\t{ X = -0.341365015915316, Y = -0.00869790510030349 },\n\t\t\t\t\t\t\t\t\t{ X = -0.34580649937079, Y = -0.0101783995854615 },\n\t\t\t\t\t\t\t\t\t{ X = -0.412724850099933, Y = -0.0101043748612036 },\n\t\t\t\t\t\t\t\t\t{ X = -0.418572803316308, Y = -0.0101783995854615 },\n\t\t\t\t\t\t\t\t\t{ X = -0.416500111037086, Y = -0.0140276852468725 },\n\t\t\t\t\t\t\t\t\t{ X = -0.411040252896729, Y = -0.0232807757791102 },\n\t\t\t\t\t\t\t\t\t{ X = -0.350816582914573, Y = -0.105841708542714 },\n\t\t\t\t\t\t\t\t\t{ X = -0.272194304857621, Y = -0.185929648241206 },\n\t\t\t\t\t\t\t\t\t{ X = -0.190117252931323, Y = -0.257118927973199 },\n\t\t\t\t\t\t\t\t\t{ X = -0.101549413735343, Y = -0.323492462311558 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0349664991624791, Y = -0.370917085427136 },\n\t\t\t\t\t\t\t\t\t{ X = -0.0158515611028081, Y = -0.384066372323409 },\n\t\t\t\t\t\t\t\t\t{ X = -0.00695379824977622, Y = -0.390187199716325 },\n\t\t\t\t\t\t\t\t\t{ X = -0.00391115918238408, Y = -0.393253415936144 },";
 var HEART_BOTTOM_KNOTS_LUA="0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142";
 
-function buildHeartShapeNode(name, pointsLua, knotsLua, pos){
+function buildHeartShapeNode(name, pointsLua, knotsLua, pos, W, H){
   var L=[];
   L.push('\t\t\t\t'+name+' = BSplineMask {');
   L.push('\t\t\t\t\tDrawMode = "ModifyOnly",');
@@ -375,8 +379,8 @@ function buildHeartShapeNode(name, pointsLua, knotsLua, pos){
   L.push('\t\t\t\t\tCtrlWZoom = false,');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -546,6 +550,7 @@ function buildPolylineShapeNodes(maskName, splineToolName, pts, closed, solid, b
 
 function buildRouteSetting(){
   var c=cfg();
+  var W=c.W, H=c.H;
   var tW=parseFloat(c.trackW)||4;
   var sW=tW*SHADOW_WIDTH_RATIO;
   var sOf=zahlOderVorgabe(c.shadowOffset,5);
@@ -563,25 +568,25 @@ function buildRouteSetting(){
 
   var shadowDotDiaPxPre=dR*2*1.15;
   var MARGIN=Math.ceil(shadowDotDiaPxPre/2)+Math.ceil(sOf)+6;
-  var boxW=1920-MARGIN*2, boxH=1080-MARGIN*2;
+  var boxW=W-MARGIN*2, boxH=H-MARGIN*2;
   var sw=boxW,sh=sw*(laR/loR); if(sh>boxH){sh=boxH;sw=sh*(loR/laR);}
-  var padX=(1920-sw)/2, padY=(1080-sh)/2;
+  var padX=(W-sw)/2, padY=(H-sh)/2;
   var pxPts=[];
   for(var i=0;i<rawPoints.length;i++){
     var px=padX+(rawPoints[i].lon-mnLo)*(sw/loR);
     var py=padY+(sh-(rawPoints[i].lat-mnLa)*(sh/laR));
     pxPts.push({px:px, py:py});
   }
-  var maskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px,p.py,1920,1080);});
+  var maskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px,p.py,W,H);});
   var sOxPx=sOf, sOyPx=-sOf;
-  var shadowMaskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px+sOxPx,p.py-sOyPx,1920,1080);});
+  var shadowMaskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px+sOxPx,p.py-sOyPx,W,H);});
 
-  var dotCenter01=pxPts.map(function(p){return {x:p.px/1920, y:1-(p.py/1080)};});
+  var dotCenter01=pxPts.map(function(p){return {x:p.px/W, y:1-(p.py/H)};});
   var dispKF=buildDisplacementKeyframes(rawPoints);
   var dotDiaPx=dR*2, shadowDotDiaPx=dR*2*1.15;
 
-  var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,tW/1080,false,[0,50],1920,1080,'Publish1');
-  var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,sW/1080,false,[0,150],1920,1080,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
+  var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,tW/H,false,[0,50], W, H,'Publish1');
+  var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,sW/H,false,[0,150], W, H,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
 
   var L=[];
   L.push('{');
@@ -600,17 +605,17 @@ function buildRouteSetting(){
   L.push('\t\t\t\tOffset = { 0, 0 }');
   L.push('\t\t\t},');
   L.push('\t\t\tTools = ordered() {');
-  L.push(buildBackgroundNode('BackgroundCanvas', null, [0,0,0], [-100,100], 0, 1920, 1080));
+  L.push(buildBackgroundNode('BackgroundCanvas', null, [0,0,0], [-100,100], 0, W, H));
   L.push(shadowShape.node);
-  L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, 1920, 1080));
+  L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, W, H));
   L.push(mainShape.node);
-  L.push(buildBackgroundNode('BackgroundMain', 'MainPath', tc, [100,50], undefined, 1920, 1080));
+  L.push(buildBackgroundNode('BackgroundMain', 'MainPath', tc, [100,50], undefined, W, H));
   L.push(buildMergeNode('Merge1', 'BackgroundShadow', 'BackgroundMain', [200,100]));
-  L.push(buildDotMaskNode('OutlineDotMask', 'Input { Value = { '+dotCenter01[0].x.toFixed(6)+', '+dotCenter01[0].y.toFixed(6)+' }, Expression = "MainDotMask.Center", }', shadowDotDiaPx, [300,150], 1920, 1080));
-  L.push(buildBackgroundNode('BackgroundOutlineDot', 'OutlineDotMask', sc, [400,150], undefined, 1920, 1080));
+  L.push(buildDotMaskNode('OutlineDotMask', 'Input { Value = { '+dotCenter01[0].x.toFixed(6)+', '+dotCenter01[0].y.toFixed(6)+' }, Expression = "MainDotMask.Center", }', shadowDotDiaPx, [300,150], W, H));
+  L.push(buildBackgroundNode('BackgroundOutlineDot', 'OutlineDotMask', sc, [400,150], undefined, W, H));
   L.push(buildMergeNode('Merge2', 'Merge1', 'BackgroundOutlineDot', [500,100]));
-  L.push(buildDotMaskNode('MainDotMask', polyPathPositionInput('Path1'), dotDiaPx, [300,50], 1920, 1080));
-  L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [400,50], undefined, 1920, 1080));
+  L.push(buildDotMaskNode('MainDotMask', polyPathPositionInput('Path1'), dotDiaPx, [300,50], W, H));
+  L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [400,50], undefined, W, H));
   L.push(buildMergeNode('Merge3', 'Merge2', 'BackgroundMainDot', [600,100]));
   L.push(buildMergeNode('Merge4', 'BackgroundCanvas', 'Merge3', [700,100]));
   L.push(buildBrightnessNode('BrightAdjust', 'Merge4', [800,100]));
@@ -627,6 +632,7 @@ function buildRouteSetting(){
 
 function buildElevSetting(){
   var c=cfg();
+  var W=c.W, H=c.H;
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});
   if(!elevPts.length) return null;
   var lc=hexToRgb(c.elevColor);
@@ -638,9 +644,10 @@ function buildElevSetting(){
   var sOf=zahlOderVorgabe(c.elevShadowOffset,4);
   var sw=lw*SHADOW_WIDTH_RATIO;
 
-  var FULL_CW=1920, FULL_CH=1080;
-  var GRAPH_W=parseInt(c.elevW)||1920;
-  var GRAPH_H=parseInt(c.elevH)||300;
+  var FULL_CW=W, FULL_CH=H;
+  // Breiter als die Leinwand ergibt kein Bild; der Vorgabewert folgt ihr.
+  var GRAPH_W=Math.min(W, parseInt(c.elevW)||W);
+  var GRAPH_H=Math.min(H, parseInt(c.elevH)||300);
   var MARGIN_BOTTOM=40;
   var OFFSET_X=Math.max(0,(FULL_CW-GRAPH_W)/2);
   var BAND_TOP=FULL_CH-MARGIN_BOTTOM-GRAPH_H, BAND_BOTTOM=FULL_CH-MARGIN_BOTTOM;
@@ -724,6 +731,7 @@ function buildElevSetting(){
 
 function buildHRSetting(){
   var c=cfg();
+  var W=c.W, H=c.H;
   var hrKF=buildKeyframeList(hrData,function(p){return Math.round(p.hr);});
   var textRgb=hexToRgb(c.hrColor);
   var textSize=parseFloat(c.hrSize)||0.07;
@@ -762,8 +770,8 @@ function buildHRSetting(){
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
   L.push('\t\t\t\t\t\tBorderWidth = Input { Value = -0.181, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -780,18 +788,18 @@ function buildHRSetting(){
   L.push('\t\t\t\t\t\t\tSourceOp = "Rectangle1",');
   L.push('\t\t\t\t\t\t\tSource = "Mask",');
   L.push('\t\t\t\t\t\t},');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftAlpha = Input { Value = 0.433, }');
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 856.776, 84.493 } },');
   L.push('\t\t\t\t},');
-  L.push(buildHeartShapeNode('HeartTop', HEART_TOP_POINTS_LUA, HEART_TOP_KNOTS_LUA, [992,-40]));
-  L.push(buildBackgroundNode('BackgroundHeartTop', 'HeartTop', heartRgb, [1050,-40]));
-  L.push(buildHeartShapeNode('HeartBottom', HEART_BOTTOM_POINTS_LUA, HEART_BOTTOM_KNOTS_LUA, [992,60]));
-  L.push(buildBackgroundNode('BackgroundHeartBottom', 'HeartBottom', heartRgb, [1050,60]));
+  L.push(buildHeartShapeNode('HeartTop', HEART_TOP_POINTS_LUA, HEART_TOP_KNOTS_LUA, [992,-40], W, H));
+  L.push(buildBackgroundNode('BackgroundHeartTop', 'HeartTop', heartRgb, [1050,-40], undefined, W, H));
+  L.push(buildHeartShapeNode('HeartBottom', HEART_BOTTOM_POINTS_LUA, HEART_BOTTOM_KNOTS_LUA, [992,60], W, H));
+  L.push(buildBackgroundNode('BackgroundHeartBottom', 'HeartBottom', heartRgb, [1050,60], undefined, W, H));
   L.push(buildMergeNode('MergeHeart', 'BackgroundHeartBottom', 'BackgroundHeartTop', [1080,10]));
 
   L.push('\t\t\t\tTransform1 = Transform {');
@@ -805,8 +813,8 @@ function buildHRSetting(){
   L.push('\t\t\t\t},');
   L.push('\t\t\t\tText2 = TextPlus {');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
@@ -883,6 +891,7 @@ function buildHRSetting(){
 
 function buildInclineSetting(){
   var c=cfg();
+  var W=c.W, H=c.H;
   var unit=c.inclineUnit;
 
   var exprStr = (unit==='deg')
@@ -913,8 +922,8 @@ function buildInclineSetting(){
   L.push('\t\t\tTools = ordered() {');
   L.push('\t\t\t\tText2 = TextPlus {');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
@@ -951,8 +960,8 @@ function buildInclineSetting(){
   L.push('\t\t\t\tBackground1 = Background {');
   L.push('\t\t\t\t\tCtrlWShown = false,');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftAlpha = Input { Value = 0, }');
@@ -974,8 +983,8 @@ function buildInclineSetting(){
   L.push('\t\t\t\t\tCtrlWShown = false,');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -1009,8 +1018,8 @@ function buildInclineSetting(){
   L.push('\t\t\t\t\tCtrlWShown = false,');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tEffectMask = Input { SourceOp = "Polygon1", Source = "Mask", },');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftRed = Input { Value = '+wrF+', },');
@@ -1052,6 +1061,7 @@ function buildInclineSetting(){
 
 function buildMileSetting(){
   var c=cfg();
+  var W=c.W, H=c.H;
   var unit=c.unit;
   var unitLabel = unit==='mph' ? 'Miles' : 'Kilometers';
 
@@ -1095,8 +1105,8 @@ function buildMileSetting(){
   L.push('\t\t\t\t\t\t\tSourceOp = "BackroundRectangle",');
   L.push('\t\t\t\t\t\t\tSource = "Mask",');
   L.push('\t\t\t\t\t\t},');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftAlpha = Input { Value = 0.433, }');
@@ -1121,8 +1131,8 @@ function buildMileSetting(){
   L.push('\t\t\t\tNumber = TextPlus {');
   L.push('\t\t\t\t\tNameSet = true,');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
@@ -1179,8 +1189,8 @@ function buildMileSetting(){
   L.push('\t\t\t\t\tNameSet = true,');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -1194,8 +1204,8 @@ function buildMileSetting(){
   L.push('\t\t\t\t\tNameSet = true,');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
-  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
@@ -1247,8 +1257,8 @@ function buildMileSetting(){
   L.push('\t\t\t\t\t\t\tSourceOp = "Rectangle3",');
   L.push('\t\t\t\t\t\t\tSource = "Mask",');
   L.push('\t\t\t\t\t\t},');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tTopLeftRed = Input { Value = '+(lineDistRgb[0]/255).toFixed(6)+', },');
@@ -1260,8 +1270,8 @@ function buildMileSetting(){
   L.push('\t\t\t\tUnit = TextPlus {');
   L.push('\t\t\t\t\tNameSet = true,');
   L.push('\t\t\t\t\tInputs = {');
-  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
-  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+H+', },');
   L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
   L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');

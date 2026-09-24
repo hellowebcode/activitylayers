@@ -40,7 +40,7 @@ function element(id) {
     checked: !!vorgaben['__checked__' + id],
     textContent: '', innerText: '', innerHTML: '', className: '', disabled: false,
     hidden: false, offsetWidth: 800, offsetHeight: 300, width: 800, height: 300,
-    style: {}, dataset: {}, childNodes: [], children: [], parentElement: null,
+    style: {}, dataset: {}, childNodes: [], children: [], parentElement: null, options: [],
     classList: { add(){}, remove(){}, toggle(){}, contains(){ return false; } },
     addEventListener(){}, removeEventListener(){}, appendChild(){}, removeChild(){},
     insertBefore(){}, setAttribute(){}, removeAttribute(){}, getAttribute(){ return null; },

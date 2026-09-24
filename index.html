@@ -234,6 +234,29 @@
       <input type="number" id="maxSpeed" value="9" step="0.5" min="0.5" readonly style="opacity:0.6;cursor:default;">
     </div>
   </div>
+  <div class="grid3" style="margin-top:10px">
+    <div class="field">
+      <label>Canvas size</label>
+      <select id="compPreset">
+        <option value="1920x1080" selected>1920 × 1080 — HD</option>
+        <option value="2560x1440">2560 × 1440 — QHD</option>
+        <option value="3840x2160">3840 × 2160 — 4K UHD</option>
+        <option value="1080x1920">1080 × 1920 — portrait</option>
+        <option value="1080x1350">1080 × 1350 — portrait 4:5</option>
+        <option value="1080x1080">1080 × 1080 — square</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Canvas width (px)</label>
+      <input type="number" id="compW" value="1920" step="2" min="64" max="16384">
+    </div>
+    <div class="field">
+      <label>Canvas height (px)</label>
+      <input type="number" id="compH" value="1080" step="2" min="64" max="16384">
+    </div>
+  </div>
+  <p class="card-note">Both export formats follow this size. Overlays keep their distance from the edge and their proportions on any canvas.</p>
   <div class="card-title how-header" id="syncInfoHeader" style="font-size:.78rem;color:var(--muted);margin-top:10px;font-family:'DM Mono',monospace;font-weight:500">
     What do these mean?
     <span class="how-arrow" id="syncInfoArrow">▾</span>
@@ -274,7 +297,7 @@
       <button class="reset-btn" id="resetRoute"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
-  <div class="hint" style="margin-top:0;margin-bottom:10px">Auto-sizes to fill 1920×1080 based on your GPS track's aspect ratio.</div>
+  <div class="hint" style="margin-top:0;margin-bottom:10px">Auto-sizes to fill the canvas based on your GPS track's aspect ratio.</div>
   <div class="grid4" style="margin-bottom:10px">
     <div class="field"><label>Track width</label><input type="number" id="trackW" value="4" step="1" min="1"></div>
     <div class="field"><label>Dot radius</label><input type="number" id="dotR" value="8" step="1" min="2"></div>
