@@ -1203,18 +1203,79 @@ function sanitizeFilename(s){
   return s;
 }
 function makeFilename(suffix,ext){
-  var dur=document.getElementById('statDur').textContent||'';
+  var dur=cfg().statDur||'';
   var base=currentFilename||'overlay';
   if(base.length>80) base=base.slice(0,80);
   var nm=sanitizeFilename(base+' - '+dur+' - '+suffix);
   return (nm||'overlay')+'.'+ext;
 }
 
+var CONTROL_IDS=[
+  'cadColor',
+  'cadSize',
+  'dotColor',
+  'dotR',
+  'driftFactor',
+  'elevColor',
+  'elevDotColor',
+  'elevFill',
+  'elevFillColor',
+  'elevH',
+  'elevLabels',
+  'elevLineW',
+  'elevShadowColor',
+  'elevShadowOffset',
+  'elevW',
+  'fps',
+  'gaugeArcColor',
+  'gaugeBgColor',
+  'gaugeNumberColor',
+  'gaugeRingColor',
+  'gaugeUnitColor',
+  'hrColor',
+  'hrHeartColor',
+  'hrSize',
+  'inclineNumberColor',
+  'inclineUnit',
+  'inclineWedgeColor',
+  'lapColor',
+  'lapSize',
+  'maxSpeed',
+  'mileColor',
+  'mileDecimals',
+  'mileLineDistColor',
+  'offset',
+  'powerColor',
+  'powerSize',
+  'sg1',
+  'sg2',
+  'shadowColor',
+  'shadowOffset',
+  'smooth',
+  'sv1',
+  'sv2',
+  'trackColor',
+  'trackW',
+  'unit'
+];
+
+function cfg(){
+  var c={}, el;
+  for(var i=0;i<CONTROL_IDS.length;i++){
+    el=document.getElementById(CONTROL_IDS[i]);
+    if(el) c[CONTROL_IDS[i]]=(el.type==='checkbox')?el.checked:el.value;
+  }
+  el=document.getElementById('statDur');
+  c.statDur=el?el.textContent:'';
+  return c;
+}
+
 function buildKeyframeList(dataArr, valueFn){
+  var c=cfg();
   if(!dataArr || !dataArr.length) return [];
-  var fps=parseFloat(document.getElementById('fps').value);
-  var offset=parseFloat(document.getElementById('offset').value)||0;
-  var drift=parseFloat(document.getElementById('driftFactor').value)||1.0;
+  var fps=parseFloat(c.fps);
+  var offset=parseFloat(c.offset)||0;
+  var drift=parseFloat(c.driftFactor)||1.0;
   var t0=(typeof rawPoints!=='undefined'&&rawPoints.length)?rawPoints[0].time:dataArr[0].time;
   var out=[],lf=-1;
   for(var i=0;i<dataArr.length;i++){
@@ -1292,14 +1353,15 @@ function buildDisplacementKeyframes(ptsArr){
 }
 
 function buildSetting(){
-  var maxSpd=parseFloat(document.getElementById('maxSpeed').value)||9;
-  var unit=document.getElementById('unit').value,u=unitDisplay(unit),ms=maxSpd.toFixed(2);
+  var c=cfg();
+  var maxSpd=parseFloat(c.maxSpeed)||9;
+  var unit=c.unit,u=unitDisplay(unit),ms=maxSpd.toFixed(2);
   var speedKF=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);});
-  var bgRgb=hexToRgb(document.getElementById('gaugeBgColor').value);
-  var ringRgb=hexToRgb(document.getElementById('gaugeRingColor').value);
-  var arcRgb=hexToRgb(document.getElementById('gaugeArcColor').value);
-  var numRgb=hexToRgb(document.getElementById('gaugeNumberColor').value);
-  var unitRgb=hexToRgb(document.getElementById('gaugeUnitColor').value);
+  var bgRgb=hexToRgb(c.gaugeBgColor);
+  var ringRgb=hexToRgb(c.gaugeRingColor);
+  var arcRgb=hexToRgb(c.gaugeArcColor);
+  var numRgb=hexToRgb(c.gaugeNumberColor);
+  var unitRgb=hexToRgb(c.gaugeUnitColor);
   function f(c){return (c/255).toFixed(6);}
 
   var ROW_Y=100, STEP=110, x=0;
@@ -1679,13 +1741,14 @@ function buildPolylineShapeNodes(maskName, splineToolName, pts, closed, solid, b
 }
 
 function buildRouteSetting(){
-  var tW=parseFloat(document.getElementById('trackW').value)||4;
+  var c=cfg();
+  var tW=parseFloat(c.trackW)||4;
   var sW=tW*SHADOW_WIDTH_RATIO;
-  var sOf=parseFloat(document.getElementById('shadowOffset').value)||5;
-  var dR=parseFloat(document.getElementById('dotR').value)||8;
-  var tc=hexToRgb(document.getElementById('trackColor').value);
-  var sc=hexToRgb(document.getElementById('shadowColor').value);
-  var dc=hexToRgb(document.getElementById('dotColor').value);
+  var sOf=parseFloat(c.shadowOffset)||5;
+  var dR=parseFloat(c.dotR)||8;
+  var tc=hexToRgb(c.trackColor);
+  var sc=hexToRgb(c.shadowColor);
+  var dc=hexToRgb(c.dotColor);
 
   var mnLa=Infinity,mxLa=-Infinity,mnLo=Infinity,mxLo=-Infinity;
   for(var i=0;i<rawPoints.length;i++){
@@ -1759,20 +1822,21 @@ function buildRouteSetting(){
 }
 
 function buildElevSetting(){
+  var c=cfg();
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});
   if(!elevPts.length) return null;
-  var lc=hexToRgb(document.getElementById('elevColor').value);
-  var dc=hexToRgb(document.getElementById('elevDotColor').value);
-  var fillOn=document.getElementById('elevFill').value==='1';
-  var fillC=hexToRgb(document.getElementById('elevFillColor').value);
-  var lw=parseFloat(document.getElementById('elevLineW').value)||2;
-  var sc=hexToRgb(document.getElementById('elevShadowColor').value);
-  var sOf=parseFloat(document.getElementById('elevShadowOffset').value)||4;
+  var lc=hexToRgb(c.elevColor);
+  var dc=hexToRgb(c.elevDotColor);
+  var fillOn=c.elevFill==='1';
+  var fillC=hexToRgb(c.elevFillColor);
+  var lw=parseFloat(c.elevLineW)||2;
+  var sc=hexToRgb(c.elevShadowColor);
+  var sOf=parseFloat(c.elevShadowOffset)||4;
   var sw=lw*SHADOW_WIDTH_RATIO;
 
   var FULL_CW=1920, FULL_CH=1080;
-  var GRAPH_W=parseInt(document.getElementById('elevW').value)||1920;
-  var GRAPH_H=parseInt(document.getElementById('elevH').value)||300;
+  var GRAPH_W=parseInt(c.elevW)||1920;
+  var GRAPH_H=parseInt(c.elevH)||300;
   var MARGIN_BOTTOM=40;
   var OFFSET_X=Math.max(0,(FULL_CW-GRAPH_W)/2);
   var BAND_TOP=FULL_CH-MARGIN_BOTTOM-GRAPH_H, BAND_BOTTOM=FULL_CH-MARGIN_BOTTOM;
@@ -1855,11 +1919,12 @@ function buildElevSetting(){
 }
 
 function buildHRSetting(){
+  var c=cfg();
   var hrKF=buildKeyframeList(hrData,function(p){return Math.round(p.hr);});
-  var textRgb=hexToRgb(document.getElementById('hrColor').value);
-  var textSize=parseFloat(document.getElementById('hrSize').value)||0.07;
+  var textRgb=hexToRgb(c.hrColor);
+  var textSize=parseFloat(c.hrSize)||0.07;
 
-  var heartRgb=hexToRgb(document.getElementById('hrHeartColor').value);
+  var heartRgb=hexToRgb(c.hrHeartColor);
   var L=[];
   L.push('{');
   L.push('\tTools = ordered() {');
@@ -1999,15 +2064,16 @@ function buildHRSetting(){
 }
 
 function buildInclineSetting(){
-  var unit=document.getElementById('inclineUnit').value;
+  var c=cfg();
+  var unit=c.inclineUnit;
 
   var exprStr = (unit==='deg')
     ? "string.format('%.1f°', math.atan(NumberDrive/100) * (180/math.pi))"
     : "string.format('%.1f%%', NumberDrive)";
   var inclineKF=buildKeyframeList(gradeData,function(p){return p.pct;});
-  var numRgb=hexToRgb(document.getElementById('inclineNumberColor').value);
+  var numRgb=hexToRgb(c.inclineNumberColor);
   var rF=(numRgb[0]/255).toFixed(6), gF=(numRgb[1]/255).toFixed(6), bF=(numRgb[2]/255).toFixed(6);
-  var wedgeRgb=hexToRgb(document.getElementById('inclineWedgeColor').value);
+  var wedgeRgb=hexToRgb(c.inclineWedgeColor);
   var wrF=(wedgeRgb[0]/255).toFixed(6), wgF=(wedgeRgb[1]/255).toFixed(6), wbF=(wedgeRgb[2]/255).toFixed(6);
 
   var L=[];
@@ -2167,15 +2233,16 @@ function buildInclineSetting(){
 }
 
 function buildMileSetting(){
-  var unit=document.getElementById('unit').value;
+  var c=cfg();
+  var unit=c.unit;
   var unitLabel = unit==='mph' ? 'Miles' : 'Kilometers';
 
   var totalDispDist = unit==='mph' ? totalDistM/1609.344 : totalDistM/1000;
   if(!isFinite(totalDispDist) || totalDispDist<=0) totalDispDist = 1;
   var mileKF=buildKeyframeList(distData,function(p){return unit==='mph' ? p.distM/1609.344 : p.distM/1000;});
-  var mileDec=parseInt(document.getElementById('mileDecimals').value,10)||1;
-  var lineDistRgb=hexToRgb(document.getElementById('mileLineDistColor').value);
-  var mileTextRgb=hexToRgb(document.getElementById('mileColor').value);
+  var mileDec=parseInt(c.mileDecimals,10)||1;
+  var lineDistRgb=hexToRgb(c.mileLineDistColor);
+  var mileTextRgb=hexToRgb(c.mileColor);
 
   var L=[];
   L.push('{');
@@ -2433,16 +2500,18 @@ function aeKf(kfs,dec){
   return aeList(o);
 }
 function aeDuration(){
-  var fps=parseFloat(document.getElementById('fps').value)||30;
+  var c=cfg();
+  var fps=parseFloat(c.fps)||30;
   if(!speedData.length) return 10;
-  var drift=parseFloat(document.getElementById('driftFactor').value)||1.0;
-  var offset=parseFloat(document.getElementById('offset').value)||0;
+  var drift=parseFloat(c.driftFactor)||1.0;
+  var offset=parseFloat(c.offset)||0;
   var span=(speedData[speedData.length-1].time-speedData[0].time)/1000*drift+offset;
   return Math.max(1, Math.ceil((span+1)*fps)/fps);
 }
 
 function aeHead(compName){
-  var fps=parseFloat(document.getElementById('fps').value)||30;
+  var c=cfg();
+  var fps=parseFloat(c.fps)||30;
   return [
 '// ─────────────────────────────────────────────────────────────────────────────',
 '// '+compName+' — generated by Activity Layers',
@@ -2585,9 +2654,10 @@ function aePathKeys(dataArr, pts){
 }
 
 function buildSpeedJsx(){
+  var c=cfg();
   if(!speedData.length) return null;
-  var maxSpd=parseFloat(document.getElementById('maxSpeed').value)||9;
-  var unit=unitDisplay(document.getElementById('unit').value);
+  var maxSpd=parseFloat(c.maxSpeed)||9;
+  var unit=unitDisplay(c.unit);
   var kf=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);});
   var CX=320, CY=760, DISC=200, R=148, SPAN=86.111, OFF=205;
   var L=[aeHead('Speed Overlay')];
@@ -2595,57 +2665,59 @@ function buildSpeedJsx(){
   L.push('  var MAXS='+aeNum(maxSpd)+', SPAN='+SPAN+';');
   L.push('  var disc=shapeLayer("Gauge Backdrop"), dg=grpOf(disc,"Disc");');
   L.push('  addEllipse(dg,['+(DISC*2)+','+(DISC*2)+'],['+CX+','+CY+']);');
-  L.push('  addFill(dg,'+aeCol(document.getElementById('gaugeBgColor').value)+');');
+  L.push('  addFill(dg,'+aeCol(c.gaugeBgColor)+');');
   L.push('  var ring=shapeLayer("Gauge Ring"), rg=grpOf(ring,"Ring");');
   L.push('  addEllipse(rg,['+(R*2)+','+(R*2)+'],['+CX+','+CY+']);');
-  L.push('  addStroke(rg,'+aeCol(document.getElementById('gaugeRingColor').value)+',20);');
+  L.push('  addStroke(rg,'+aeCol(c.gaugeRingColor)+',20);');
   L.push('  addTrim(rg,0,SPAN,'+OFF+');');
   L.push('  var arc=shapeLayer("Speed Arc"), ag=grpOf(arc,"Arc");');
   L.push('  addEllipse(ag,['+(R*2)+','+(R*2)+'],['+CX+','+CY+']);');
-  L.push('  addStroke(ag,'+aeCol(document.getElementById('gaugeArcColor').value)+',24);');
+  L.push('  addStroke(ag,'+aeCol(c.gaugeArcColor)+',24);');
   L.push('  var at=addTrim(ag,0,0,'+OFF+');');
   L.push('  keys(at.property("ADBE Vector Trim End"), (function(k){');
   L.push('    var o=[]; for(var i=0;i<k.length;i++) o.push([k[i][0], k[i][1]/MAXS*SPAN]); return o;');
   L.push('  })('+aeKf(kf)+'));');
-  L.push('  var num=textLayer("Speed Value","0.0",['+CX+','+(CY+18)+'],76,'+aeCol(document.getElementById('gaugeNumberColor').value)+',true);');
+  L.push('  var num=textLayer("Speed Value","0.0",['+CX+','+(CY+18)+'],76,'+aeCol(c.gaugeNumberColor)+',true);');
   L.push('  driveText(num,"Speed",'+aeKf(kf)+',"v.toFixed(1);");');
-  L.push('  textLayer("Speed Unit",'+aeStr(unit)+',['+CX+','+(CY+78)+'],30,'+aeCol(document.getElementById('gaugeUnitColor').value)+',true);');
+  L.push('  textLayer("Speed Unit",'+aeStr(unit)+',['+CX+','+(CY+78)+'],30,'+aeCol(c.gaugeUnitColor)+',true);');
   L.push(aeTail());
   return L.join('\n');
 }
 
 function buildRouteJsx(){
+  var c=cfg();
   if(rawPoints.length<2) return null;
   var pts=aeRoutePoints(90);
-  var tw=parseFloat(document.getElementById('trackW').value)||6;
-  var dr=parseFloat(document.getElementById('dotR').value)||12;
-  var so=parseFloat(document.getElementById('shadowOffset').value)||4;
+  var tw=parseFloat(c.trackW)||6;
+  var dr=parseFloat(c.dotR)||12;
+  var so=parseFloat(c.shadowOffset)||4;
   var dotKf=aePathKeys(rawPoints,pts);
   var L=[aeHead('Route Overlay')];
   L.push('  var PTS='+aePts(pts)+';');
   L.push('  var sh=shapeLayer("Route Shadow"), sg=grpOf(sh,"Path");');
   L.push('  addPath(sg,PTS,false);');
-  L.push('  addStroke(sg,'+aeCol(document.getElementById('shadowColor').value)+','+aeNum(tw*SHADOW_WIDTH_RATIO)+');');
+  L.push('  addStroke(sg,'+aeCol(c.shadowColor)+','+aeNum(tw*SHADOW_WIDTH_RATIO)+');');
   L.push('  tf(sh,"ADBE Position").setValue(['+aeNum(so)+','+aeNum(so)+']);');
   L.push('  var tr=shapeLayer("Route Track"), tg=grpOf(tr,"Path");');
   L.push('  addPath(tg,PTS,false);');
-  L.push('  addStroke(tg,'+aeCol(document.getElementById('trackColor').value)+','+aeNum(tw)+');');
+  L.push('  addStroke(tg,'+aeCol(c.trackColor)+','+aeNum(tw)+');');
   L.push('  var dot=shapeLayer("Route Dot"), dg=grpOf(dot,"Dot");');
   L.push('  addEllipse(dg,['+aeNum(dr*2)+','+aeNum(dr*2)+'],[0,0]);');
-  L.push('  addFill(dg,'+aeCol(document.getElementById('dotColor').value)+');');
+  L.push('  addFill(dg,'+aeCol(c.dotColor)+');');
   L.push('  keys(tf(dot,"ADBE Position"),'+aeKf(dotKf,2)+');');
   L.push(aeTail());
   return L.join('\n');
 }
 
 function buildElevJsx(){
+  var c=cfg();
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});
   if(elevPts.length<2) return null;
-  var iW=parseFloat(document.getElementById('elevW').value)||1920;
-  var iH=parseFloat(document.getElementById('elevH').value)||300;
-  var lw=parseFloat(document.getElementById('elevLineW').value)||2;
-  var so=parseFloat(document.getElementById('elevShadowOffset').value)||4;
-  var fillOn=document.getElementById('elevFill').value==='1';
+  var iW=parseFloat(c.elevW)||1920;
+  var iH=parseFloat(c.elevH)||300;
+  var lw=parseFloat(c.elevLineW)||2;
+  var so=parseFloat(c.elevShadowOffset)||4;
+  var fillOn=c.elevFill==='1';
   var ox=(AE_W-iW)/2, oy=AE_H-iH-120;
   var xy=buildElevXY(elevPts,iW,iH,0);
   var pts=[],i;
@@ -2659,26 +2731,27 @@ function buildElevJsx(){
   if(fillOn){
     L.push('  var fl=shapeLayer("Elevation Fill"), fg=grpOf(fl,"Area");');
     L.push('  addPath(fg,'+aePts(closed)+',true);');
-    L.push('  addFill(fg,'+aeCol(document.getElementById('elevFillColor').value)+');');
+    L.push('  addFill(fg,'+aeCol(c.elevFillColor)+');');
   }
   L.push('  var sh=shapeLayer("Elevation Shadow"), sg=grpOf(sh,"Path");');
   L.push('  addPath(sg,PTS,false);');
-  L.push('  addStroke(sg,'+aeCol(document.getElementById('elevShadowColor').value)+','+aeNum(lw*SHADOW_WIDTH_RATIO)+');');
+  L.push('  addStroke(sg,'+aeCol(c.elevShadowColor)+','+aeNum(lw*SHADOW_WIDTH_RATIO)+');');
   L.push('  tf(sh,"ADBE Position").setValue([0,'+aeNum(so)+']);');
   L.push('  var ln=shapeLayer("Elevation Line"), lg=grpOf(ln,"Path");');
   L.push('  addPath(lg,PTS,false);');
-  L.push('  addStroke(lg,'+aeCol(document.getElementById('elevColor').value)+','+aeNum(lw)+');');
+  L.push('  addStroke(lg,'+aeCol(c.elevColor)+','+aeNum(lw)+');');
   L.push('  var dot=shapeLayer("Elevation Dot"), dg=grpOf(dot,"Dot");');
   L.push('  addEllipse(dg,[18,18],[0,0]);');
-  L.push('  addFill(dg,'+aeCol(document.getElementById('elevDotColor').value)+');');
+  L.push('  addFill(dg,'+aeCol(c.elevDotColor)+');');
   L.push('  keys(tf(dot,"ADBE Position"),'+aeKf(dotKf,2)+');');
   L.push(aeTail());
   return L.join('\n');
 }
 
 function buildHRJsx(){
+  var c=cfg();
   if(!hrData.length) return null;
-  var size=(parseFloat(document.getElementById('hrSize').value)||0.07)*AE_H;
+  var size=(parseFloat(c.hrSize)||0.07)*AE_H;
   var kf=buildKeyframeList(hrData,function(p){return p.hr;});
   var HX=250, HY=880, s=size/22;
   var heart=[],t;
@@ -2690,16 +2763,17 @@ function buildHRJsx(){
   var L=[aeHead('HR Overlay')];
   L.push('  var hl=shapeLayer("Heart"), hg=grpOf(hl,"Heart");');
   L.push('  addPath(hg,'+aePts(heart)+',true);');
-  L.push('  addFill(hg,'+aeCol(document.getElementById('hrHeartColor').value)+');');
-  L.push('  var num=textLayer("HR Value","0",['+aeNum(HX+size*1.2)+','+aeNum(HY+size*0.4)+'],'+aeNum(size)+','+aeCol(document.getElementById('hrColor').value)+',false);');
+  L.push('  addFill(hg,'+aeCol(c.hrHeartColor)+');');
+  L.push('  var num=textLayer("HR Value","0",['+aeNum(HX+size*1.2)+','+aeNum(HY+size*0.4)+'],'+aeNum(size)+','+aeCol(c.hrColor)+',false);');
   L.push('  driveText(num,"Heart Rate",'+aeKf(kf,0)+',"Math.round(v)+\\"\\";");');
   L.push(aeTail());
   return L.join('\n');
 }
 
 function buildInclineJsx(){
+  var c=cfg();
   if(!gradeData.length) return null;
-  var unit=document.getElementById('inclineUnit').value;
+  var unit=c.inclineUnit;
   var kf=buildKeyframeList(gradeData,function(p){return p.pct;});
   var rot=[],i;
   for(i=0;i<kf.length;i++) rot.push([kf[i][0], -Math.atan(kf[i][1]/100)*180/Math.PI]);
@@ -2708,11 +2782,11 @@ function buildInclineJsx(){
   L.push('  // The wedge rotates to the real slope angle; the number stays upright.');
   L.push('  var w=shapeLayer("Incline Wedge"), wg=grpOf(w,"Wedge");');
   L.push('  addPath(wg,[[-90,0],[90,0],[90,16],[-90,16]],true);');
-  L.push('  addFill(wg,'+aeCol(document.getElementById('inclineWedgeColor').value)+');');
+  L.push('  addFill(wg,'+aeCol(c.inclineWedgeColor)+');');
   L.push('  tf(w,"ADBE Anchor Point").setValue([0,0]);');
   L.push('  tf(w,"ADBE Position").setValue(['+BX+','+BY+']);');
   L.push('  keys(tf(w,"ADBE Rotate Z"),'+aeKf(rot,2)+');');
-  L.push('  var num=textLayer("Incline Value","0",['+BX+','+(BY-70)+'],84,'+aeCol(document.getElementById('inclineNumberColor').value)+',true);');
+  L.push('  var num=textLayer("Incline Value","0",['+BX+','+(BY-70)+'],84,'+aeCol(c.inclineNumberColor)+',true);');
   if(unit==='deg') L.push('  driveText(num,"Incline",'+aeKf(kf,2)+',"(Math.atan(v/100)*180/Math.PI).toFixed(1)+\\"\\\\u00b0\\";");');
   else             L.push('  driveText(num,"Incline",'+aeKf(kf,2)+',"v.toFixed(1)+\\"%\\";");');
   L.push(aeTail());
@@ -2720,17 +2794,18 @@ function buildInclineJsx(){
 }
 
 function buildMileJsx(){
+  var c=cfg();
   if(!distData.length) return null;
-  var unit=document.getElementById('unit').value;
-  var dec=parseInt(document.getElementById('mileDecimals').value,10)||1;
+  var unit=c.unit;
+  var dec=parseInt(c.mileDecimals,10)||1;
   var div=unit==='mph'?1609.344:1000;
   var label=unit==='mph'?'mi':'km';
   var kf=buildKeyframeList(distData,function(p){return p.distM/div;});
   var MX=260, MY=880;
   var L=[aeHead('Mile Marker Overlay')];
-  L.push('  var num=textLayer("Distance Value","0",['+MX+','+MY+'],88,'+aeCol(document.getElementById('mileColor').value)+',true);');
+  L.push('  var num=textLayer("Distance Value","0",['+MX+','+MY+'],88,'+aeCol(c.mileColor)+',true);');
   L.push('  driveText(num,"Distance",'+aeKf(kf,3)+',"v.toFixed('+dec+');");');
-  L.push('  textLayer("Distance Unit",'+aeStr(label)+',['+MX+','+(MY+54)+'],34,'+aeCol(document.getElementById('mileLineDistColor').value)+',true);');
+  L.push('  textLayer("Distance Unit",'+aeStr(label)+',['+MX+','+(MY+54)+'],34,'+aeCol(c.mileLineDistColor)+',true);');
   L.push(aeTail());
   return L.join('\n');
 }
@@ -2757,15 +2832,17 @@ function overlayLabels(){
 }
 
 function timeToFrame(tMs,t0){
-  var fps=parseFloat(document.getElementById('fps').value)||30;
-  var offset=parseFloat(document.getElementById('offset').value)||0;
-  var drift=parseFloat(document.getElementById('driftFactor').value)||1.0;
+  var c=cfg();
+  var fps=parseFloat(c.fps)||30;
+  var offset=parseFloat(c.offset)||0;
+  var drift=parseFloat(c.driftFactor)||1.0;
   return Math.round(((tMs-t0)/1000*drift+offset)*fps);
 }
 
 function buildLapKeyframes(){
+  var c=cfg();
   if(!lapData.length||!rawPoints.length) return null;
-  var fps=parseFloat(document.getElementById('fps').value)||30;
+  var fps=parseFloat(c.fps)||30;
   var t0=rawPoints[0].time, num=[], sec=[], last=-1;
   for(var i=0;i<lapData.length;i++){
     var a=timeToFrame(lapData[i].start,t0), b=timeToFrame(lapData[i].end,t0);
@@ -2897,11 +2974,12 @@ function buildTextOverlaySetting(cfg){
 }
 
 function buildCadenceSetting(){
+  var c=cfg();
   if(!cadData.length) return null;
   return buildTextOverlaySetting({
     group:'Cadence',
-    rgb:hexToRgb(document.getElementById('cadColor').value),
-    size:parseFloat(document.getElementById('cadSize').value)||0.07,
+    rgb:hexToRgb(c.cadColor),
+    size:parseFloat(c.cadSize)||0.07,
     expr:'string.format("%d '+overlayLabels().cad+'", floor(Cadence))',
     drives:[{name:'Cadence',label:'Cadence',min:0,max:200,
              kf:buildKeyframeList(cadData,function(p){return Math.round(p.cad);})}]
@@ -2909,11 +2987,12 @@ function buildCadenceSetting(){
 }
 
 function buildPowerSetting(){
+  var c=cfg();
   if(!powerData.length) return null;
   return buildTextOverlaySetting({
     group:'Power',
-    rgb:hexToRgb(document.getElementById('powerColor').value),
-    size:parseFloat(document.getElementById('powerSize').value)||0.07,
+    rgb:hexToRgb(c.powerColor),
+    size:parseFloat(c.powerSize)||0.07,
     expr:'string.format("%d '+overlayLabels().power+'", floor(Power))',
     drives:[{name:'Power',label:'Power',min:0,max:1500,
              kf:buildKeyframeList(powerData,function(p){return Math.round(p.power);})}]
@@ -2921,13 +3000,14 @@ function buildPowerSetting(){
 }
 
 function buildLapSetting(){
+  var c=cfg();
   var k=buildLapKeyframes();
   if(!k) return null;
   return buildTextOverlaySetting({
     group:'LapMarker',
     boxWidth:0.5,
-    rgb:hexToRgb(document.getElementById('lapColor').value),
-    size:parseFloat(document.getElementById('lapSize').value)||0.06,
+    rgb:hexToRgb(c.lapColor),
+    size:parseFloat(c.lapSize)||0.06,
     expr:'string.format("'+overlayLabels().lap+' %d   %d:%02d", floor(LapNumber), floor(LapTime/60), floor(LapTime - floor(LapTime/60)*60))',
     drives:[{name:'LapNumber',label:'Lap Number',min:0,max:99,kf:k.num},
             {name:'LapTime',label:'Lap Time (s)',min:0,max:3600,kf:k.sec}]
@@ -2935,37 +3015,40 @@ function buildLapSetting(){
 }
 
 function buildCadenceJsx(){
+  var c=cfg();
   if(!cadData.length) return null;
-  var size=(parseFloat(document.getElementById('cadSize').value)||0.07)*AE_H;
+  var size=(parseFloat(c.cadSize)||0.07)*AE_H;
   var kf=buildKeyframeList(cadData,function(p){return p.cad;});
   var L=[aeHead('Cadence Overlay')];
-  L.push('  var num=textLayer("Cadence","0",[250,880],'+aeNum(size)+','+aeCol(document.getElementById('cadColor').value)+',false);');
+  L.push('  var num=textLayer("Cadence","0",[250,880],'+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
   L.push(aeTail());
   return L.join('\n');
 }
 
 function buildPowerJsx(){
+  var c=cfg();
   if(!powerData.length) return null;
-  var size=(parseFloat(document.getElementById('powerSize').value)||0.07)*AE_H;
+  var size=(parseFloat(c.powerSize)||0.07)*AE_H;
   var kf=buildKeyframeList(powerData,function(p){return p.power;});
   var L=[aeHead('Power Overlay')];
-  L.push('  var num=textLayer("Power","0",[250,880],'+aeNum(size)+','+aeCol(document.getElementById('powerColor').value)+',false);');
+  L.push('  var num=textLayer("Power","0",[250,880],'+aeNum(size)+','+aeCol(c.powerColor)+',false);');
   L.push('  driveText(num,"Power",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().power+'";')+');');
   L.push(aeTail());
   return L.join('\n');
 }
 
 function buildLapJsx(){
+  var c=cfg();
   var k=buildLapKeyframes();
   if(!k) return null;
-  var size=(parseFloat(document.getElementById('lapSize').value)||0.06)*AE_H;
+  var size=(parseFloat(c.lapSize)||0.06)*AE_H;
   var expr='var n=Math.floor(effect("Lap Number")(1).value); '+
            'var t=effect("Lap Time")(1).value; '+
            'var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
            '"'+overlayLabels().lap+' "+n+"   "+m+":"+(s<10?"0":"")+s;';
   var L=[aeHead('Lap Marker Overlay')];
-  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+',[250,880],'+aeNum(size)+','+aeCol(document.getElementById('lapColor').value)+',false);');
+  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+',[250,880],'+aeNum(size)+','+aeCol(c.lapColor)+',false);');
   L.push('  slider(lap,"Lap Number",'+aeKf(k.num,0)+');');
   L.push('  slider(lap,"Lap Time",'+aeKf(k.sec,2)+');');
   L.push('  lap.property("ADBE Text Properties").property("ADBE Text Document").expression = '+aeStr(expr)+';');
