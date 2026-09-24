@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Wie funktioniert das? — Activity Layers</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="light">
+<div class="legal-page">
+  <header class="legal-head">
+    <a class="studio-brand" href="index.html" aria-label="Activity Layers">
+      <span class="studio-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+          <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+          <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+          <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+        </svg>
+      </span>
+      <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+    </a>
+    <div class="legal-head-tools">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="language-option" type="button" data-help-lang="en" aria-pressed="false">English</button>
+        <button class="language-option active" type="button" data-help-lang="de" aria-pressed="true">Deutsch</button>
+      </div>
+      <a class="legal-back" href="index.html">&larr; <span data-back>Zur&uuml;ck zum Tool</span></a>
+    </div>
+  </header>
+  <main class="legal help">
+    <section data-help="de">
+      <h1>Wie funktioniert das?</h1>
+      <p class="lead">In f&uuml;nf Schritten von der Aufzeichnung deiner Uhr zum fertigen Overlay im
+      Schnittprogramm. Alles l&auml;uft in deinem Browser &ndash; deine Aufzeichnung verl&auml;sst dein Ger&auml;t nicht.</p>
+
+      <h2><span class="step">01</span>Datei laden</h2>
+      <p>Zieh die Datei deiner Uhr oder deines Radcomputers in das Feld ganz oben, oder klick hinein und
+      w&auml;hl sie aus. Unterst&uuml;tzt werden <code>.gpx</code> und <code>.fit</code> &ndash; also praktisch alles,
+      was Garmin, Wahoo, Polar, Suunto oder Strava ausgeben.</p>
+      <p>Sobald die Datei gelesen ist, springt die Seite zu den Einstellungen und zeigt dir darunter eine
+      Kartenvorschau, den Streckenverlauf, die Geschwindigkeitskurve und &ndash; falls vorhanden &ndash;
+      Herzfrequenz und H&ouml;henprofil. Daran erkennst du sofort, ob die richtige Aufzeichnung geladen ist.</p>
+
+      <h2><span class="step">02</span>Video- und GPS-Einstellungen</h2>
+      <p>Drei Angaben entscheiden dar&uuml;ber, ob das Overlay sp&auml;ter zu deinem Material passt:</p>
+      <ul>
+        <li><strong>Bildrate</strong> &ndash; stell hier exakt die Bildrate deines Schnittprojekts ein.
+        Stimmt sie nicht, l&auml;uft das Overlay langsam aus dem Takt.</li>
+        <li><strong>Geschwindigkeitseinheit</strong> &ndash; km/h oder MPH. Sie bestimmt auch die
+        Beschriftung im fertigen Overlay.</li>
+        <li><strong>Gl&auml;ttungsfenster</strong> &ndash; GPS-Geschwindigkeit springt naturgem&auml;&szlig;. Ein Wert
+        zwischen 3 und 7 beruhigt die Nadel, ohne echte Beschleunigungen zu verschlucken.</li>
+      </ul>
+
+      <h2><span class="step">03</span>Auf das Video synchronisieren</h2>
+      <p>Deine Uhr und deine Kamera haben nicht gleichzeitig gestartet. Zwei Werte bringen beides
+      zusammen:</p>
+      <ul>
+        <li><strong>GPS-Versatz</strong> verschiebt die Daten auf der Zeitachse. Positiv, wenn die Kamera
+        fr&uuml;her lief als die Uhr.</li>
+        <li><strong>Zeitabweichungsfaktor</strong> korrigiert, dass beide Uhren minimal unterschiedlich
+        schnell laufen. Schon 0,1&nbsp;% Unterschied ergeben nach zehn Minuten rund sechs Sekunden
+        Versatz &ndash; genau der Grund, warum eine Synchronisierung am Anfang perfekt sitzt und zum Ende
+        hin auseinanderl&auml;uft.</li>
+      </ul>
+      <p>Du musst nichts rechnen. Such dir einen Moment, den du in beiden Quellen erkennst &ndash; ein
+      Anfahren, eine markante Kurve, ein Bremspunkt. Notiere den Timecode im Video und die verstrichene
+      Zeit in der Aufzeichnung, trag beides unter <strong>Synchronisierung</strong> ein und lass dir die
+      Werte berechnen. Ein zweites Ereignis am Ende des Clips liefert zus&auml;tzlich den
+      Abweichungsfaktor.</p>
+      <p class="hint-box">Alle sechs Overlays nutzen denselben Versatz. Einmal synchronisieren gen&uuml;gt.</p>
+
+      <h2><span class="step">04</span>Aussehen anpassen</h2>
+      <p>F&uuml;r jedes Overlay gibt es eine eigene Karte mit Farben, Linienst&auml;rken und Gr&ouml;&szlig;en. Die
+      Vorschauen aktualisieren sich sofort. Ein Tipp aus der Praxis: Schatten und eine kr&auml;ftige
+      Kontrastfarbe halten die Anzeige auch &uuml;ber unruhigem Bildmaterial lesbar.</p>
+
+      <h2><span class="step">05</span>Exportieren und einbauen</h2>
+      <p>Im letzten Abschnitt w&auml;hlst du, welche Ebenen du brauchst. Es gibt zwei Formate:</p>
+      <h3>DaVinci Resolve</h3>
+      <p>Lad die <code>.setting</code>-Dateien herunter. In Resolve legst du deinen Clip auf die Timeline,
+      wechselst auf die <strong>Fusion</strong>-Seite und ziehst die Datei in den Node-Editor. Das Overlay
+      erscheint als fertige Gruppe samt Animation. Verbinde sie &uuml;ber einen Merge-Node mit deinem
+      Bild &ndash; das Overlay geh&ouml;rt auf den Vordergrund-Eingang.</p>
+      <h3>After Effects</h3>
+      <p>Lad die <code>.jsx</code>-Dateien herunter und ruf in After Effects
+      <strong>Datei &rsaquo; Skripten &rsaquo; Skriptdatei ausf&uuml;hren&nbsp;&hellip;</strong> auf. Das Skript
+      legt eine neue Komposition in 1920&times;1080 an, mit Formebenen f&uuml;r die Grafik und Keyframes f&uuml;r
+      die Werte. Zieh sie anschlie&szlig;end &uuml;ber dein Footage.</p>
+      <p>Die Animationen sind danach frei editierbar &ndash; du kannst Farben, Position und Gr&ouml;&szlig;e im
+      Schnittprogramm weiter anpassen, ohne dass die Werte verloren gehen.</p>
+      <p class="hint-box">&Auml;nderst du hier eine Einstellung, exportier die betroffene Datei einfach neu.
+      Der Button &bdquo;Alle Dateien herunterladen&ldquo; packt alles in ein ZIP.</p>
+    </section>
+    <section data-help="en" hidden>
+      <h1>How does it work?</h1>
+      <p class="lead">Five steps from your watch recording to a finished overlay in your editor.
+      Everything runs in your browser &ndash; your recording never leaves your device.</p>
+
+      <h2><span class="step">01</span>Load your file</h2>
+      <p>Drop the file from your watch or bike computer into the field at the top, or click it and pick
+      the file. <code>.gpx</code> and <code>.fit</code> are supported &ndash; which covers just about
+      anything Garmin, Wahoo, Polar, Suunto or Strava will give you.</p>
+      <p>Once the file is read, the page jumps to the settings and shows a map preview, the route, the
+      speed curve and &ndash; where present &ndash; heart rate and elevation. That tells you at a glance
+      whether you loaded the right recording.</p>
+
+      <h2><span class="step">02</span>Video and GPS settings</h2>
+      <p>Three values decide whether the overlay will match your footage:</p>
+      <ul>
+        <li><strong>Frame rate</strong> &ndash; set this to exactly the frame rate of your edit. Get it
+        wrong and the overlay slowly drifts out of sync.</li>
+        <li><strong>Speed unit</strong> &ndash; KPH or MPH. It also sets the label burned into the
+        overlay.</li>
+        <li><strong>Smoothing window</strong> &ndash; GPS speed is jumpy by nature. A value between 3 and
+        7 calms the needle without swallowing real acceleration.</li>
+      </ul>
+
+      <h2><span class="step">03</span>Sync to your video</h2>
+      <p>Your watch and your camera did not start at the same moment. Two values bring them together:</p>
+      <ul>
+        <li><strong>GPS offset</strong> shifts the data along the timeline. Positive when the camera was
+        already running before the watch.</li>
+        <li><strong>Clock drift factor</strong> corrects for the two clocks running at slightly different
+        rates. Even 0.1&nbsp;% adds up to about six seconds over ten minutes &ndash; exactly why a sync
+        that looks perfect at the start falls apart towards the end.</li>
+      </ul>
+      <p>You do not have to do the maths. Find a moment you can recognise in both sources &ndash; pulling
+      away, a distinctive corner, a braking point. Note the video timecode and the elapsed time in the
+      recording, enter both under <strong>Sync Helper</strong> and let it calculate. A second event near
+      the end of the clip gives you the drift factor as well.</p>
+      <p class="hint-box">All six overlays share the same offset. Syncing once is enough.</p>
+
+      <h2><span class="step">04</span>Style it</h2>
+      <p>Every overlay has its own card with colours, line weights and sizes, and the previews update as
+      you go. One practical tip: a shadow plus a strong contrasting colour keeps the readout legible even
+      over busy footage.</p>
+
+      <h2><span class="step">05</span>Export and bring it in</h2>
+      <p>In the last section you pick the layers you need. Two formats are available:</p>
+      <h3>DaVinci Resolve</h3>
+      <p>Download the <code>.setting</code> files. In Resolve, put your clip on the timeline, switch to
+      the <strong>Fusion</strong> page and drag the file into the node editor. The overlay appears as a
+      finished group with its animation. Connect it through a Merge node &ndash; the overlay belongs on
+      the foreground input.</p>
+      <h3>After Effects</h3>
+      <p>Download the <code>.jsx</code> files and run
+      <strong>File &rsaquo; Scripts &rsaquo; Run Script File&nbsp;&hellip;</strong> in After Effects. The
+      script builds a new 1920&times;1080 composition with shape layers for the graphics and keyframes for
+      the values. Drop it over your footage.</p>
+      <p>Everything stays editable afterwards &ndash; you can change colours, position and size in your
+      editor without losing the animation.</p>
+      <p class="hint-box">Changed a setting here? Just export that file again. The &ldquo;Download All
+      Files&rdquo; button wraps everything into one ZIP.</p>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link" href="impressum.html">Impressum</a> &middot; <a class="attrib-link" href="datenschutz.html">Datenschutz</a></p>
+  </footer>
+</div>
+<script>
+(function(){
+  var T={de:'Wie funktioniert das? \u2014 Activity Layers', en:'How does it work? \u2014 Activity Layers'};
+  var B={de:'Zur\u00fcck zum Tool', en:'Back to the tool'};
+  function apply(lang){
+    lang=(lang==='en')?'en':'de';
+    document.documentElement.lang=lang;
+    document.title=T[lang];
+    document.querySelector('[data-back]').textContent=B[lang];
+    document.querySelectorAll('[data-help]').forEach(function(s){ s.hidden=(s.getAttribute('data-help')!==lang); });
+    document.querySelectorAll('[data-help-lang]').forEach(function(b){
+      var on=b.getAttribute('data-help-lang')===lang;
+      b.classList.toggle('active',on);
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+    try{ localStorage.setItem('overlayUILanguage',lang); }catch(e){}
+  }
+  document.querySelectorAll('[data-help-lang]').forEach(function(b){
+    b.addEventListener('click',function(){ apply(b.getAttribute('data-help-lang')); });
+  });
+  var saved='de';
+  try{ saved=localStorage.getItem('overlayUILanguage')||'de'; }catch(e){}
+  apply(saved);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Layers — GPX &amp; FIT overlays for DaVinci Resolve &amp; After Effects</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/jszip.min.js"></script>
+<!--
+  UI icons (reset, timer, download): Phosphor Icons — https://phosphoricons.com
+  Copyright (c) 2023 Phosphor Icons
+  Licensed under the MIT License. Permission is hereby granted, free of charge,
+  to any person obtaining a copy of this software and associated documentation
+  files (the "Software"), to deal in the Software without restriction. The above
+  copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS".
+-->
+</head>
+<body class="light">
+<aside class="studio-sidebar" aria-label="Studio navigation">
+  <a class="studio-brand" href="#top" aria-label="Activity Layers home">
+    <span class="studio-mark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" role="img">
+        <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+        <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+        <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+        <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+        <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+        <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+      </svg>
+    </span>
+    <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+  </a>
+  <nav class="studio-nav">
+    <a href="#dropZone"><span>01</span>Import</a>
+    <a href="#settings-card"><span>02</span>Sync</a>
+    <a href="#gauge-card"><span>03</span>Style</a>
+    <a href="#outputs-card"><span>04</span>Export</a>
+  </nav>
+  <a class="studio-nav-help" href="hilfe.html"><span>?</span>How does it work</a>
+  <div class="privacy-note">
+    <span class="privacy-dot"></span>
+    <strong>Local by design</strong>
+    <p>Your activity data stays in this browser.</p>
+  </div>
+  <p class="studio-tagline">Six data layers.<br>Ready for the edit.</p>
+</aside>
+<div class="container">
+
+<div class="topbar" id="top">
+  <div class="headline">
+    <p class="eyebrow">DaVinci Resolve · Fusion · After Effects</p>
+    <h1>Layer your activity<br><span>into every frame.</span></h1>
+    <p class="subtitle">Create six animated overlays for <a href="https://www.blackmagicdesign.com/de/products/davinciresolve" target="_blank" rel="noopener">DaVinci Resolve</a> and <a href="https://www.adobe.com/de/products/aftereffects.html" target="_blank" rel="noopener">After Effects</a> from GPX and FIT files — processed locally in your browser.</p>
+  </div>
+  <div class="header-tools">
+    <div class="language-switcher" role="group" aria-label="Language">
+      <button class="language-option active" type="button" data-language="en" aria-pressed="true">English</button>
+      <button class="language-option" type="button" data-language="de" aria-pressed="false">Deutsch</button>
+    </div>
+    <button class="header-coffee" id="btnSupportHeader" type="button" aria-haspopup="dialog" aria-controls="supportModal">
+      <img src="assets/icons/flaticon-coffee-cup.png" alt=""> Buy me a Coffee
+    </button>
+  </div>
+</div>
+
+<div class="modal-bg" id="syncModal">
+  <div class="modal">
+    <h3>⏱ GPS Sync Calibration Helper</h3>
+    <div class="hint" style="margin-top:0;margin-bottom:10px">Enter timecodes in <strong>HH:MM:SS:FF</strong> format (e.g. <code>00:00:08:00</code>). GPS elapsed time is seconds from when you started the activity.</div>
+    <div class="field"><label>Event 1 — Video timecode (HH:MM:SS:FF)</label><input type="text" id="sv1" placeholder="00:00:08:00" maxlength="11"></div>
+    <div class="field"><label>Event 1 — GPS elapsed time (HH:MM:SS:FF)</label><input type="text" id="sg1" placeholder="00:00:00:00" maxlength="11"></div>
+    <hr class="modal-divider">
+    <div class="hint" style="margin-top:0;margin-bottom:8px"><strong>Optional:</strong> second sync event late in the clip for drift correction.</div>
+    <div class="field"><label>Event 2 — Video timecode (HH:MM:SS:FF)</label><input type="text" id="sv2" placeholder="00:09:04:00" maxlength="11"></div>
+    <div class="field"><label>Event 2 — GPS elapsed time (HH:MM:SS:FF)</label><input type="text" id="sg2" placeholder="00:09:10:00" maxlength="11"></div>
+    <div class="modal-result" id="syncResult">—</div>
+    <div class="modal-btns">
+      <button class="modal-btn" id="syncCalc">Calculate</button>
+      <button class="modal-btn accent" id="syncApply" disabled>Apply</button>
+      <button class="modal-btn" id="syncClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="supportModal" aria-hidden="true">
+  <div class="modal coffee-modal" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+    <button class="coffee-close" id="supportClose" type="button" aria-label="Close support overlay">×</button>
+    <div class="coffee-modal-icon" aria-hidden="true"><img src="assets/icons/flaticon-coffee-cup.png" alt=""></div>
+    <p class="coffee-kicker">BUY ME A COFFEE</p>
+    <h3 id="supportTitle">Support Daniel</h3>
+    <div class="bmc-msg">This free browser tool turns your activity data into ready-to-edit video overlays. If it saves you time, you can support its continued development with a coffee.</div>
+    <div class="bmc-buttons">
+      <button class="bmc-btn bmc-primary bmc-large" id="btnSupportProject" type="button">
+        <img src="assets/icons/flaticon-coffee-cup.png" alt=""> Buy me a Coffee
+      </button>
+    </div>
+    <p class="coffee-note">Opens the secure Buy Me a Coffee page in a new tab.</p>
+  </div>
+</div>
+
+<div class="drop-zone indexed-section" id="dropZone" tabindex="0" role="button" aria-label="Choose a GPX or FIT file">
+  <span class="section-step" aria-hidden="true">01</span>
+
+  <input type="file" id="fileInput" accept=".gpx,.fit">
+  <div class="drop-visual" aria-hidden="true">
+    <svg viewBox="0 0 420 130"><path class="track-shadow" d="M12 91 C62 91 68 30 116 30 S166 108 214 108 278 48 322 48 363 79 408 78"/><path class="track" d="M12 82 C62 82 68 21 116 21 S166 99 214 99 278 39 322 39 363 70 408 69"/><circle cx="12" cy="82" r="6"/><circle cx="408" cy="69" r="6"/></svg>
+  </div>
+  <div class="drop-icon">+</div>
+  <div class="drop-label">Drop your GPX or FIT file here</div>
+  <div class="drop-sub">
+    <span class="drop-sub-primary">or click to browse</span>
+    <span class="drop-sub-tail"><span class="drop-sub-dot" aria-hidden="true">·</span><span>.gpx and .fit supported</span></span>
+  </div>
+  <div class="drop-assurance">No upload · No account</div>
+</div>
+
+<div class="card indexed-section" id="settings-card">
+  <span class="section-step" aria-hidden="true">02</span>
+  <div class="card-title">Video &amp; GPS settings
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetVideo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="field">
+      <label>Frame rate</label>
+      <select id="fps">
+        <option value="23.976">23.976</option>
+        <option value="24">24</option>
+        <option value="25">25</option>
+        <option value="29.97" selected>29.97</option>
+        <option value="30">30</option>
+        <option value="59.94">59.94</option>
+        <option value="60">60</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Speed unit</label>
+      <select id="unit"><option value="mph" selected>MPH</option><option value="kph">KPH</option></select>
+    </div>
+    <div class="field">
+      <label>Smoothing window (0–20)</label>
+      <input type="number" id="smooth" value="3" step="1" min="0" max="20">
+    </div>
+  </div>
+  <div class="grid3" style="margin-top:10px">
+    <div class="field">
+      <label>GPS offset (seconds)</label>
+      <input type="number" id="offset" value="0" step="0.5">
+    </div>
+    <div class="field">
+      <label>Clock drift factor</label>
+      <input type="number" id="driftFactor" value="1.0" step="0.0001" min="0.9" max="1.1">
+      <button class="reset-btn" id="btnSyncHelper" style="margin-top:6px;width:100%;text-align:center;border-color:var(--accent);color:var(--accent)"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z"/></svg>Sync Helper</button>
+    </div>
+    <div class="field">
+      <label>Max gauge speed (auto)</label>
+      <input type="number" id="maxSpeed" value="9" step="0.5" min="0.5" readonly style="opacity:0.6;cursor:default;">
+    </div>
+  </div>
+  <div class="card-title how-header" id="syncInfoHeader" style="font-size:.78rem;color:var(--muted);margin-top:10px;font-family:'DM Mono',monospace;font-weight:500">
+    What do these mean?
+    <span class="how-arrow" id="syncInfoArrow">▾</span>
+  </div>
+  <div id="syncInfoBody" style="display:none">
+    <div class="hint" style="margin-top:8px">
+      <strong>GPS offset</strong> = video timecode in seconds at the moment you pressed start on your watch. Negative if watch started before the camera.<br><br>
+      <strong>Clock drift factor</strong> = corrects the GPS clock running at a slightly different rate than the camera clock. Even a 0.1% difference causes ~6 seconds of drift over 10 minutes — this is the most common cause of sync that's perfect at the start but gets progressively worse.<br><br>
+      <strong>To calibrate</strong>: find a <em>second</em> sync event late in the clip. Note its video timecode and GPS elapsed time, then use the <svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z"/></svg>Sync Helper button to calculate both values automatically, or use:<br>
+      <strong>factor = (videoTimecode − offset) ÷ gpsElapsed</strong><br>
+      Example: second sync at video 9:04 (544s), GPS elapsed 9:10 (550s), offset = 5s → factor = (544 − 5) ÷ 550 = 0.9800
+    </div>
+  </div>
+</div>
+
+<div class="card indexed-section" id="gauge-card">
+  <span class="section-step" aria-hidden="true">03</span>
+  <div class="card-title">Speedometer style
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetGauge"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="field"><label>Dial backdrop</label><input type="color" id="gaugeBgColor" value="#000000"></div>
+    <div class="field"><label>Ring color</label><input type="color" id="gaugeRingColor" value="#ffffff"></div>
+    <div class="field"><label>Active arc color</label><input type="color" id="gaugeArcColor" value="#aa0000"></div>
+  </div>
+  <div class="grid3" style="margin-top:10px">
+    <div class="field"><label>Number color</label><input type="color" id="gaugeNumberColor" value="#ffffff"></div>
+    <div class="field"><label>Unit label color</label><input type="color" id="gaugeUnitColor" value="#6d6d7e"></div>
+  </div>
+</div>
+
+<div class="card" id="route-card">
+  <div class="card-title">Route style
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetRoute"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div class="hint" style="margin-top:0;margin-bottom:10px">Auto-sizes to fill 1920×1080 based on your GPS track's aspect ratio.</div>
+  <div class="grid4" style="margin-bottom:10px">
+    <div class="field"><label>Track width</label><input type="number" id="trackW" value="4" step="1" min="1"></div>
+    <div class="field"><label>Dot radius</label><input type="number" id="dotR" value="8" step="1" min="2"></div>
+    <div class="field"><label>Shadow offset</label><input type="number" id="shadowOffset" value="5" step="1" min="0"></div>
+  </div>
+  <div class="grid3">
+    <div class="field"><label>Track color</label><input type="color" id="trackColor" value="#ff6600"></div>
+    <div class="field"><label>Dot color</label><input type="color" id="dotColor" value="#fca300"></div>
+    <div class="field"><label>Shadow color</label><input type="color" id="shadowColor" value="#000000"></div>
+  </div>
+</div>
+
+<div class="card" id="elevation-card">
+  <div class="card-title">Elevation style
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetElev"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div id="elevOptions">
+    <div class="grid3" style="margin-bottom:10px">
+      <div class="field"><label>Width px</label><input type="number" id="elevW" value="1920" step="10" min="100"></div>
+      <div class="field"><label>Height px</label><input type="number" id="elevH" value="300" step="10" min="50"></div>
+      <div class="field"><label>Line width</label><input type="number" id="elevLineW" value="2" step="1" min="1"></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Line color</label><input type="color" id="elevColor" value="#38bdf8"></div>
+      <div class="field"><label>Fill</label>
+        <select id="elevFill"><option value="1">Yes</option><option value="0">No</option></select>
+      </div>
+      <div class="field"><label>Fill color</label><input type="color" id="elevFillColor" value="#ffffff"></div>
+    </div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="field"><label>Dot color</label><input type="color" id="elevDotColor" value="#38bdf8"></div>
+      <div class="field"><label>Shadow color</label><input type="color" id="elevShadowColor" value="#000000"></div>
+      <div class="field"><label>Shadow offset</label><input type="number" id="elevShadowOffset" value="4" step="1" min="0"></div>
+    </div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+
+      <div class="toggle-row">
+        <input type="checkbox" id="elevLabels" checked>
+        <label for="elevLabels">Show elevation numbers on graph (min/max + ticks)</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="hrCard">
+  <div class="card-title">Heart Rate overlay style
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetHR"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="field"><label>Number color</label><input type="color" id="hrColor" value="#ef4444"></div>
+    <div class="field"><label>Heart color</label><input type="color" id="hrHeartColor" value="#ef4444"></div>
+    <div class="field"><label>Text size</label><input type="number" id="hrSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+  </div>
+
+</div>
+
+<div class="card" id="inclineCard">
+  <div class="card-title">Incline overlay style
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetIncline"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="field"><label>Number color</label><input type="color" id="inclineNumberColor" value="#22c55e"></div>
+    <div class="field"><label>Wedge color</label><input type="color" id="inclineWedgeColor" value="#22c55e"></div>
+    <div class="field"><label>Units</label>
+      <select id="inclineUnit"><option value="pct" selected>Percent (%)</option><option value="deg">Degrees (°)</option></select>
+    </div>
+  </div>
+
+</div>
+
+<div class="card" id="mileCard">
+  <div class="card-title">Distance / Mile Marker overlay style
+    <div class="card-title-actions">
+      <button class="reset-btn" id="resetMile"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="field"><label>Text color</label><input type="color" id="mileColor" value="#38bdf8"></div>
+    <div class="field"><label>Line distance color</label><input type="color" id="mileLineDistColor" value="#111111"></div>
+    <div class="field"><label>Decimals</label>
+      <select id="mileDecimals"><option value="1" selected>1 (e.g. 3.2)</option><option value="2">2 (e.g. 3.24)</option></select>
+    </div>
+  </div>
+
+</div>
+
+<div id="statsWrap" style="display:none">
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Points</div>
+      <div class="stat-value" id="statPts">-</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Duration</div>
+      <div class="stat-value" id="statDur">-</div>
+      <button class="copy-btn" id="copyDur" title="Copy duration">copy</button>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Distance</div>
+      <div class="stat-value" id="statDist">-</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Peak speed</div>
+      <div class="stat-value" id="statSpd">-</div>
+    </div>
+  </div>
+  <div class="preview-wrap" id="mapPreviewWrap" style="display:none">
+    <div class="preview-label">Map preview</div>
+    <div class="map-box">
+      <canvas id="mapCanvas" height="260"></canvas>
+      <div class="map-overlay" id="mapOverlay"><p class="map-note" id="mapNote">Loading map…</p></div>
+      <a class="map-attrib" id="mapAttrib" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" hidden>&copy; OpenStreetMap contributors</a>
+    </div>
+    <p class="map-hint">Visualisation only — this map is never part of an export. The six overlays above are unaffected.</p>
+  </div>
+  <div class="preview-wrap">
+    <div class="preview-label">Route preview</div>
+    <canvas id="routeCanvas" height="180"></canvas>
+  </div>
+  <div class="preview-wrap">
+    <div class="preview-label">Speed curve</div>
+    <canvas id="speedCanvas" height="60"></canvas>
+  </div>
+  <div class="preview-wrap" id="hrPreviewWrap" style="display:none">
+    <div class="preview-label">Heart rate</div>
+    <canvas id="hrCanvas" height="60"></canvas>
+  </div>
+  <div class="preview-wrap" id="elevPreviewWrap" style="display:none">
+    <div class="preview-label">Elevation profile</div>
+    <canvas id="elevCanvas" height="80"></canvas>
+  </div>
+</div>
+
+<div class="card indexed-section" id="outputs-card">
+  <span class="section-step" aria-hidden="true">04</span>
+  <div class="card-title">Download outputs</div>
+  <div class="dl-section-label">DaVinci Resolve — Fusion .setting files</div>
+  <div class="dl-grid">
+    <button class="dl-btn primary" id="btnSetting" disabled>Speedometer<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button class="dl-btn primary" id="btnRouteSetting" disabled>Route Overlay<div class="dl-sub">.setting file (path + dot baked in)</div></button>
+    <button class="dl-btn blue" id="btnElevSetting" disabled>Elevation Overlay<div class="dl-sub">.setting file (graph + dot baked in)</div></button>
+    <button class="dl-btn" id="btnHRSetting" disabled>HR Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button class="dl-btn" id="btnInclineSetting" disabled>Incline Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button class="dl-btn" id="btnMileSetting" disabled>Mile Marker Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+  </div>
+  <div class="dl-section-label">After Effects — .jsx scripts (File &gt; Scripts &gt; Run Script File…)</div>
+  <div class="dl-grid">
+    <button class="dl-btn" id="btnSpeedJsx" disabled>Speedometer<div class="dl-sub">.jsx script (comp + keyframes)</div></button>
+    <button class="dl-btn" id="btnRouteJsx" disabled>Route Overlay<div class="dl-sub">.jsx script (path + dot)</div></button>
+    <button class="dl-btn" id="btnElevJsx" disabled>Elevation Overlay<div class="dl-sub">.jsx script (graph + dot)</div></button>
+    <button class="dl-btn" id="btnHRJsx" disabled>HR Overlay<div class="dl-sub">.jsx script (heart + value)</div></button>
+    <button class="dl-btn" id="btnInclineJsx" disabled>Incline Overlay<div class="dl-sub">.jsx script (wedge + value)</div></button>
+    <button class="dl-btn" id="btnMileJsx" disabled>Mile Marker Overlay<div class="dl-sub">.jsx script (distance value)</div></button>
+  </div>
+  <button class="dl-all-btn" id="btnDownloadAll" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download All Files</button>
+  <div class="export-progress-wrap" id="exportProgressWrap" style="display:none">
+    <div class="export-progress-track"><div class="export-progress-fill" id="exportProgressFill"></div></div>
+    <div class="export-progress-label" id="exportProgressLabel">Preparing files…</div>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<footer class="site-footer">
+  <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link" href="impressum.html">Impressum</a> &middot; <a class="attrib-link" href="datenschutz.html">Datenschutz</a></p>
+</footer>
+</div>
+<div class="floating-tools">
+  <button class="coffee-fab" id="btnSupport" type="button" aria-label="Buy me a Coffee" aria-haspopup="dialog" aria-controls="supportModal">
+    <img src="assets/icons/flaticon-coffee-cup.png" alt="">
+    <span>Buy me a Coffee</span>
+  </button>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

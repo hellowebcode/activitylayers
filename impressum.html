@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, follow">
+<title>Impressum — Activity Layers</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="light">
+<div class="legal-page">
+  <header class="legal-head">
+    <a class="studio-brand" href="index.html" aria-label="Activity Layers">
+      <span class="studio-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+          <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+          <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+          <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+        </svg>
+      </span>
+      <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+    </a>
+    <div class="legal-head-tools">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="language-option" type="button" data-legal-lang="en" aria-pressed="false">English</button>
+        <button class="language-option active" type="button" data-legal-lang="de" aria-pressed="true">Deutsch</button>
+      </div>
+      <a class="legal-back" href="index.html">&larr; <span data-back>Zur&uuml;ck zum Tool</span></a>
+    </div>
+  </header>
+  <main class="legal">
+    <section data-legal="de">
+
+    <h1>Impressum</h1>
+
+    <p>Daniel Heidrich<br>
+    Hollerithstr. 12<br>
+    53359 Rheinbach</p>
+
+    <h2>Kontakt</h2>
+    <p>E&#8209;Mail: <a href="mailto:info@hello-webcode.com">info@hello-webcode.com</a></p>
+
+    <h2>Redaktionell verantwortlich</h2>
+    <p>Daniel Heidrich<br>
+    Hollerithstr. 12<br>
+    53359 Rheinbach</p>
+    </section>
+    <section data-legal="en" hidden>
+      <h1>Legal notice</h1>
+
+      <p>Daniel Heidrich<br>
+      Hollerithstr. 12<br>
+      53359 Rheinbach<br>
+      Germany</p>
+
+      <h2>Contact</h2>
+      <p>E&#8209;mail: <a href="mailto:info@hello-webcode.com">info@hello-webcode.com</a></p>
+
+      <h2>Responsible for editorial content</h2>
+      <p>Daniel Heidrich<br>
+      Hollerithstr. 12<br>
+      53359 Rheinbach<br>
+      Germany</p>
+
+      <p class="legal-updated">This is a courtesy translation. In case of any discrepancy, the German
+      version of this legal notice prevails.</p>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link" href="impressum.html">Impressum</a> &middot; <a class="attrib-link" href="datenschutz.html">Datenschutz</a></p>
+  </footer>
+</div>
+<script>
+(function(){
+  var T={de:'Impressum — Activity Layers', en:'Legal notice — Activity Layers'};
+  var B={de:'Zur\u00fcck zum Tool', en:'Back to the tool'};
+  function apply(lang){
+    lang=(lang==='en')?'en':'de';
+    document.documentElement.lang=lang;
+    document.title=T[lang];
+    document.querySelector('[data-back]').textContent=B[lang];
+    document.querySelectorAll('[data-legal]').forEach(function(s){ s.hidden=(s.getAttribute('data-legal')!==lang); });
+    document.querySelectorAll('[data-legal-lang]').forEach(function(b){
+      var on=b.getAttribute('data-legal-lang')===lang;
+      b.classList.toggle('active',on);
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+    try{ localStorage.setItem('overlayUILanguage',lang); }catch(e){}
+  }
+  document.querySelectorAll('[data-legal-lang]').forEach(function(b){
+    b.addEventListener('click',function(){ apply(b.getAttribute('data-legal-lang')); });
+  });
+  var saved='de';
+  try{ saved=localStorage.getItem('overlayUILanguage')||'de'; }catch(e){}
+  apply(saved);
+})();
+</script>
+</body>
+</html>
