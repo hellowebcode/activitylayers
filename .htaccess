@@ -11,3 +11,17 @@
   AddType font/woff2 .woff2
   AddType image/svg+xml .svg
 </IfModule>
+
+<IfModule mod_headers.c>
+  # HTML, CSS und JavaScript aendern sich mit jeder Aenderung am Projekt.
+  # "no-cache" erlaubt das Zwischenspeichern, verlangt aber jedes Mal eine
+  # Rueckfrage beim Server; unveraenderte Dateien kommen als 304 zurueck.
+  <FilesMatch "\.(html|css|js)$">
+    Header always set Cache-Control "no-cache"
+  </FilesMatch>
+
+  # Schriften und Bilder aendern sich praktisch nie.
+  <FilesMatch "\.(woff2|png|svg|ico)$">
+    Header always set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
