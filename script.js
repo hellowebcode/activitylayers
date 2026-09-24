@@ -2450,6 +2450,8 @@ function aeHead(compName){
 '// After Effects:  File > Scripts > Run Script File…',
 '// Creates a new '+AE_W+'x'+AE_H+' comp. Values are driven by Slider Control',
 '// keyframes, so you can restyle the layers without losing the animation.',
+'// Values are smoothed and, where the device recorded none, reconstructed from',
+'// GPS positions. Use them for display, not as measurements.',
 '// ─────────────────────────────────────────────────────────────────────────────',
 '(function(){',
 '  if (typeof app === "undefined" || !app.project) { alert("Please run this from inside After Effects."); return; }',
