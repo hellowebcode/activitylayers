@@ -39,6 +39,5 @@ Dieses Projekt steht unter der MIT-Lizenz, Copyright (c) 2026 Daniel Heidrich
 (siehe `LICENSE`).
 
 Es baut auf [GPS-Data-overlay-tool](https://github.com/J-Hulin/GPS-Data-overlay-tool)
-von Josiah Hulin auf, das ebenfalls unter der MIT-Lizenz steht. Dessen
-Urhebervermerk ist in `LICENSE` unter „Third-party notices" wiedergegeben, wie
-die Lizenz es verlangt. Dort sind auch die übrigen verwendeten Werke gelistet.
+von Josiah Hulin auf. Dessen Urhebervermerk und die Lizenzen der übrigen
+verwendeten Werke stehen in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
