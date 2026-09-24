@@ -248,3 +248,10 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .hint p{margin:0 0 10px}
 .hint p:last-child{margin-bottom:0}
 .sync-formula{padding:8px 11px;border-radius:8px;background:var(--surface3);font-family:var(--mono);font-size:11px;color:var(--text-soft)}
+.ghost-block{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.ghost-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ghost-title{font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.ghost-loaded{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;
+  padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)}
+.ghost-name{font-family:var(--mono);font-size:.8rem;color:var(--text-soft);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}

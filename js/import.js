@@ -28,6 +28,15 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
   if(el && el.tagName==='SELECT') el.addEventListener('change',function(){if(rawPoints.length) drawElev();});
 });
 
+(function(){
+  var feld=document.getElementById('ghostInput'), knopf=document.getElementById('ghostPick'),
+      weg=document.getElementById('ghostRemove');
+  if(!feld) return;
+  knopf.addEventListener('click',function(){ feld.click(); });
+  feld.addEventListener('change',function(){ if(feld.files[0]) handleGhostFile(feld.files[0]); feld.value=''; });
+  weg.addEventListener('click',entferneGeisterspur);
+})();
+
 function setStatus(msg,cls){statusEl.textContent=localizeRuntimeText(msg);statusEl.className='status'+(cls?' '+cls:'');}
 function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).disabled=!on;});
   ['btnDownloadAll','btnDownloadFusion','btnDownloadAe'].forEach(function(id){document.getElementById(id).disabled=!on;});}
@@ -75,6 +84,76 @@ function handleFile(file){
     reader.onload=function(e){parseGPX(e.target.result,file.name);};
     reader.readAsText(file);
   }
+}
+
+// Die Leser schreiben in rawPoints. Fuer die Geisterspur wird die Hauptspur
+// deshalb beiseitegelegt und danach unveraendert zurueckgesetzt - auch wenn das
+// Einlesen mittendrin abbricht.
+var importZiel='haupt', geistKandidat=null;
+
+function handleGhostFile(file){
+  var name=file.name.toLowerCase();
+  if(!name.endsWith('.gpx')&&!name.endsWith('.fit')&&!name.endsWith('.tcx')){
+    setStatus('Please upload a .gpx, .fit or .tcx file','err'); return;
+  }
+  if(file.size>MAX_FILE_BYTES){
+    setStatus('File too large: '+Math.round(file.size/1048576)+' MB — the limit is '+Math.round(MAX_FILE_BYTES/1048576)+' MB','err');
+    return;
+  }
+  setStatus('Reading '+file.name+'...');
+  var reader=new FileReader();
+  function lies(inhalt){
+    var merk={rawPoints:rawPoints, lapData:lapData, totalDistM:totalDistM, currentFilename:currentFilename};
+    importZiel='geist'; geistKandidat=null;
+    try{
+      if(name.endsWith('.fit')) parseFIT(inhalt,file.name);
+      else if(name.endsWith('.tcx')) parseTCX(inhalt,file.name);
+      else parseGPX(inhalt,file.name);
+    } finally {
+      importZiel='haupt';
+      rawPoints=merk.rawPoints; lapData=merk.lapData;
+      totalDistM=merk.totalDistM; currentFilename=merk.currentFilename;
+    }
+    if(geistKandidat&&geistKandidat.length>1){
+      ghostPoints=geistKandidat;
+      ghostFilename=file.name;
+      zeigeGeisterspur();
+      setStatus('Ghost track loaded: '+ghostPoints.length+' points','ok');
+      if(rawPoints.length){ drawRoute(); resetMapPreview(); }
+    } else {
+      setStatus('No usable track in that file','err');
+    }
+    geistKandidat=null;
+  }
+  reader.onload=function(e){ lies(e.target.result); };
+  if(name.endsWith('.fit')) reader.readAsArrayBuffer(file); else reader.readAsText(file);
+}
+
+function entferneGeisterspur(){
+  ghostPoints=[]; ghostFilename='';
+  zeigeGeisterspur();
+  if(rawPoints.length){ drawRoute(); resetMapPreview(); }
+}
+
+function zeigeGeisterspur(){
+  var n=document.getElementById('ghostName'), w=document.getElementById('ghostLoaded');
+  if(n) n.textContent=ghostFilename;
+  if(w) w.style.display=ghostPoints.length?'flex':'none';
+}
+
+// Gemeinsamer Abschluss aller drei Leser. Liefert false, wenn der Track als
+// Geisterspur eingelesen wurde - dann bleibt die Oberflaeche unberuehrt.
+function uebernehmeTrack(name){
+  if(importZiel==='geist'){
+    geistKandidat=rawPoints.map(function(p){ return {lat:p.lat, lon:p.lon}; });
+    return false;
+  }
+  totalDistM=0;
+  currentFilename=name.replace(/\.[^.]+$/,'');
+  dropZone.querySelector('.drop-label').textContent=name;
+  dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
+  reprocess();
+  return true;
 }
 
 var FIT_CRC_TABLE=[0x0000,0xCC01,0xD801,0x1400,0xF001,0x3C00,0x2800,0xE401,
@@ -242,14 +321,11 @@ function parseFIT(buffer,name){
     rawPoints=points;
     laps.sort(function(a,b){return a.start-b.start;});
     lapData=laps;
-    totalDistM=0;
-    currentFilename=name.replace(/\.[^.]+$/,'');
-    dropZone.querySelector('.drop-label').textContent=name;
-    dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
-    reprocess();
-    if(truncated) setStatus('File could not be read to the end — only '+rawPoints.length+' track points were used','err');
-    else if(breitenfehler) setStatus('Some fields in this FIT file are declared with an unexpected size and were skipped','err');
-    jumpToSettings();
+    if(uebernehmeTrack(name)){
+      if(truncated) setStatus('File could not be read to the end — only '+rawPoints.length+' track points were used','err');
+      else if(breitenfehler) setStatus('Some fields in this FIT file are declared with an unexpected size and were skipped','err');
+      jumpToSettings();
+    }
   }catch(e){console.error(e);setStatus('FIT parse error: '+e.message,'err');}
 }
 
@@ -337,12 +413,7 @@ function parseTCX(text,name){
     }
     lapData.sort(function(a,b){return a.start-b.start;});
     if(uebersprungen)console.warn('Activity Layers: '+uebersprungen+' track point(s) skipped, coordinates out of range or not finite');
-    totalDistM=0;
-    currentFilename=name.replace(/\.[^.]+$/,'');
-    dropZone.querySelector('.drop-label').textContent=name;
-    dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
-    reprocess();
-    jumpToSettings();
+    if(uebernehmeTrack(name)) jumpToSettings();
   }catch(e){console.error(e);setStatus('Error: '+e.message,'err');}
 }
 
@@ -372,12 +443,7 @@ function parseGPX(text,name){
     lapData=[];
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
     if(skipped)console.warn('Activity Layers: '+skipped+' track point(s) skipped, coordinates out of range or not finite');
-    totalDistM=0;
-    currentFilename=name.replace(/\.[^.]+$/,'');
-    dropZone.querySelector('.drop-label').textContent=name;
-    dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
-    reprocess();
-    jumpToSettings();
+    if(uebernehmeTrack(name)) jumpToSettings();
   }catch(e){console.error(e);setStatus('Error: '+e.message,'err');}
 }
 

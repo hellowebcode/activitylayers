@@ -44,20 +44,30 @@ window.addEventListener('resize',function(){
 function drawRoute(){
   var c=document.getElementById('routeCanvas'),W=c.offsetWidth||620;
   var ctx=setupHiDPICanvas(c,W,180);
-  var pts=project(rawPoints,W-20,160);
-  var xs=pts.map(function(p){return p.x;}),ys=pts.map(function(p){return p.y;});
-  var mnX=minOf(xs),mxX=maxOf(xs);
-  var mnY=minOf(ys),mxY=maxOf(ys);
-  var mapped=pts.map(function(p,i){return{x:10+(p.x-mnX)/(mxX-mnX||1)*(W-20),y:10+(p.y-mnY)/(mxY-mnY||1)*160};});
-  ctx.beginPath();
-  for(var i=0;i<mapped.length;i++){if(i===0)ctx.moveTo(mapped[i].x,mapped[i].y);else ctx.lineTo(mapped[i].x,mapped[i].y);}
-  ctx.strokeStyle='#f97316'; ctx.lineWidth=2; ctx.stroke();
+  // Beide Spuren gemeinsam projizieren, damit sie im selben Rahmen liegen.
+  var alle=project(rawPoints.concat(ghostPoints),W-20,160);
+  var xs=alle.map(function(p){return p.x;}),ys=alle.map(function(p){return p.y;});
+  var mnX=minOf(xs),mxX=maxOf(xs),mnY=minOf(ys),mxY=maxOf(ys);
+  function auf(p){ return {x:10+(p.x-mnX)/(mxX-mnX||1)*(W-20), y:10+(p.y-mnY)/(mxY-mnY||1)*160}; }
+  function zeichne(liste,farbe,breite,deckkraft){
+    if(liste.length<2) return;
+    ctx.save(); ctx.globalAlpha=deckkraft;
+    ctx.beginPath();
+    for(var i=0;i<liste.length;i++){ var q=auf(liste[i]);
+      if(i===0) ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); }
+    ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.stroke(); ctx.restore();
+  }
+  var geist=alle.slice(rawPoints.length);
+  var el=document.getElementById('ghostColor');
+  zeichne(geist,(el&&el.value)||'#8892a4',2,0.7);
+  zeichne(alle.slice(0,rawPoints.length),'#f97316',2,1);
 }
 
 var mapInstance=null, mapRouteLayer=null, mapLoaded=false, lastMapTrackId=null;
 
 function trackBounds(){
-  var la=rawPoints.map(function(p){return p.lat;}), lo=rawPoints.map(function(p){return p.lon;});
+  var alle=rawPoints.concat(ghostPoints);
+  var la=alle.map(function(p){return p.lat;}), lo=alle.map(function(p){return p.lon;});
   return{minLat:minOf(la),maxLat:maxOf(la),
          minLon:minOf(lo),maxLon:maxOf(lo)};
 }
@@ -98,7 +108,7 @@ function trackKennung(){
     h^=Math.round(p.lon*1e5)|0; h=(h*0x01000193)>>>0;
   }
   return rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time
-       +'|'+h.toString(16)+'|'+currentFilename;
+       +'|'+h.toString(16)+'|'+currentFilename+'|'+ghostPoints.length+ghostFilename;
 }
 
 function showMapPreview(){
@@ -121,12 +131,22 @@ function showMapPreview(){
       if(validLatLon(rawPoints[i].lat,rawPoints[i].lon)) pts.push([rawPoints[i].lat,rawPoints[i].lon]);
     }
     if(pts.length<2) throw new Error('no valid coordinates');
-    mapRouteLayer=L.layerGroup([
+    var geistPts=[];
+    for(var g=0;g<ghostPoints.length;g++){
+      if(validLatLon(ghostPoints[g].lat,ghostPoints[g].lon)) geistPts.push([ghostPoints[g].lat,ghostPoints[g].lon]);
+    }
+    var ebenen=[];
+    if(geistPts.length>1){
+      var gf=document.getElementById('ghostColor');
+      ebenen.push(L.polyline(geistPts,{color:'#ffffff',weight:5,opacity:.6,lineJoin:'round',lineCap:'round'}));
+      ebenen.push(L.polyline(geistPts,{color:(gf&&gf.value)||'#8892a4',weight:3,opacity:.85,dashArray:'6 5',lineJoin:'round',lineCap:'round'}));
+    }
+    mapRouteLayer=L.layerGroup(ebenen.concat([
       L.polyline(pts,{color:'#ffffff',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}),
       L.polyline(pts,{color:'#f97316',weight:3,lineJoin:'round',lineCap:'round'}),
       L.circleMarker(pts[0],{radius:6,color:'#fff',weight:2,fillColor:'#16a34a',fillOpacity:1}),
       L.circleMarker(pts[pts.length-1],{radius:6,color:'#fff',weight:2,fillColor:'#dc2626',fillOpacity:1})
-    ]).addTo(mapInstance);
+    ])).addTo(mapInstance);
     var b=trackBounds();
     mapInstance.fitBounds([[b.minLat,b.minLon],[b.maxLat,b.maxLon]],{padding:[24,24]});
     setTimeout(function(){ if(mapInstance) mapInstance.invalidateSize(); },60);

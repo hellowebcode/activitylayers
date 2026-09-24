@@ -164,19 +164,26 @@ function aeTail(){
 '})();',''].join('\n');
 }
 
+// Liefert die Hauptspur und, falls vorhanden, die Geisterspur. Beide teilen
+// sich einen Rahmen, sonst laegen sie nicht uebereinander.
 function aeRoutePoints(c,pad){
   pad=pad*aeFaktor(c);
   var merc=function(lat){ return Math.log(Math.tan(Math.PI/4+lat*Math.PI/360)); };
+  var rahmen=rawPoints.concat(ghostPoints);
   var xs=[],ys=[];
-  for(var i=0;i<rawPoints.length;i++){ xs.push(rawPoints[i].lon*Math.PI/180); ys.push(merc(rawPoints[i].lat)); }
+  for(var i=0;i<rahmen.length;i++){ xs.push(rahmen[i].lon*Math.PI/180); ys.push(merc(rahmen[i].lat)); }
   var mnx=minOf(xs), mxx=maxOf(xs);
   var mny=minOf(ys), mxy=maxOf(ys);
   var sw=c.W-2*pad, sh=c.H-2*pad;
   var s=Math.min(sw/((mxx-mnx)||1), sh/((mxy-mny)||1));
   var ox=pad+(sw-(mxx-mnx)*s)/2, oy=pad+(sh-(mxy-mny)*s)/2;
-  var out=[];
-  for(var j=0;j<rawPoints.length;j++) out.push([ox+(xs[j]-mnx)*s, oy+(mxy-ys[j])*s]);
-  return out;
+  function aufLeinwand(liste){
+    var out=[];
+    for(var j=0;j<liste.length;j++)
+      out.push([ox+(liste[j].lon*Math.PI/180-mnx)*s, oy+(mxy-merc(liste[j].lat))*s]);
+    return out;
+  }
+  return { track: aufLeinwand(rawPoints), ghost: aufLeinwand(ghostPoints) };
 }
 
 function aePathKeys(dataArr, pts){
@@ -220,12 +227,20 @@ function buildSpeedJsx(){
 function buildRouteJsx(){
   var c=cfg();
   if(rawPoints.length<2) return null;
-  var pts=aeRoutePoints(c,90);
+  var spuren=aeRoutePoints(c,90);
+  var pts=spuren.track;
   var tw=parseFloat(c.trackW)||6;
   var dr=parseFloat(c.dotR)||12;
   var so=zahlOderVorgabe(c.shadowOffset,5);
   var dotKf=aePathKeys(rawPoints,pts);
   var L=[aeHead('Route Overlay')];
+  if(spuren.ghost.length>1){
+    var gAlpha=Math.max(0.05,Math.min(1,zahlOderVorgabe(c.ghostAlpha,0.55)));
+    L.push('  var gh=shapeLayer("Ghost Track"), gg=grpOf(gh,"Path");');
+    L.push('  addPath(gg,'+aePts(spuren.ghost)+',false);');
+    L.push('  addStroke(gg,'+aeCol(c.ghostColor||'#8892a4')+','+aeNum(parseFloat(c.ghostW)||4)+');');
+    L.push('  tf(gh,"ADBE Opacity").setValue('+aeNum(gAlpha*100)+');');
+  }
   L.push('  var PTS='+aePts(pts)+';');
   L.push('  var sh=shapeLayer("Route Shadow"), sg=grpOf(sh,"Path");');
   L.push('  addPath(sg,PTS,false);');

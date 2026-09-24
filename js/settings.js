@@ -61,6 +61,9 @@ var CONTROL_IDS=[
   'tempColor',
   'tempSize',
   'shadowOffset',
+  'ghostW',
+  'ghostColor',
+  'ghostAlpha',
   'smooth',
   'compPreset',
   'compW',
@@ -81,7 +84,8 @@ var syncCalcResult={offset:null,drift:null};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0',
                compPreset:'1920x1080',compW:'1920',compH:'1080'};
-var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColor:'#fca300',shadowColor:'#000000'};
+var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColor:'#fca300',shadowColor:'#000000',
+               ghostW:'4',ghostColor:'#8892a4',ghostAlpha:'0.55'};
 var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#aa0000',gaugeNumberColor:'#ffffff',gaugeUnitColor:'#6d6d7e'};
 var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFill:'1',elevFillColor:'#ffffff',elevDotColor:'#38bdf8',elevShadowColor:'#000000',elevShadowOffset:'4'};
 

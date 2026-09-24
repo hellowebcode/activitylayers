@@ -559,10 +559,12 @@ function buildRouteSetting(){
   var sc=hexToRgb(c.shadowColor);
   var dc=hexToRgb(c.dotColor);
 
+  // Beide Spuren teilen sich einen Rahmen, sonst laegen sie nicht uebereinander.
+  var rahmen=rawPoints.concat(ghostPoints);
   var mnLa=Infinity,mxLa=-Infinity,mnLo=Infinity,mxLo=-Infinity;
-  for(var i=0;i<rawPoints.length;i++){
-    if(rawPoints[i].lat<mnLa)mnLa=rawPoints[i].lat; if(rawPoints[i].lat>mxLa)mxLa=rawPoints[i].lat;
-    if(rawPoints[i].lon<mnLo)mnLo=rawPoints[i].lon; if(rawPoints[i].lon>mxLo)mxLo=rawPoints[i].lon;
+  for(var i=0;i<rahmen.length;i++){
+    if(rahmen[i].lat<mnLa)mnLa=rahmen[i].lat; if(rahmen[i].lat>mxLa)mxLa=rahmen[i].lat;
+    if(rahmen[i].lon<mnLo)mnLo=rahmen[i].lon; if(rahmen[i].lon>mxLo)mxLo=rahmen[i].lon;
   }
   var laR=(mxLa-mnLa)||0.0001, loR=(mxLo-mnLo)||0.0001;
 
@@ -584,6 +586,18 @@ function buildRouteSetting(){
   var dotCenter01=pxPts.map(function(p){return {x:p.px/W, y:1-(p.py/H)};});
   var dispKF=buildDisplacementKeyframes(rawPoints);
   var dotDiaPx=dR*2, shadowDotDiaPx=dR*2*1.15;
+
+  function aufLeinwand(p){
+    return toFusionMaskCoord(padX+(p.lon-mnLo)*(sw/loR),
+                             padY+(sh-(p.lat-mnLa)*(sh/laR)), W, H);
+  }
+  var geistPts=ghostPoints.map(aufLeinwand);
+  var gW=parseFloat(c.ghostW)||4;
+  var gc=hexToRgb(c.ghostColor||'#8892a4');
+  var gAlpha=Math.max(0.05,Math.min(1,zahlOderVorgabe(c.ghostAlpha,0.55)));
+  var geistShape=geistPts.length>1
+    ? buildPolylineShapeNodes('GhostPath','GhostPathPolyline',geistPts,false,false,gW/H,false,[0,250], W, H)
+    : null;
 
   var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,tW/H,false,[0,50], W, H,'Publish1');
   var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,sW/H,false,[0,150], W, H,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
@@ -610,7 +624,14 @@ function buildRouteSetting(){
   L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, W, H));
   L.push(mainShape.node);
   L.push(buildBackgroundNode('BackgroundMain', 'MainPath', tc, [100,50], undefined, W, H));
-  L.push(buildMergeNode('Merge1', 'BackgroundShadow', 'BackgroundMain', [200,100]));
+  var unterlage='BackgroundShadow';
+  if(geistShape){
+    L.push(geistShape.node);
+    L.push(buildBackgroundNode('BackgroundGhost', 'GhostPath', gc, [100,250], gAlpha, W, H));
+    L.push(buildMergeNode('MergeGhost', 'BackgroundGhost', 'BackgroundShadow', [200,200]));
+    unterlage='MergeGhost';
+  }
+  L.push(buildMergeNode('Merge1', unterlage, 'BackgroundMain', [200,100]));
   L.push(buildDotMaskNode('OutlineDotMask', 'Input { Value = { '+dotCenter01[0].x.toFixed(6)+', '+dotCenter01[0].y.toFixed(6)+' }, Expression = "MainDotMask.Center", }', shadowDotDiaPx, [300,150], W, H));
   L.push(buildBackgroundNode('BackgroundOutlineDot', 'OutlineDotMask', sc, [400,150], undefined, W, H));
   L.push(buildMergeNode('Merge2', 'Merge1', 'BackgroundOutlineDot', [500,100]));

@@ -65,6 +65,13 @@ var UI_DE={
   'Number color':'Zahlenfarbe',
   'Unit label color':'Farbe der Einheitenbeschriftung',
   'Route style':'Routen-Stil',
+  'Ghost track':'Geisterspur',
+  'Choose a second file':'Zweite Datei wählen',
+  'Remove':'Entfernen',
+  'Ghost width':'Breite der Geisterspur',
+  'Ghost color':'Farbe der Geisterspur',
+  'Ghost opacity':'Deckkraft der Geisterspur',
+  'A second recording of the same route, drawn behind your track. Only the shape is used — no speed, no time. Both tracks are framed together, so they line up.':'Eine zweite Aufzeichnung derselben Strecke, hinter deiner Spur gezeichnet. Genutzt wird nur der Verlauf — keine Geschwindigkeit, keine Zeit. Beide Spuren teilen sich einen Rahmen und liegen dadurch übereinander.',
   'Canvas size':'Leinwandgröße',
   'Canvas width (px)':'Leinwandbreite (px)',
   'Canvas height (px)':'Leinwandhöhe (px)',
@@ -295,6 +302,8 @@ function localizeRuntimeText(message){
                   .replace(' track points were used',' Routenpunkte verwendet');
   if(message.indexOf('Some fields in this FIT file are declared')===0)
     return 'Einzelne Felder dieser FIT-Datei sind mit einer unerwarteten Größe angegeben und wurden übergangen';
+  if(/^Ghost track loaded: /.test(message)) return message.replace('Ghost track loaded: ','Geisterspur geladen: ').replace(' points',' Punkte');
+  if(message==='No usable track in that file') return 'Kein brauchbarer Streckenverlauf in dieser Datei';
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
