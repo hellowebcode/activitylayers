@@ -128,6 +128,39 @@ def schreibe_gpx(pts, pfad, mit_sensoren):
     open(pfad, 'w', encoding='utf-8').write(inhalt)
     return len(inhalt.encode('utf-8'))
 
+def schreibe_tcx(pts, pfad):
+    """TCX mit Runden - damit bekommen auch Nicht-FIT-Nutzer die Rundenmarken."""
+    z = ['<?xml version="1.0" encoding="UTF-8"?>',
+         '<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"',
+         '  xmlns:ns3="http://www.garmin.com/xmlschemas/ActivityExtension/v2">',
+         '  <Activities><Activity Sport="Biking">',
+         '    <Id>%s</Id>' % zeit(0)]
+    for r in range(RUNDEN):
+        a, e = r * PRO_RUNDE, (r + 1) * PRO_RUNDE
+        z += ['    <Lap StartTime="%s">' % zeit(a),
+              '      <TotalTimeSeconds>%d</TotalTimeSeconds>' % (e - a),
+              '      <DistanceMeters>%.2f</DistanceMeters>' % (pts[e]['dist'] - pts[a]['dist']),
+              '      <Intensity>Active</Intensity><TriggerMethod>Manual</TriggerMethod>',
+              '      <Track>']
+        for p in pts[a:e]:
+            z += ['        <Trackpoint>',
+                  '          <Time>%s</Time>' % zeit(p['i']),
+                  '          <Position><LatitudeDegrees>%.7f</LatitudeDegrees>'
+                  '<LongitudeDegrees>%.7f</LongitudeDegrees></Position>' % (p['lat'], p['lon']),
+                  '          <AltitudeMeters>%.1f</AltitudeMeters>' % p['ele'],
+                  '          <DistanceMeters>%.2f</DistanceMeters>' % p['dist']]
+            if p['hr'] is not None:
+                z.append('          <HeartRateBpm><Value>%d</Value></HeartRateBpm>' % p['hr'])
+            z += ['          <Cadence>%d</Cadence>' % p['cad'],
+                  '          <Extensions><ns3:TPX><ns3:Speed>%.3f</ns3:Speed>'
+                  '<ns3:Watts>%d</ns3:Watts></ns3:TPX></Extensions>' % (p['spd'], p['pwr']),
+                  '        </Trackpoint>']
+        z += ['      </Track>', '    </Lap>']
+    z += ['  </Activity></Activities>', '</TrainingCenterDatabase>', '']
+    inhalt = '\n'.join(z)
+    open(pfad, 'w', encoding='utf-8').write(inhalt)
+    return len(inhalt.encode('utf-8'))
+
 if __name__ == '__main__':
     os.makedirs(ZIEL, exist_ok=True)
     pts = punkte()
@@ -136,4 +169,6 @@ if __name__ == '__main__':
     c = schreibe_gpx(pts[::3], os.path.join(ZIEL, 'demo-minimal.gpx'), False)
     print('demo-ride.fit     %7d Byte  %d Punkte, %d Runden' % (a, len(pts), RUNDEN))
     print('demo-ride.gpx     %7d Byte  %d Punkte, mit Sensorwerten' % (b, len(pts)))
+    e = schreibe_tcx(pts, os.path.join(ZIEL, 'demo-ride.tcx'))
     print('demo-minimal.gpx  %7d Byte  %d Punkte, nur Position und Zeit' % (c, len(pts[::3])))
+    print('demo-ride.tcx     %7d Byte  %d Punkte, %d Runden' % (e, RUNDEN * PRO_RUNDE, RUNDEN))

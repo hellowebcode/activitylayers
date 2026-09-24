@@ -12,9 +12,9 @@ var UI_DE={
   'Ready for the edit.':'Bereit für den Schnitt.',
   'Layer your activity':'Deine Aktivität –',
   'into every frame.':'in jedem Frame sichtbar.',
-  'Create nine animated overlays for':'Erstelle aus GPX- und FIT-Dateien neun animierte Overlays für',
+  'Create nine animated overlays for':'Erstelle aus GPX-, FIT- und TCX-Dateien neun animierte Overlays für',
   'and':'und',
-  'from GPX and FIT files — processed locally in your browser. Lap markers need a .fit file - every other overlay works with both formats.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit-Datei, alle übrigen Overlays funktionieren mit beiden Formaten.',
+  'from GPX, FIT and TCX files — processed locally in your browser. Lap markers need a .fit or .tcx file - every other overlay works with all three.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit- oder .tcx-Datei, alle übrigen Overlays funktionieren mit allen drei Formaten.',
   '⏱ GPS Sync Calibration Helper':'⏱ GPS-Synchronisierung kalibrieren',
   'Enter timecodes in':'Timecodes im Format',
   'format (e.g.':'eingeben (z. B.',
@@ -33,7 +33,7 @@ var UI_DE={
   'Opens the secure Buy Me a Coffee page in a new tab.':'Öffnet die sichere Buy-Me-a-Coffee-Seite in einem neuen Tab.',
   'Drop your GPX or FIT file here':'GPX- oder FIT-Datei hier ablegen',
   'or click to browse':'oder zum Auswählen klicken',
-  '.gpx and .fit supported':'.gpx und .fit werden unterstützt',
+  '.gpx, .fit and .tcx supported':'.gpx, .fit und .tcx werden unterstützt',
   'No upload · No account':'Kein Upload · Kein Konto',
   'Video & GPS settings':'Video- & GPS-Einstellungen',
   'Reset':'Zurücksetzen',
@@ -117,11 +117,11 @@ var UI_DE={
   'Cadence Overlay':'Trittfrequenz-Overlay',
   'Power Overlay':'Leistungs-Overlay',
   'Lap Marker Overlay':'Rundenmarken-Overlay',
-  '.setting file (.fit files only)':'.setting-Datei (nur .fit-Dateien)',
+  '.setting file (.fit and .tcx only)':'.setting-Datei (nur .fit und .tcx)',
   '.jsx script (cadence value)':'.jsx-Skript (Trittfrequenzwert)',
   '.jsx script (power value)':'.jsx-Skript (Leistungswert)',
-  '.jsx script (.fit files only)':'.jsx-Skript (nur .fit-Dateien)',
-  'Lap markers are read from the lap records inside a .fit file. GPX files carry no lap information, so this overlay stays unavailable for them.':'Rundenmarken stammen aus den Runden-Datens\u00e4tzen einer .fit-Datei. GPX-Dateien enthalten keine Rundeninformationen, dieses Overlay bleibt dort also ohne Funktion.',
+  '.jsx script (.fit and .tcx only)':'.jsx-Skript (nur .fit und .tcx)',
+  'Lap markers are read from the lap records inside a .fit or .tcx file. GPX files carry no lap information, so this overlay stays unavailable for them.':'Rundenmarken stammen aus den Runden-Datens\u00e4tzen einer .fit- oder .tcx-Datei. GPX-Dateien enthalten keine Rundeninformationen, dieses Overlay bleibt dort also ohne Funktion.',
   'Download All Files':'Alle Dateien herunterladen',
   'Download DaVinci Resolve files':'DaVinci-Resolve-Dateien herunterladen',
   'Download After Effects files':'After-Effects-Dateien herunterladen',
@@ -222,7 +222,8 @@ function localizeRuntimeText(message){
     'copied!':'kopiert!',
     'copy':'kopieren',
     'Enter event 1 values':'Werte für Ereignis 1 eingeben',
-    'Please upload a .gpx or .fit file':'Bitte eine GPX- oder FIT-Datei auswählen',
+    'Please upload a .gpx, .fit or .tcx file':'Bitte eine GPX-, FIT- oder TCX-Datei auswählen',
+    'XML error in TCX file':'XML-Fehler in der TCX-Datei',
     'No GPS track points found in FIT file':'Keine GPS-Routenpunkte in der FIT-Datei gefunden',
     'XML error in GPX file':'XML-Fehler in der GPX-Datei',
     'No track points found':'Keine Routenpunkte gefunden',
@@ -233,7 +234,7 @@ function localizeRuntimeText(message){
     'No GPS data in this file':'Diese Datei enthält keine GPS-Daten',
     'No cadence data in this file':'Diese Datei enth\u00e4lt keine Trittfrequenzdaten',
     'No power data in this file':'Diese Datei enth\u00e4lt keine Leistungsdaten',
-    'No lap data in this file (.fit files only)':'Diese Datei enth\u00e4lt keine Rundendaten (nur .fit-Dateien)',
+    'No lap data in this file (.fit and .tcx files only)':'Diese Datei enth\u00e4lt keine Rundendaten (nur .fit und .tcx)',
     'Building Cadence overlay\u2026':'Trittfrequenz-Overlay wird erstellt \u2026',
     'Building Power overlay\u2026':'Leistungs-Overlay wird erstellt \u2026',
     'Building Lap Marker overlay\u2026':'Rundenmarken-Overlay wird erstellt \u2026',
@@ -487,7 +488,7 @@ var MAX_FILE_BYTES=32*1024*1024;
 
 function handleFile(file){
   var name=file.name.toLowerCase();
-  if(!name.endsWith('.gpx')&&!name.endsWith('.fit')){setStatus('Please upload a .gpx or .fit file','err');return;}
+  if(!name.endsWith('.gpx')&&!name.endsWith('.fit')&&!name.endsWith('.tcx')){setStatus('Please upload a .gpx, .fit or .tcx file','err');return;}
   if(file.size>MAX_FILE_BYTES){
     setStatus('File too large: '+Math.round(file.size/1048576)+' MB — the limit is '+Math.round(MAX_FILE_BYTES/1048576)+' MB','err');
     return;
@@ -498,6 +499,9 @@ function handleFile(file){
   if(name.endsWith('.fit')){
     reader.onload=function(e){parseFIT(e.target.result,file.name);};
     reader.readAsArrayBuffer(file);
+  } else if(name.endsWith('.tcx')){
+    reader.onload=function(e){parseTCX(e.target.result,file.name);};
+    reader.readAsText(file);
   } else {
     reader.onload=function(e){parseGPX(e.target.result,file.name);};
     reader.readAsText(file);
@@ -653,6 +657,67 @@ function getExtNumber(pt,names,lo,hi){
     }
   }
   return null;
+}
+
+function tcxKind(el,name){
+  var all=el.getElementsByTagName('*');
+  for(var i=0;i<all.length;i++) if(all[i].localName===name) return all[i];
+  return null;
+}
+function tcxZahl(el,name,lo,hi){
+  var k=tcxKind(el,name);
+  if(!k) return null;
+  var v=parseFloat(k.textContent);
+  return (!isNaN(v)&&isFinite(v)&&v>=lo&&v<=hi)?v:null;
+}
+
+function parseTCX(text,name){
+  try{
+    var parser=new DOMParser(),doc=parser.parseFromString(text,'application/xml');
+    if(doc.querySelector('parsererror')){setStatus('XML error in TCX file','err');return;}
+    var alle=doc.getElementsByTagName('*'), punkte=[], runden=[];
+    for(var i=0;i<alle.length;i++){
+      if(alle[i].localName==='Trackpoint') punkte.push(alle[i]);
+      else if(alle[i].localName==='Lap') runden.push(alle[i]);
+    }
+    if(!punkte.length){setStatus('No track points found','err');return;}
+    rawPoints=[];
+    var uebersprungen=0;
+    for(var i=0;i<punkte.length;i++){
+      var pt=punkte[i];
+      var zeitEl=tcxKind(pt,'Time');
+      var t=zeitEl?new Date(zeitEl.textContent).getTime():null;
+      var pos=tcxKind(pt,'Position');
+      var lat=pos?tcxZahl(pos,'LatitudeDegrees',-90,90):null;
+      var lon=pos?tcxZahl(pos,'LongitudeDegrees',-180,180):null;
+      if(!(t&&isFinite(t))||lat===null||lon===null||!validLatLon(lat,lon)){uebersprungen++;continue;}
+      var ele=tcxZahl(pt,'AltitudeMeters',-500,20000);
+      var hrEl=tcxKind(pt,'HeartRateBpm');
+      rawPoints.push({time:t,lat:lat,lon:lon,
+        ele:(ele!==null&&validElevation(ele))?ele:null,
+        speed:tcxZahl(pt,'Speed',0,200),
+        hr:hrEl?tcxZahl(hrEl,'Value',1,255):null,
+        cad:tcxZahl(pt,'Cadence',0,254),
+        power:tcxZahl(pt,'Watts',0,3000),
+        dist:tcxZahl(pt,'DistanceMeters',0,1e7)});
+    }
+    rawPoints.sort(function(a,b){return a.time-b.time;});
+    if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
+    lapData=[];
+    for(var i=0;i<runden.length;i++){
+      var st=Date.parse(runden[i].getAttribute('StartTime')||'');
+      var dauer=tcxZahl(runden[i],'TotalTimeSeconds',0,864000);
+      if(!isFinite(st)||dauer===null||!(dauer>0)) continue;
+      lapData.push({start:st,end:st+dauer*1000,elapsed:dauer});
+    }
+    lapData.sort(function(a,b){return a.start-b.start;});
+    if(uebersprungen)console.warn('Activity Layers: '+uebersprungen+' track point(s) skipped, coordinates out of range or not finite');
+    totalDistM=0;
+    dropZone.querySelector('.drop-label').textContent=name;
+    dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
+    reprocess();
+    jumpToSettings();
+  }catch(e){console.error(e);setStatus('Error: '+e.message,'err');}
 }
 
 function parseGPX(text,name){
@@ -3111,7 +3176,7 @@ document.getElementById('btnPowerSetting').addEventListener('click',function(){
 
 document.getElementById('btnLapSetting').addEventListener('click',function(){
   var c=buildLapSetting();
-  if(!c){setStatus('No lap data in this file (.fit files only)','err');return;}
+  if(!c){setStatus('No lap data in this file (.fit and .tcx files only)','err');return;}
   dl(c,makeFilename('Lap_Marker_Overlay','setting'));
   setStatus('Downloaded Lap_Marker_Overlay.setting','ok');
 });
