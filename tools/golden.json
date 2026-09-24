@@ -1,5 +1,5 @@
 {
-  "__daten__": "punkte=721 hr=691 cad=721 power=721 temp=721 runden=3 distanz=6.001",
+  "__daten__": "punkte=721 hr=691 cad=721 power=721 temp=721 pace=721 runden=3 distanz=6.001",
   "Speed_Overlay.setting": "42a0748b92520b97  29726",
   "Route_Overlay.setting": "c4d3389ff4c7b476  109771",
   "Elevation_Overlay.setting": "70a902226bbbb05d  198995",
@@ -9,6 +9,7 @@
   "Cadence_Overlay.setting": "118efea119772ef1  25554",
   "Power_Overlay.setting": "47eb85446056afd4  26260",
   "Temperature_Overlay.setting": "031bc68c9bc43ddd  25578",
+  "Pace_Overlay.setting": "7fe5b4501e4360de  26301",
   "Lap_Marker_Overlay.setting": "5daa67ee5dc777c4  4472",
   "Speed_Overlay_AE.jsx": "fad069950f79a76d  26694",
   "Route_Overlay_AE.jsx": "0d602e288537c980  28369",
@@ -19,5 +20,6 @@
   "Cadence_Overlay_AE.jsx": "4db0504afc83fe5e  12773",
   "Power_Overlay_AE.jsx": "eef659df39909b33  13482",
   "Temperature_Overlay_AE.jsx": "48743de023e9bd5a  12788",
+  "Pace_Overlay_AE.jsx": "4df6c0570efe8896  13554",
   "Lap_Marker_Overlay_AE.jsx": "3eb1aa72e77c4858  5635"
 }

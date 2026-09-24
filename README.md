@@ -1,6 +1,6 @@
 # Activity Layers
 
-Browser-Tool, das aus GPX-, FIT- und TCX-Aufzeichnungen zehn animierte Overlays für
+Browser-Tool, das aus GPX-, FIT- und TCX-Aufzeichnungen elf animierte Overlays für
 DaVinci Resolve (Fusion `.setting`) und After Effects (ExtendScript `.jsx`)
 erzeugt. Die Verarbeitung findet vollständig im Browser statt – es gibt keinen
 Upload.
@@ -45,10 +45,10 @@ sich im Verhalten unterscheiden:
 
 | Datei | Ergibt |
 |---|---|
-| `demo-ride.fit` | alle zehn Overlays, drei Runden |
-| `demo-ride.gpx` | neun Overlays, GPX kennt keine Runden |
-| `demo-minimal.gpx` | fünf Overlays, weder Höhe noch Sensorwerte |
-| `demo-ride.tcx` | neun Overlays, TCX führt keine Temperatur |
+| `demo-ride.fit` | alle elf Overlays, drei Runden |
+| `demo-ride.gpx` | zehn Overlays, GPX kennt keine Runden |
+| `demo-minimal.gpx` | sechs Overlays, weder Höhe noch Sensorwerte |
+| `demo-ride.tcx` | zehn Overlays, TCX führt keine Temperatur |
 
 Neu erzeugen mit `python3 tools/make-examples.py`. Die Dateien sind
 deterministisch, derselbe Lauf liefert dieselben Bytes.

@@ -8,11 +8,11 @@ var UI_DE={
   'Export':'Export',
   'Local by design':'Bewusst lokal',
   'Your activity data stays in this browser.':'Deine Aktivitätsdaten bleiben in diesem Browser.',
-  'Ten data layers.':'Zehn Datenebenen.',
+  'Eleven data layers.':'Elf Datenebenen.',
   'Ready for the edit.':'Bereit für den Schnitt.',
   'Layer your activity':'Deine Aktivität –',
   'into every frame.':'in jedem Frame sichtbar.',
-  'Create ten animated overlays for':'Erstelle aus GPX-, FIT- und TCX-Dateien zehn animierte Overlays für',
+  'Create eleven animated overlays for':'Erstelle aus GPX-, FIT- und TCX-Dateien elf animierte Overlays für',
   'and':'und',
   'from GPX, FIT and TCX files — processed locally in your browser. Lap markers need a .fit or .tcx file - every other overlay works with all three.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit- oder .tcx-Datei, alle übrigen Overlays funktionieren mit allen drei Formaten.',
   '⏱ GPS Sync Calibration Helper':'⏱ GPS-Synchronisierung kalibrieren',
@@ -118,6 +118,10 @@ var UI_DE={
   'Power Overlay':'Leistungs-Overlay',
   'Temperature overlay style':'Temperatur-Overlay-Stil',
   'Temperature Overlay':'Temperatur-Overlay',
+  'Pace overlay style':'Pace-Overlay-Stil',
+  'Pace Overlay':'Pace-Overlay',
+  'Pace follows the speed unit: minutes per kilometre, or minutes per mile when MPH is selected.':'Pace folgt der Geschwindigkeitseinheit: Minuten je Kilometer, bei MPH Minuten je Meile.',
+  '.jsx script (pace value)':'.jsx-Skript (Pace-Wert)',
   '.jsx script (temperature value)':'.jsx-Skript (Temperaturwert)',
   'Lap Marker Overlay':'Rundenmarken-Overlay',
   '.setting file (.fit and .tcx only)':'.setting-Datei (nur .fit und .tcx)',
@@ -151,7 +155,7 @@ var UI_DE={
   '.jsx script (heart + value)':'.jsx-Skript (Herz + Wert)',
   '.jsx script (wedge + value)':'.jsx-Skript (Keil + Wert)',
   '.jsx script (distance value)':'.jsx-Skript (Distanzwert)',
-  'Visualisation only — this map is never part of an export. The ten overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die zehn Overlays oben bleiben davon unberührt.'
+  'Visualisation only — this map is never part of an export. The eleven overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die elf Overlays oben bleiben davon unberührt.'
 };
 
 var lastMaxSpeedValue=null;
@@ -239,6 +243,7 @@ function localizeRuntimeText(message){
     'No power data in this file':'Diese Datei enth\u00e4lt keine Leistungsdaten',
     'No temperature data in this file':'Diese Datei enth\u00e4lt keine Temperaturdaten',
     'Building Temperature overlay…':'Temperatur-Overlay wird erstellt …',
+    'Building Pace overlay…':'Pace-Overlay wird erstellt …',
     'No lap data in this file (.fit and .tcx files only)':'Diese Datei enth\u00e4lt keine Rundendaten (nur .fit und .tcx)',
     'Building Cadence overlay\u2026':'Trittfrequenz-Overlay wird erstellt \u2026',
     'Building Power overlay\u2026':'Leistungs-Overlay wird erstellt \u2026',
@@ -295,11 +300,11 @@ var savedUILanguage='en';
 try{savedUILanguage=localStorage.getItem('overlayUILanguage')||'en';}catch(e){}
 applyUILanguage(savedUILanguage);
 
-var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], tempData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';
+var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], tempData=[], paceData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';
 var btnIds=['btnSetting','btnRouteSetting','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
-  'btnCadSetting','btnPowerSetting','btnTempSetting','btnLapSetting',
+  'btnCadSetting','btnPowerSetting','btnTempSetting','btnPaceSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
-  'btnCadJsx','btnPowerJsx','btnTempJsx','btnLapJsx'];
+  'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
 var syncCalcResult={offset:null,drift:null};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0'};
@@ -431,6 +436,10 @@ document.getElementById('resetPower').addEventListener('click',function(){
 document.getElementById('resetTemp').addEventListener('click',function(){
   document.getElementById('tempColor').value='#0ea5e9';
   document.getElementById('tempSize').value='0.07';
+});
+document.getElementById('resetPace').addEventListener('click',function(){
+  document.getElementById('paceColor').value='#14b8a6';
+  document.getElementById('paceSize').value='0.07';
 });
 document.getElementById('resetLap').addEventListener('click',function(){
   document.getElementById('lapColor').value='#38bdf8';
@@ -947,6 +956,10 @@ function reprocess(){
   cadData=rawPoints.filter(function(p){return p.cad!==null&&p.cad!==undefined&&!isNaN(p.cad);}).map(function(p){return{time:p.time,cad:p.cad};});
   powerData=rawPoints.filter(function(p){return p.power!==null&&p.power!==undefined&&!isNaN(p.power);}).map(function(p){return{time:p.time,power:p.power};});
   tempData=rawPoints.filter(function(p){return p.temp!==null&&p.temp!==undefined&&!isNaN(p.temp);}).map(function(p){return{time:p.time,temp:p.temp};});
+  paceData=speedData.map(function(p){
+    var sek=(p.spd>0.1)?3600/p.spd:3600;          // Sekunden je Kilometer bzw. Meile
+    return{time:p.time, sec:Math.max(60,Math.min(3600,sek))};
+  });
   gradeData=buildGradeData(rawPoints);
   distData=buildDistData(rawPoints);
   totalDistM=distData.length?distData[distData.length-1].distM:0;
@@ -1343,6 +1356,8 @@ var CONTROL_IDS=[
   'powerSize',
   'sg1',
   'sg2',
+  'paceColor',
+  'paceSize',
   'shadowColor',
   'tempColor',
   'tempSize',
@@ -3082,6 +3097,22 @@ function buildCadenceSetting(){
   });
 }
 
+function paceLabel(c){ return (c.unit==='mph')?'/mi':'/km'; }
+
+function buildPaceSetting(){
+  var c=cfg();
+  if(!paceData.length) return null;
+  return buildTextOverlaySetting({
+    group:'Pace',
+    boxWidth:0.44,
+    rgb:hexToRgb(c.paceColor),
+    size:parseFloat(c.paceSize)||0.07,
+    expr:'string.format("%d:%02d '+paceLabel(c)+'", floor(Pace/60), floor(Pace - floor(Pace/60)*60))',
+    drives:[{name:'Pace',label:'Pace (s)',min:60,max:3600,
+             kf:buildKeyframeList(paceData,function(p){return Math.round(p.sec);})}]
+  });
+}
+
 function buildTempSetting(){
   var c=cfg();
   if(!tempData.length) return null;
@@ -3131,6 +3162,20 @@ function buildCadenceJsx(){
   var L=[aeHead('Cadence Overlay')];
   L.push('  var num=textLayer("Cadence","0",[250,880],'+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
+function buildPaceJsx(){
+  var c=cfg();
+  if(!paceData.length) return null;
+  var size=(parseFloat(c.paceSize)||0.07)*AE_H;
+  var kf=buildKeyframeList(paceData,function(p){return Math.round(p.sec);});
+  var ausdruck='var t=v; var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
+               'm+":"+(s<10?"0":"")+s+" '+paceLabel(c)+'";';
+  var L=[aeHead('Pace Overlay')];
+  L.push('  var num=textLayer("Pace","0:00",[250,880],'+aeNum(size)+','+aeCol(c.paceColor)+',false);');
+  L.push('  driveText(num,"Pace",'+aeKf(kf,0)+','+aeStr(ausdruck)+');');
   L.push(aeTail());
   return L.join('\n');
 }
@@ -3186,6 +3231,7 @@ function buildLapJsx(){
  ['btnCadJsx',buildCadenceJsx,'Cadence_Overlay'],
  ['btnPowerJsx',buildPowerJsx,'Power_Overlay'],
  ['btnTempJsx',buildTempJsx,'Temperature_Overlay'],
+ ['btnPaceJsx',buildPaceJsx,'Pace_Overlay'],
  ['btnLapJsx',buildLapJsx,'Lap_Marker_Overlay']
 ].forEach(function(spec){
   document.getElementById(spec[0]).addEventListener('click',function(){
@@ -3238,6 +3284,13 @@ document.getElementById('btnTempSetting').addEventListener('click',function(){
   setStatus('Downloaded Temperature_Overlay.setting','ok');
 });
 
+document.getElementById('btnPaceSetting').addEventListener('click',function(){
+  var t=buildPaceSetting();
+  if(!t){setStatus('No data for this overlay in this file','err');return;}
+  dl(t,makeFilename('Pace_Overlay','setting'));
+  setStatus('Downloaded Pace_Overlay.setting','ok');
+});
+
 document.getElementById('btnLapSetting').addEventListener('click',function(){
   var c=buildLapSetting();
   if(!c){setStatus('No lap data in this file (.fit and .tcx files only)','err');return;}
@@ -3268,6 +3321,7 @@ function exportSteps(){
     {kind:'fusion',label:'Building Cadence overlay…',run:function(){return buildCadenceSetting();},name:function(){return makeFilename('Cadence_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Power overlay…',run:function(){return buildPowerSetting();},name:function(){return makeFilename('Power_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Temperature overlay…',run:function(){return buildTempSetting();},name:function(){return makeFilename('Temperature_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Pace overlay…',run:function(){return buildPaceSetting();},name:function(){return makeFilename('Pace_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Lap Marker overlay…',run:function(){return buildLapSetting();},name:function(){return makeFilename('Lap_Marker_Overlay','setting');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildSpeedJsx();},name:function(){return makeFilename('Speed_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildRouteJsx();},name:function(){return makeFilename('Route_Overlay_AE','jsx');},optional:true},
@@ -3278,6 +3332,7 @@ function exportSteps(){
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildCadenceJsx();},name:function(){return makeFilename('Cadence_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildPowerJsx();},name:function(){return makeFilename('Power_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildTempJsx();},name:function(){return makeFilename('Temperature_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildPaceJsx();},name:function(){return makeFilename('Pace_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildLapJsx();},name:function(){return makeFilename('Lap_Marker_Overlay_AE','jsx');},optional:true}
   ];
 }

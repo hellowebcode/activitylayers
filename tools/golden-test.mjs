@@ -131,6 +131,7 @@ const GENERATOREN = [
   ['Cadence_Overlay.setting',      'buildCadenceSetting'],
   ['Power_Overlay.setting',        'buildPowerSetting'],
   ['Temperature_Overlay.setting',  'buildTempSetting'],
+  ['Pace_Overlay.setting',         'buildPaceSetting'],
   ['Lap_Marker_Overlay.setting',   'buildLapSetting'],
   ['Speed_Overlay_AE.jsx',         'buildSpeedJsx'],
   ['Route_Overlay_AE.jsx',         'buildRouteJsx'],
@@ -141,6 +142,7 @@ const GENERATOREN = [
   ['Cadence_Overlay_AE.jsx',       'buildCadenceJsx'],
   ['Power_Overlay_AE.jsx',         'buildPowerJsx'],
   ['Temperature_Overlay_AE.jsx',   'buildTempJsx'],
+  ['Pace_Overlay_AE.jsx',          'buildPaceJsx'],
   ['Lap_Marker_Overlay_AE.jsx',    'buildLapJsx'],
 ];
 
@@ -154,7 +156,7 @@ function lauf() {
   ergebnis['__daten__'] = [
     'punkte=' + ctx.rawPoints.length, 'hr=' + ctx.hrData.length,
     'cad=' + ctx.cadData.length, 'power=' + ctx.powerData.length,
-    'temp=' + ctx.tempData.length,
+    'temp=' + ctx.tempData.length, 'pace=' + ctx.paceData.length,
     'runden=' + ctx.lapData.length,
     'distanz=' + (ctx.totalDistM / 1000).toFixed(3),
   ].join(' ');
