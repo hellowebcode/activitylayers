@@ -131,17 +131,17 @@
       Zeit in der Aufzeichnung, trag beides unter <strong>Synchronisierung</strong> ein und lass dir die
       Werte berechnen. Ein zweites Ereignis am Ende des Clips liefert zus&auml;tzlich den
       Abweichungsfaktor.</p>
-      <p class="hint-box">Alle neun Overlays nutzen denselben Versatz. Einmal synchronisieren gen&uuml;gt.</p>
+      <p class="hint-box">Alle zehn Overlays nutzen denselben Versatz. Einmal synchronisieren gen&uuml;gt.</p>
 
       <h2 id="schritt-04"><span class="step">04</span>Aussehen anpassen</h2>
       <p>F&uuml;r jedes Overlay gibt es eine eigene Karte mit Farben, Linienst&auml;rken und Gr&ouml;&szlig;en. Die
       Vorschauen aktualisieren sich sofort. Ein Tipp aus der Praxis: Schatten und eine kr&auml;ftige
       Kontrastfarbe halten die Anzeige auch &uuml;ber unruhigem Bildmaterial lesbar.</p>
 
-      <h2 id="die-overlays">Die neun Overlays</h2>
+      <h2 id="die-overlays">Die zehn Overlays</h2>
       <p>Jedes Overlay ist eine eigene Ebene und l&auml;sst sich einzeln herunterladen. Fehlen die
       passenden Werte in deiner Datei, bleibt das Overlay leer und wird beim Sammelexport
-      weggelassen &ndash; du bekommst dann eben sieben statt neun Dateien.</p>
+      weggelassen &ndash; du bekommst dann eben sieben statt zehn Dateien.</p>
       <ul>
         <li><strong>Tacho</strong> &ndash; Rundinstrument mit Nadel und Zahl. Die Skala richtet sich nach dem
         H&ouml;chstwert deiner Aufzeichnung, die Einheit nach deiner Auswahl in Schritt&nbsp;02.</li>
@@ -159,6 +159,8 @@
         <li><strong>Trittfrequenz</strong> &ndash; Zahl in Umdrehungen pro Minute. Braucht einen
         Trittfrequenzsensor.</li>
         <li><strong>Leistung</strong> &ndash; Zahl in Watt. Braucht einen Leistungsmesser.</li>
+        <li><strong>Temperatur</strong> &ndash; Zahl in Grad Celsius. Steht in FIT- und GPX-Dateien,
+        TCX f&uuml;hrt kein Temperaturfeld.</li>
         <li><strong>Rundenmarken</strong> &ndash; Rundennummer und die mitlaufende Zeit der aktuellen Runde.
         Die Runden stehen nur in <code>.fit</code>- und <code>.tcx</code>-Dateien; GPX kennt keine Runden, dort bleibt dieses
         Overlay ohne Funktion.</li>
@@ -224,17 +226,17 @@
       away, a distinctive corner, a braking point. Note the video timecode and the elapsed time in the
       recording, enter both under <strong>Sync Helper</strong> and let it calculate. A second event near
       the end of the clip gives you the drift factor as well.</p>
-      <p class="hint-box">All nine overlays share the same offset. Syncing once is enough.</p>
+      <p class="hint-box">All ten overlays share the same offset. Syncing once is enough.</p>
 
       <h2 id="step-04"><span class="step">04</span>Style it</h2>
       <p>Every overlay has its own card with colours, line weights and sizes, and the previews update as
       you go. One practical tip: a shadow plus a strong contrasting colour keeps the readout legible even
       over busy footage.</p>
 
-      <h2 id="the-overlays">The nine overlays</h2>
+      <h2 id="the-overlays">The ten overlays</h2>
       <p>Each overlay is its own layer and can be downloaded on its own. If your file has no matching
       values, the overlay stays empty and is left out of the bulk export &ndash; you simply get seven
-      files instead of nine.</p>
+      files instead of ten.</p>
       <ul>
         <li><strong>Speedometer</strong> &ndash; a dial with a needle and a number. The scale follows the
         fastest moment in your recording, the unit follows your choice in step&nbsp;02.</li>
@@ -251,6 +253,8 @@
         miles.</li>
         <li><strong>Cadence</strong> &ndash; the value in revolutions per minute. Needs a cadence sensor.</li>
         <li><strong>Power</strong> &ndash; the value in watts. Needs a power meter.</li>
+        <li><strong>Temperature</strong> &ndash; the value in degrees Celsius. Present in FIT and GPX
+        files; TCX has no temperature field.</li>
         <li><strong>Lap markers</strong> &ndash; the lap number and the running time of the current lap. Laps
         only exist inside <code>.fit</code> and <code>.tcx</code> files; GPX has no notion of them, so this overlay stays
         unavailable there.</li>

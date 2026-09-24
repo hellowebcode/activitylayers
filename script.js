@@ -8,11 +8,11 @@ var UI_DE={
   'Export':'Export',
   'Local by design':'Bewusst lokal',
   'Your activity data stays in this browser.':'Deine Aktivitätsdaten bleiben in diesem Browser.',
-  'Nine data layers.':'Neun Datenebenen.',
+  'Ten data layers.':'Zehn Datenebenen.',
   'Ready for the edit.':'Bereit für den Schnitt.',
   'Layer your activity':'Deine Aktivität –',
   'into every frame.':'in jedem Frame sichtbar.',
-  'Create nine animated overlays for':'Erstelle aus GPX-, FIT- und TCX-Dateien neun animierte Overlays für',
+  'Create ten animated overlays for':'Erstelle aus GPX-, FIT- und TCX-Dateien zehn animierte Overlays für',
   'and':'und',
   'from GPX, FIT and TCX files — processed locally in your browser. Lap markers need a .fit or .tcx file - every other overlay works with all three.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit- oder .tcx-Datei, alle übrigen Overlays funktionieren mit allen drei Formaten.',
   '⏱ GPS Sync Calibration Helper':'⏱ GPS-Synchronisierung kalibrieren',
@@ -116,6 +116,9 @@ var UI_DE={
   'Lap Marker overlay style':'Rundenmarken-Overlay-Stil',
   'Cadence Overlay':'Trittfrequenz-Overlay',
   'Power Overlay':'Leistungs-Overlay',
+  'Temperature overlay style':'Temperatur-Overlay-Stil',
+  'Temperature Overlay':'Temperatur-Overlay',
+  '.jsx script (temperature value)':'.jsx-Skript (Temperaturwert)',
   'Lap Marker Overlay':'Rundenmarken-Overlay',
   '.setting file (.fit and .tcx only)':'.setting-Datei (nur .fit und .tcx)',
   '.jsx script (cadence value)':'.jsx-Skript (Trittfrequenzwert)',
@@ -148,7 +151,7 @@ var UI_DE={
   '.jsx script (heart + value)':'.jsx-Skript (Herz + Wert)',
   '.jsx script (wedge + value)':'.jsx-Skript (Keil + Wert)',
   '.jsx script (distance value)':'.jsx-Skript (Distanzwert)',
-  'Visualisation only — this map is never part of an export. The nine overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die neun Overlays oben bleiben davon unberührt.'
+  'Visualisation only — this map is never part of an export. The ten overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die zehn Overlays oben bleiben davon unberührt.'
 };
 
 var lastMaxSpeedValue=null;
@@ -234,6 +237,8 @@ function localizeRuntimeText(message){
     'No GPS data in this file':'Diese Datei enthält keine GPS-Daten',
     'No cadence data in this file':'Diese Datei enth\u00e4lt keine Trittfrequenzdaten',
     'No power data in this file':'Diese Datei enth\u00e4lt keine Leistungsdaten',
+    'No temperature data in this file':'Diese Datei enth\u00e4lt keine Temperaturdaten',
+    'Building Temperature overlay…':'Temperatur-Overlay wird erstellt …',
     'No lap data in this file (.fit and .tcx files only)':'Diese Datei enth\u00e4lt keine Rundendaten (nur .fit und .tcx)',
     'Building Cadence overlay\u2026':'Trittfrequenz-Overlay wird erstellt \u2026',
     'Building Power overlay\u2026':'Leistungs-Overlay wird erstellt \u2026',
@@ -290,11 +295,11 @@ var savedUILanguage='en';
 try{savedUILanguage=localStorage.getItem('overlayUILanguage')||'en';}catch(e){}
 applyUILanguage(savedUILanguage);
 
-var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';
+var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], tempData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';
 var btnIds=['btnSetting','btnRouteSetting','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
-  'btnCadSetting','btnPowerSetting','btnLapSetting',
+  'btnCadSetting','btnPowerSetting','btnTempSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
-  'btnCadJsx','btnPowerJsx','btnLapJsx'];
+  'btnCadJsx','btnPowerJsx','btnTempJsx','btnLapJsx'];
 var syncCalcResult={offset:null,drift:null};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0'};
@@ -423,6 +428,10 @@ document.getElementById('resetPower').addEventListener('click',function(){
   document.getElementById('powerColor').value='#f59e0b';
   document.getElementById('powerSize').value='0.07';
 });
+document.getElementById('resetTemp').addEventListener('click',function(){
+  document.getElementById('tempColor').value='#0ea5e9';
+  document.getElementById('tempSize').value='0.07';
+});
 document.getElementById('resetLap').addEventListener('click',function(){
   document.getElementById('lapColor').value='#38bdf8';
   document.getElementById('lapSize').value='0.06';
@@ -542,15 +551,30 @@ function parseFIT(buffer,name){
     function u32be(p){need(p,4);return ((bytes[p]<<24)|(bytes[p+1]<<16)|(bytes[p+2]<<8)|bytes[p+3])>>>0;}
     function u16(p){need(p,2);return bytes[p]|(bytes[p+1]<<8);}
     function u8(p){need(p,1);return bytes[p];}
+    // Basistyp -> [Bytebreite, vorzeichenbehaftet, Ungueltigkeitswert]
+    var FIT_TYPEN={
+      0x00:[1,false,0xFF],       0x01:[1,true,0x7F],        0x02:[1,false,0xFF],
+      0x83:[2,true,0x7FFF],      0x84:[2,false,0xFFFF],
+      0x85:[4,true,0x7FFFFFFF],  0x86:[4,false,0xFFFFFFFF],
+      0x88:[4,false,null],       0x89:[8,false,null],
+      0x0A:[1,false,0],          0x8B:[2,false,0],          0x8C:[4,false,0],
+      0x0D:[1,false,0xFF]
+    };
     function readFields(def){
       var sp=pos,rec={};
       need(sp,def.dataSize);
       for(var f=0;f<def.fields.length;f++){
-        var fd=def.fields[f],val;
+        var fd=def.fields[f],typ=FIT_TYPEN[fd.bt],val;
         if(fd.size===4)val=fd.arch===0?u32(pos):u32be(pos);
         else if(fd.size===2)val=fd.arch===0?u16(pos):((bytes[pos]<<8)|bytes[pos+1]);
         else if(fd.size===1)val=u8(pos);
         else{pos+=fd.size;continue;}
+        // nur wenn Basistyp und Feldgroesse zusammenpassen, sonst bleibt es beim Rohwert
+        if(typ&&typ[0]===fd.size&&typ[1]){
+          if(fd.size===1&&val>0x7F)val-=0x100;
+          else if(fd.size===2&&val>0x7FFF)val-=0x10000;
+          else if(fd.size===4&&val>0x7FFFFFFF)val-=0x100000000;
+        }
         rec[fd.num]=val; pos+=fd.size;
       }
       pos=sp+def.dataSize; return rec;
@@ -570,7 +594,7 @@ function parseFIT(buffer,name){
       var lat=rec[0],lon=rec[1];
       var alt=rec[2]!==undefined?rec[2]:rec[78];
       var spd=rec[6]!==undefined?rec[6]:rec[73];
-      var hr=rec[3], cad=rec[4], pwr=rec[7], dst=rec[5];
+      var hr=rec[3], cad=rec[4], pwr=rec[7], dst=rec[5], tmp=rec[13];
       if(ts!==undefined&&ts!==0xFFFFFFFF&&lat!==undefined&&lat!==0x7FFFFFFF&&lon!==undefined&&lon!==0x7FFFFFFF){
         var latDeg=(lat|0)*(180/Math.pow(2,31)), lonDeg=(lon|0)*(180/Math.pow(2,31));
         if(!validLatLon(latDeg,lonDeg)) return;
@@ -582,7 +606,8 @@ function parseFIT(buffer,name){
           hr:(hr!==undefined&&hr!==0xFF&&hr!==0xFFFF)?hr:null,
           cad:(cad!==undefined&&cad!==0xFF)?cad:null,
           power:(pwr!==undefined&&pwr!==0xFFFF&&pwr!==0xFFFFFFFF)?pwr:null,
-          dist:(dst!==undefined&&dst!==0xFFFFFFFF)?dst/100:null});
+          dist:(dst!==undefined&&dst!==0xFFFFFFFF)?dst/100:null,
+          temp:(tmp!==undefined&&tmp!==0x7F&&tmp>=-100&&tmp<=100)?tmp:null});
       }
     }
     while(pos<dataEnd){
@@ -603,7 +628,7 @@ function parseFIT(buffer,name){
         pos++;var arch=bytes[pos++];
         var gmn=arch===0?u16(pos):(bytes[pos]<<8)|bytes[pos+1]; pos+=2;
         var nf=bytes[pos++],flds=[],ds=0;
-        for(var f=0;f<nf;f++){flds.push({num:bytes[pos++],size:bytes[pos++],arch:arch});bytes[pos++];ds+=flds[flds.length-1].size;}
+        for(var f=0;f<nf;f++){var fn=bytes[pos++],fs=bytes[pos++],fb=bytes[pos++];flds.push({num:fn,size:fs,bt:fb,arch:arch});ds+=fs;}
         if(h&0x20){var nd=bytes[pos++];for(var d=0;d<nd;d++){ds+=bytes[pos+1];pos+=3;}}
         definitions[lmn]={globalMsgNum:gmn,fields:flds,dataSize:ds,arch:arch};
       } else {
@@ -699,7 +724,8 @@ function parseTCX(text,name){
         hr:hrEl?tcxZahl(hrEl,'Value',1,255):null,
         cad:tcxZahl(pt,'Cadence',0,254),
         power:tcxZahl(pt,'Watts',0,3000),
-        dist:tcxZahl(pt,'DistanceMeters',0,1e7)});
+        dist:tcxZahl(pt,'DistanceMeters',0,1e7),
+        temp:null});
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
@@ -738,6 +764,7 @@ function parseGPX(text,name){
           hr:getExtNumber(pt,['hr','heartrate'],1,255),
           cad:getExtNumber(pt,['cad','cadence'],0,254),
           power:getExtNumber(pt,['power','pwr'],0,3000),
+          temp:getExtNumber(pt,['atemp','temperature'],-100,100),
           dist:null});
       } else skipped++;
     }
@@ -919,6 +946,7 @@ function reprocess(){
   hrData=rawPoints.filter(function(p){return p.hr!==null&&!isNaN(p.hr);}).map(function(p){return{time:p.time,hr:p.hr};});
   cadData=rawPoints.filter(function(p){return p.cad!==null&&p.cad!==undefined&&!isNaN(p.cad);}).map(function(p){return{time:p.time,cad:p.cad};});
   powerData=rawPoints.filter(function(p){return p.power!==null&&p.power!==undefined&&!isNaN(p.power);}).map(function(p){return{time:p.time,power:p.power};});
+  tempData=rawPoints.filter(function(p){return p.temp!==null&&p.temp!==undefined&&!isNaN(p.temp);}).map(function(p){return{time:p.time,temp:p.temp};});
   gradeData=buildGradeData(rawPoints);
   distData=buildDistData(rawPoints);
   totalDistM=distData.length?distData[distData.length-1].distM:0;
@@ -1275,6 +1303,7 @@ function makeFilename(suffix,ext){
   return (nm||'overlay')+'.'+ext;
 }
 
+// Jedes Bedienelement, das ein Generator liest, gehoert in diese Liste.
 var CONTROL_IDS=[
   'cadColor',
   'cadSize',
@@ -1315,6 +1344,8 @@ var CONTROL_IDS=[
   'sg1',
   'sg2',
   'shadowColor',
+  'tempColor',
+  'tempSize',
   'shadowOffset',
   'smooth',
   'sv1',
@@ -2893,7 +2924,7 @@ function promptSupport(){
 
 function overlayLabels(){
   var de=(typeof uiLanguage!=='undefined'&&uiLanguage==='de');
-  return { cad: de?'U/min':'rpm', power:'W', lap: de?'Runde':'Lap' };
+  return { cad: de?'U/min':'rpm', power:'W', lap: de?'Runde':'Lap', temp:'\u00b0C' };
 }
 
 function timeToFrame(tMs,t0){
@@ -3051,6 +3082,19 @@ function buildCadenceSetting(){
   });
 }
 
+function buildTempSetting(){
+  var c=cfg();
+  if(!tempData.length) return null;
+  return buildTextOverlaySetting({
+    group:'Temperature',
+    rgb:hexToRgb(c.tempColor),
+    size:parseFloat(c.tempSize)||0.07,
+    expr:'string.format("%d '+overlayLabels().temp+'", floor(Temperature))',
+    drives:[{name:'Temperature',label:'Temperature',min:-40,max:60,
+             kf:buildKeyframeList(tempData,function(p){return Math.round(p.temp);})}]
+  });
+}
+
 function buildPowerSetting(){
   var c=cfg();
   if(!powerData.length) return null;
@@ -3087,6 +3131,18 @@ function buildCadenceJsx(){
   var L=[aeHead('Cadence Overlay')];
   L.push('  var num=textLayer("Cadence","0",[250,880],'+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
+function buildTempJsx(){
+  var c=cfg();
+  if(!tempData.length) return null;
+  var size=(parseFloat(c.tempSize)||0.07)*AE_H;
+  var kf=buildKeyframeList(tempData,function(p){return p.temp;});
+  var L=[aeHead('Temperature Overlay')];
+  L.push('  var num=textLayer("Temperature","0",[250,880],'+aeNum(size)+','+aeCol(c.tempColor)+',false);');
+  L.push('  driveText(num,"Temperature",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().temp+'";')+');');
   L.push(aeTail());
   return L.join('\n');
 }
@@ -3129,6 +3185,7 @@ function buildLapJsx(){
  ['btnMileJsx',buildMileJsx,'Mile_Marker_Overlay'],
  ['btnCadJsx',buildCadenceJsx,'Cadence_Overlay'],
  ['btnPowerJsx',buildPowerJsx,'Power_Overlay'],
+ ['btnTempJsx',buildTempJsx,'Temperature_Overlay'],
  ['btnLapJsx',buildLapJsx,'Lap_Marker_Overlay']
 ].forEach(function(spec){
   document.getElementById(spec[0]).addEventListener('click',function(){
@@ -3174,6 +3231,13 @@ document.getElementById('btnPowerSetting').addEventListener('click',function(){
   setStatus('Downloaded Power_Overlay.setting','ok');
 });
 
+document.getElementById('btnTempSetting').addEventListener('click',function(){
+  var t=buildTempSetting();
+  if(!t){setStatus('No temperature data in this file','err');return;}
+  dl(t,makeFilename('Temperature_Overlay','setting'));
+  setStatus('Downloaded Temperature_Overlay.setting','ok');
+});
+
 document.getElementById('btnLapSetting').addEventListener('click',function(){
   var c=buildLapSetting();
   if(!c){setStatus('No lap data in this file (.fit and .tcx files only)','err');return;}
@@ -3203,6 +3267,7 @@ function exportSteps(){
     {kind:'fusion',label:'Building Mile Marker overlay…',run:function(){return distData.length?buildMileSetting():null;},name:function(){return makeFilename('Mile_Marker_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Cadence overlay…',run:function(){return buildCadenceSetting();},name:function(){return makeFilename('Cadence_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Power overlay…',run:function(){return buildPowerSetting();},name:function(){return makeFilename('Power_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Temperature overlay…',run:function(){return buildTempSetting();},name:function(){return makeFilename('Temperature_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Lap Marker overlay…',run:function(){return buildLapSetting();},name:function(){return makeFilename('Lap_Marker_Overlay','setting');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildSpeedJsx();},name:function(){return makeFilename('Speed_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildRouteJsx();},name:function(){return makeFilename('Route_Overlay_AE','jsx');},optional:true},
@@ -3212,6 +3277,7 @@ function exportSteps(){
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildMileJsx();},name:function(){return makeFilename('Mile_Marker_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildCadenceJsx();},name:function(){return makeFilename('Cadence_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildPowerJsx();},name:function(){return makeFilename('Power_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildTempJsx();},name:function(){return makeFilename('Temperature_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildLapJsx();},name:function(){return makeFilename('Lap_Marker_Overlay_AE','jsx');},optional:true}
   ];
 }

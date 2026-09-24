@@ -38,6 +38,7 @@ def punkte():
             'hr':  None if i < 30 else int(128 + 34 * (0.5 - 0.5 * math.cos(t)) + 6 * math.sin(7 * t)),
             'cad': int(82 + 9 * math.cos(t + 0.6)),
             'pwr': int(205 + 95 * (0.5 - 0.5 * math.cos(t)) + 18 * math.sin(4 * t)),
+            'tmp': int(round(4 - 18 * (0.5 - 0.5 * math.cos(t)))),
         })
     if len(aus) > 1:
         aus[0]['spd'] = aus[1]['spd']
@@ -59,8 +60,8 @@ def schreibe_fit(pts, pfad):
     d = bytearray()
     SC = 2**31 / 180.0
     # Definition, lokale Art 0 -> Message 20 (record)
-    d += bytes([0x40, 0, 0]); u16(d, 20); d += bytes([9])
-    for num, size, typ in ((253,4,0x86),(0,4,0x85),(1,4,0x85),(78,4,0x86),(5,4,0x86),(6,2,0x84),(3,1,0x02),(4,1,0x02),(7,2,0x84)):
+    d += bytes([0x40, 0, 0]); u16(d, 20); d += bytes([10])
+    for num, size, typ in ((253,4,0x86),(0,4,0x85),(1,4,0x85),(78,4,0x86),(5,4,0x86),(6,2,0x84),(3,1,0x02),(4,1,0x02),(7,2,0x84),(13,1,0x01)):
         d += bytes([num, size, typ])
     for p in pts:
         d += bytes([0x00])
@@ -73,6 +74,7 @@ def schreibe_fit(pts, pfad):
         d += bytes([0xFF if p['hr'] is None else p['hr']])
         d += bytes([p['cad']])
         u16(d, p['pwr'])
+        d += struct.pack('<b', p['tmp'])
     # Definition, lokale Art 1 -> Message 19 (lap)
     d += bytes([0x41, 0, 0]); u16(d, 19); d += bytes([4])
     for num, size, typ in ((253,4,0x86),(2,4,0x86),(7,4,0x86),(9,4,0x86)):
@@ -118,6 +120,7 @@ def schreibe_gpx(pts, pfad, mit_sensoren):
         z.append('      <time>%s</time>' % zeit(p['i']))
         if mit_sensoren:
             z.append('      <extensions><power>%d</power><gpxtpx:TrackPointExtension>' % p['pwr'])
+            z.append('        <gpxtpx:atemp>%d</gpxtpx:atemp>' % p['tmp'])
             if p['hr'] is not None:
                 z.append('        <gpxtpx:hr>%d</gpxtpx:hr>' % p['hr'])
             z.append('        <gpxtpx:cad>%d</gpxtpx:cad>' % p['cad'])
