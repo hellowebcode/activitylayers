@@ -199,7 +199,7 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .attrib-link{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent)}
 .attrib-link:hover{color:var(--accent);text-decoration-color:var(--accent)}
 .legal-link{font-size:12px;font-weight:550}
-.trademark-line{margin:7px 0 0;max-width:none;color:var(--faint);font-family:var(--mono);font-size:9px;line-height:1.6;letter-spacing:.01em}
+.trademark-line{margin:7px 0 0;max-width:none;color:var(--faint);font-family:var(--mono);font-size:10px;line-height:1.6;letter-spacing:.01em}
 
 .dl-section-label{margin:18px 0 9px;color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .dl-section-label:first-of-type{margin-top:0}
