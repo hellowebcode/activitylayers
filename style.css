@@ -202,9 +202,7 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .map-hint::before{flex:none;width:5px;height:5px;border-radius:50%;background:var(--success);content:''}
 .site-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin:34px 0 0;padding:18px 0 0;border-top:1px solid var(--border);text-align:left}
 .footer-text{min-width:0}
-.footer-github{display:inline-flex;flex:none;color:var(--muted);transition:color .16s}
-.footer-github:hover{color:var(--accent)}
-.footer-github svg{display:block;width:22px;height:22px}
+
 .attrib-line{margin:0;color:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:.02em}
 .attrib-link{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent)}
 .attrib-link:hover{color:var(--accent);text-decoration-color:var(--accent)}
@@ -242,11 +240,11 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .help .step{display:inline-grid;place-items:center;width:30px;height:30px;flex:none;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-family:var(--mono);font-size:11px;font-weight:600}
 .help h3{margin-top:22px;color:var(--accent)}
 .hint-box{margin:14px 0 0;padding:11px 14px;border-left:3px solid var(--success);border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--success) 8%,transparent)}
-.header-info{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--surface) 94%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(12px);color:var(--muted);text-decoration:none;transition:color .16s,background .16s}
-.header-info:hover{background:var(--accent-soft);color:var(--accent)}
-.header-info:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.header-info .ico{width:20px;height:20px}
-@media (max-width:420px){.header-info{width:37px;height:37px}.header-info .ico{width:17px;height:17px}.studio-sidebar .header-coffee{width:37px;min-width:37px;height:37px;min-height:37px}}
+.header-info,.footer-github{display:grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--surface) 94%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(12px);color:var(--muted);text-decoration:none;transition:color .16s,background .16s}
+.header-info:hover,.footer-github:hover{background:var(--accent-soft);color:var(--accent)}
+.header-info:focus-visible,.footer-github:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.header-info .ico,.footer-github .ico{width:20px;height:20px}
+@media (max-width:420px){.header-info,.footer-github{width:37px;height:37px}.header-info .ico,.footer-github .ico{width:17px;height:17px}.studio-sidebar .header-coffee{width:37px;min-width:37px;height:37px;min-height:37px}}
 .hint p{margin:0 0 10px}
 .hint p:last-child{margin-bottom:0}
 .sync-formula{padding:8px 11px;border-radius:8px;background:var(--surface3);font-family:var(--mono);font-size:11px;color:var(--text-soft)}
