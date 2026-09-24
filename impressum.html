@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-title-de="Impressum — Activity Layers" data-title-en="Legal notice — Activity Layers">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,30 +75,6 @@
     <p class="trademark-line">DaVinci Resolve is a registered trademark of Blackmagic Design Pty Ltd. Adobe and After Effects are registered trademarks of Adobe Inc. Activity Layers is not affiliated with Blackmagic Design or Adobe.</p>
   </footer>
 </div>
-<script>
-(function(){
-  var T={de:'Impressum — Activity Layers', en:'Legal notice — Activity Layers'};
-  var B={de:'Zur\u00fcck zum Tool', en:'Back to the tool'};
-  function apply(lang){
-    lang=(lang==='en')?'en':'de';
-    document.documentElement.lang=lang;
-    document.title=T[lang];
-    document.querySelector('[data-back]').textContent=B[lang];
-    document.querySelectorAll('[data-legal]').forEach(function(s){ s.hidden=(s.getAttribute('data-legal')!==lang); });
-    document.querySelectorAll('[data-legal-lang]').forEach(function(b){
-      var on=b.getAttribute('data-legal-lang')===lang;
-      b.classList.toggle('active',on);
-      b.setAttribute('aria-pressed',on?'true':'false');
-    });
-    try{ localStorage.setItem('overlayUILanguage',lang); }catch(e){}
-  }
-  document.querySelectorAll('[data-legal-lang]').forEach(function(b){
-    b.addEventListener('click',function(){ apply(b.getAttribute('data-legal-lang')); });
-  });
-  var saved='de';
-  try{ saved=localStorage.getItem('overlayUILanguage')||'de'; }catch(e){}
-  apply(saved);
-})();
-</script>
+<script src="lang-toggle.js"></script>
 </body>
 </html>
