@@ -117,10 +117,15 @@ sandbox.globalThis = sandbox;
 sandbox.self = sandbox;
 
 const ctx = vm.createContext(sandbox);
-const quelle = fs.readFileSync(path.join(WURZEL, 'script.js'), 'utf8');
+// Dieselbe Reihenfolge wie in index.html. Sie aus dem Markup zu lesen haelt
+// Test und Seite zusammen: eine neue Datei wirkt hier ohne weiteres Zutun.
+const DATEIEN = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+if (!DATEIEN.length) throw new Error('index.html bindet keine js/-Dateien ein');
 let ladefehler = null;
-try { vm.runInContext(quelle, ctx, { filename: 'script.js' }); }
-catch (e) { ladefehler = e; }
+for (const datei of DATEIEN) {
+  try { vm.runInContext(fs.readFileSync(path.join(WURZEL, datei), 'utf8'), ctx, { filename: datei }); }
+  catch (e) { ladefehler = new Error(datei + ': ' + e.message); break; }
+}
 
 /* ---------- Prüflauf ---------- */
 const GENERATOREN = [
@@ -202,7 +207,7 @@ function lauf() {
 }
 
 if (ladefehler && typeof ctx.parseFIT !== 'function') {
-  console.error('script.js liess sich nicht laden: ' + ladefehler.message);
+  console.error('Das Programm liess sich nicht laden - ' + ladefehler.message);
   process.exit(2);
 }
 if (ladefehler) console.error('Hinweis: Ladefehler ignoriert (' + ladefehler.message + ')');

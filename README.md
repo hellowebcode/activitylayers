@@ -17,7 +17,9 @@ Build-Schritt: Der Inhalt der Wurzel wird unverändert ins Webroot gespiegelt.
 | `index.html` | das Tool |
 | `hilfe.html` | Anleitung, deutsch und englisch |
 | `impressum.html`, `datenschutz.html` | rechtliche Angaben, zweisprachig |
-| `style.css`, `script.js` | Oberfläche und gesamte Logik |
+| `style.css` | Oberfläche |
+| `js/` | die Logik, nach Aufgaben getrennt (siehe unten) |
+| `og-image.png` | Vorschaubild für geteilte Links, gebaut aus `tools/make-og-image.py` |
 | `lang-toggle.js` | Sprachumschalter der Unterseiten |
 | `favicon.svg`, `assets/icons/` | Symbole |
 | `examples/` | Beispieldateien zum Ausprobieren |
@@ -25,6 +27,26 @@ Build-Schritt: Der Inhalt der Wurzel wird unverändert ins Webroot gespiegelt.
 | `vendor/fonts/` | Inter und IBM Plex Mono, lokal ausgeliefert |
 | `vendor/jszip.min.js` | ZIP-Erzeugung für den Sammel-Download |
 | `vendor/leaflet/` | Kartenvorschau, lokal ausgeliefert |
+
+### Die Dateien unter `js/`
+
+Sie werden in dieser Reihenfolge eingebunden und teilen sich einen
+gemeinsamen Namensraum. Jede Datei enthält nur Deklarationen und die
+Ereignisbindungen ihres eigenen Bereichs; nichts ruft beim Laden etwas aus
+einer später eingebundenen Datei auf.
+
+| Datei | Inhalt |
+|---|---|
+| `i18n.js` | Wörterbuch und Sprachumschaltung |
+| `state.js` | der gemeinsame Zustand aus der geladenen Datei |
+| `settings.js` | Bedienelemente, Vorgaben, Synchronisierungsrechner, Dialoge |
+| `import.js` | Dateiannahme und die Leser für FIT, TCX und GPX |
+| `compute.js` | Glättung, Steigung, Distanz, Pace |
+| `preview.js` | Karte, Streckenriss, Tacho, Puls, Höhenprofil |
+| `fusion.js` | Ausgabe für DaVinci Resolve |
+| `after-effects.js` | Ausgabe für After Effects |
+| `text-overlays.js` | Overlays, die beide Formate aus einer Vorlage erzeugen |
+| `export.js` | Herunterladen einzelner Dateien und als ZIP |
 
 ## Externe Ressourcen
 
