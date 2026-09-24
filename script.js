@@ -444,19 +444,48 @@ function handleFile(file){
   }
 }
 
+var FIT_CRC_TABLE=[0x0000,0xCC01,0xD801,0x1400,0xF001,0x3C00,0x2800,0xE401,
+                   0xA001,0x6C00,0x7800,0xB401,0x5000,0x9C01,0x8801,0x4400];
+function fitCrc(bytes,from,to){
+  var crc=0;
+  for(var i=from;i<to;i++){
+    var b=bytes[i],t=FIT_CRC_TABLE[crc&0xF];
+    crc=(crc>>4)&0x0FFF; crc=crc^t^FIT_CRC_TABLE[b&0xF];
+    t=FIT_CRC_TABLE[crc&0xF];
+    crc=(crc>>4)&0x0FFF; crc=crc^t^FIT_CRC_TABLE[(b>>4)&0xF];
+  }
+  return crc;
+}
+
 function parseFIT(buffer,name){
   try{
     var bytes=new Uint8Array(buffer),definitions={},points=[],lastTimestamp=undefined;
-    var pos=bytes[0],dataEnd=bytes.length-2;
-    function u32(p){return bytes[p]|(bytes[p+1]<<8)|(bytes[p+2]<<16)|(bytes[p+3]<<24);}
-    function u16(p){return bytes[p]|(bytes[p+1]<<8);}
+    if(bytes.length<14) throw new Error('file too short to be a FIT file');
+    var headerSize=bytes[0];
+    if(headerSize!==12&&headerSize!==14) throw new Error('unexpected FIT header size ('+headerSize+')');
+    if(String.fromCharCode(bytes[8],bytes[9],bytes[10],bytes[11])!=='.FIT')
+      throw new Error('missing .FIT signature — this is not a FIT file');
+    var declared=(bytes[4]|(bytes[5]<<8)|(bytes[6]<<16)|(bytes[7]<<24))>>>0;
+    var dataEnd=headerSize+declared;
+    if(declared===0||dataEnd+2>bytes.length)
+      throw new Error('declared data size does not match the file (' + declared + ' bytes)');
+    var storedCrc=bytes[dataEnd]|(bytes[dataEnd+1]<<8);
+    if(storedCrc!==0&&fitCrc(bytes,0,dataEnd)!==storedCrc)
+      throw new Error('checksum mismatch — the file appears to be damaged');
+    var pos=headerSize;
+    function need(p,n){ if(p+n>dataEnd) throw new Error('record runs past the end of the file'); }
+    function u32(p){need(p,4);return (bytes[p]|(bytes[p+1]<<8)|(bytes[p+2]<<16)|(bytes[p+3]<<24))>>>0;}
+    function u32be(p){need(p,4);return ((bytes[p]<<24)|(bytes[p+1]<<16)|(bytes[p+2]<<8)|bytes[p+3])>>>0;}
+    function u16(p){need(p,2);return bytes[p]|(bytes[p+1]<<8);}
+    function u8(p){need(p,1);return bytes[p];}
     function readFields(def){
       var sp=pos,rec={};
+      need(sp,def.dataSize);
       for(var f=0;f<def.fields.length;f++){
         var fd=def.fields[f],val;
-        if(fd.size===4)val=fd.arch===0?u32(pos):((bytes[pos]<<24)|(bytes[pos+1]<<16)|(bytes[pos+2]<<8)|bytes[pos+3]);
+        if(fd.size===4)val=fd.arch===0?u32(pos):u32be(pos);
         else if(fd.size===2)val=fd.arch===0?u16(pos):((bytes[pos]<<8)|bytes[pos+1]);
-        else if(fd.size===1)val=bytes[pos];
+        else if(fd.size===1)val=u8(pos);
         else{pos+=fd.size;continue;}
         rec[fd.num]=val; pos+=fd.size;
       }
@@ -469,7 +498,9 @@ function parseFIT(buffer,name){
       var spd=rec[6]!==undefined?rec[6]:rec[73];
       var hr=rec[3];
       if(ts!==undefined&&ts!==0xFFFFFFFF&&lat!==undefined&&lat!==0x7FFFFFFF&&lon!==undefined&&lon!==0x7FFFFFFF){
-        points.push({time:(ts+FIT_EPOCH)*1000,lat:lat*(180/Math.pow(2,31)),lon:lon*(180/Math.pow(2,31)),
+        var latDeg=(lat|0)*(180/Math.pow(2,31)), lonDeg=(lon|0)*(180/Math.pow(2,31));
+        if(!validLatLon(latDeg,lonDeg)) return;
+        points.push({time:(ts+FIT_EPOCH)*1000,lat:latDeg,lon:lonDeg,
           ele:(alt!==undefined&&alt!==0xFFFF)?(alt/5-500):null,
           speed:(spd!==undefined&&spd!==0xFFFF&&spd!==0xFFFFFFFF)?spd/1000:null,
           hr:(hr!==undefined&&hr!==0xFF&&hr!==0xFFFF)?hr:null});
@@ -536,15 +567,19 @@ function parseGPX(text,name){
     var trkpts=doc.querySelectorAll('trkpt');
     if(!trkpts.length){setStatus('No track points found','err');return;}
     rawPoints=[];
+    var skipped=0;
     for(var i=0;i<trkpts.length;i++){
       var pt=trkpts[i],timeEl=pt.querySelector('time'),eleEl=pt.querySelector('ele');
       var lat=parseFloat(pt.getAttribute('lat')),lon=parseFloat(pt.getAttribute('lon'));
       var t=timeEl?new Date(timeEl.textContent).getTime():null;
-      if(t&&!isNaN(t)&&!isNaN(lat)&&!isNaN(lon))
-        rawPoints.push({time:t,lat:lat,lon:lon,ele:eleEl?parseFloat(eleEl.textContent):null,speed:getSpeedFromPoint(pt),hr:null});
+      if(t&&isFinite(t)&&validLatLon(lat,lon)){
+        var ele=eleEl?parseFloat(eleEl.textContent):null;
+        rawPoints.push({time:t,lat:lat,lon:lon,ele:(ele!==null&&isFinite(ele))?ele:null,speed:getSpeedFromPoint(pt),hr:null});
+      } else skipped++;
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
+    if(skipped)console.warn('Activity Layers: '+skipped+' track point(s) skipped, coordinates out of range or not finite');
     totalDistM=0;
     for(var i=1;i<rawPoints.length;i++)totalDistM+=haversine(rawPoints[i-1].lat,rawPoints[i-1].lon,rawPoints[i].lat,rawPoints[i].lon);
     dropZone.querySelector('.drop-label').textContent=name;
@@ -552,6 +587,11 @@ function parseGPX(text,name){
     reprocess();
     jumpToSettings();
   }catch(e){console.error(e);setStatus('Error: '+e.message,'err');}
+}
+
+function validLatLon(lat,lon){
+  return typeof lat==='number'&&typeof lon==='number'&&isFinite(lat)&&isFinite(lon)
+      && lat>=-90&&lat<=90&&lon>=-180&&lon<=180;
 }
 
 function haversine(la1,lo1,la2,lo2){
@@ -666,22 +706,20 @@ function smooth(data, win) {
 
 function buildGradeData(pts){
   var elevPts=pts.filter(function(p){return p.ele!==null&&!isNaN(p.ele);});
-  if(elevPts.length<2) return [];
-  var windowM=15;
-  var out=[];
-  for(var i=0;i<elevPts.length;i++){
-    var d0=0,j=i;
-
-    while(j>0 && d0<windowM/2){ d0+=haversine(elevPts[j-1].lat,elevPts[j-1].lon,elevPts[j].lat,elevPts[j].lon); j--; }
-    var lo=j;
-    var d1=0,k=i;
-    while(k<elevPts.length-1 && d1<windowM/2){ d1+=haversine(elevPts[k].lat,elevPts[k].lon,elevPts[k+1].lat,elevPts[k+1].lon); k++; }
-    var hi=k;
-    var distM=0;
-    for(var m=lo;m<hi;m++) distM+=haversine(elevPts[m].lat,elevPts[m].lon,elevPts[m+1].lat,elevPts[m+1].lon);
+  var n=elevPts.length;
+  if(n<2) return [];
+  var half=15/2;
+  var cum=new Float64Array(n);
+  for(var c=1;c<n;c++)
+    cum[c]=cum[c-1]+haversine(elevPts[c-1].lat,elevPts[c-1].lon,elevPts[c].lat,elevPts[c].lon);
+  var out=new Array(n), lo=0, hi=0;
+  for(var i=0;i<n;i++){
+    while(lo+1<=i && cum[i]-cum[lo+1]>=half) lo++;
+    if(hi<i) hi=i;
+    while(hi<n-1 && cum[hi]-cum[i]<half) hi++;
+    var distM=cum[hi]-cum[lo];
     var elevDiff=elevPts[hi].ele-elevPts[lo].ele;
-    var pct=distM>1 ? (elevDiff/distM)*100 : 0;
-    out.push({time:elevPts[i].time, pct:pct});
+    out[i]={time:elevPts[i].time, pct:distM>1?(elevDiff/distM)*100:0};
   }
   return out;
 }
@@ -775,6 +813,11 @@ function drawRoute(){
 
 var MAP_TILE=256, MAP_MAX_TILES=24, mapLoaded=false;
 
+function clampTile(v,n){
+  if(!isFinite(v)) return 0;
+  var max=Math.max(0,n-1);
+  return Math.min(Math.max(Math.round(v),-max),2*max);
+}
 function lonToTileX(lon,z){ return (lon+180)/360*Math.pow(2,z); }
 function latToTileY(lat,z){
   var r=lat*Math.PI/180;
@@ -865,10 +908,20 @@ async function showMapPreview(){
   var cy=(latToTileY(b.minLat,z)+latToTileY(b.maxLat,z))/2*MAP_TILE;
   var ox=cx-W/2, oy=cy-H/2;
   var n=Math.pow(2,z);
+  if(!isFinite(ox)||!isFinite(oy)||!isFinite(n)){
+    document.getElementById('mapNote').textContent=localizeRuntimeText('Map could not be loaded');
+    return;
+  }
   var tx0=Math.floor(ox/MAP_TILE), tx1=Math.floor((ox+W)/MAP_TILE);
   var ty0=Math.floor(oy/MAP_TILE), ty1=Math.floor((oy+H)/MAP_TILE);
+  tx0=clampTile(tx0,n); tx1=clampTile(tx1,n);
+  ty0=clampTile(ty0,n); ty1=clampTile(ty1,n);
+  if(tx1<tx0||ty1<ty0||(tx1-tx0+1)*(ty1-ty0+1)>MAP_MAX_TILES){
+    document.getElementById('mapNote').textContent=localizeRuntimeText('Map could not be loaded');
+    return;
+  }
   var jobs=[];
-  for(var tx=tx0;tx<=tx1;tx++) for(var ty=ty0;ty<=ty1;ty++){
+  for(var tx=tx0;tx<=tx1&&jobs.length<MAP_MAX_TILES;tx++) for(var ty=ty0;ty<=ty1&&jobs.length<MAP_MAX_TILES;ty++){
     if(ty<0||ty>=n) continue;
     var wx=((tx%n)+n)%n;
     jobs.push({x:tx,y:ty,url:'https://tile.openstreetmap.org/'+z+'/'+wx+'/'+ty+'.png'});
