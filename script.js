@@ -282,6 +282,8 @@ function localizeRuntimeText(message){
   if(message.indexOf('File could not be read to the end')===0)
     return message.replace('File could not be read to the end — only ','Datei konnte nicht bis zum Ende gelesen werden — nur ')
                   .replace(' track points were used',' Routenpunkte verwendet');
+  if(message.indexOf('Some fields in this FIT file are declared')===0)
+    return 'Einzelne Felder dieser FIT-Datei sind mit einer unerwarteten Größe angegeben und wurden übergangen';
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
@@ -691,7 +693,7 @@ function fitCrc(bytes,from,to){
 
 function parseFIT(buffer,name){
   try{
-    var bytes=new Uint8Array(buffer),definitions={},points=[],laps=[],lastTimestamp=undefined,truncated=false;
+    var bytes=new Uint8Array(buffer),definitions={},points=[],laps=[],lastTimestamp=undefined,truncated=false,breitenfehler=false;
     if(bytes.length<14) throw new Error('file too short to be a FIT file');
     var headerSize=bytes[0];
     if(headerSize!==12&&headerSize!==14) throw new Error('unexpected FIT header size ('+headerSize+')');
@@ -722,8 +724,15 @@ function parseFIT(buffer,name){
     function readFields(def){
       var sp=pos,rec={};
       need(sp,def.dataSize);
+      var breiten=FIT_FELDBREITEN[def.globalMsgNum];
       for(var f=0;f<def.fields.length;f++){
         var fd=def.fields[f],typ=FIT_TYPEN[fd.bt],val;
+        // Ein ausgewertetes Feld mit abweichender Breite ist entweder eine Liste
+        // oder falsch deklariert. Beides als Einzelwert zu lesen ergaebe eine
+        // stille Falschangabe, deshalb bleibt es unbeachtet.
+        if(breiten&&breiten[fd.num]!==undefined&&breiten[fd.num]!==fd.size){
+          breitenfehler=true; pos+=fd.size; continue;
+        }
         if(fd.size===4)val=fd.arch===0?u32(pos):u32be(pos);
         else if(fd.size===2)val=fd.arch===0?u16(pos):((bytes[pos]<<8)|bytes[pos+1]);
         else if(fd.size===1)val=u8(pos);
@@ -739,6 +748,12 @@ function parseFIT(buffer,name){
       pos=sp+def.dataSize; return rec;
     }
     var FIT_EPOCH=631065600;
+    // Erwartete Bytebreite der Felder, die ausgewertet werden - Messpunkt (20)
+    // und Runde (19).
+    var FIT_FELDBREITEN={
+      20:{253:4,0:4,1:4,2:2,78:4,3:1,4:1,5:4,6:2,73:4,7:2,13:1},
+      19:{253:4,2:4,7:4}
+    };
     function tryEmitLap(rec){
       var st=rec[2], en=rec[253], el=rec[7];
       if(st===undefined||st===0xFFFFFFFF) return;
@@ -818,7 +833,12 @@ function parseFIT(buffer,name){
         else if(def.globalMsgNum===19) tryEmitLap(rec);
       }
     }
-    if(points.length<2){setStatus('No GPS track points found in FIT file','err');return;}
+    if(points.length<2){
+      setStatus(breitenfehler
+        ? 'Some fields in this FIT file are declared with an unexpected size and were skipped'
+        : 'No GPS track points found in FIT file','err');
+      return;
+    }
     points.sort(function(a,b){return a.time-b.time;});
     rawPoints=points;
     laps.sort(function(a,b){return a.start-b.start;});
@@ -829,6 +849,7 @@ function parseFIT(buffer,name){
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
     if(truncated) setStatus('File could not be read to the end — only '+rawPoints.length+' track points were used','err');
+    else if(breitenfehler) setStatus('Some fields in this FIT file are declared with an unexpected size and were skipped','err');
     jumpToSettings();
   }catch(e){console.error(e);setStatus('FIT parse error: '+e.message,'err');}
 }
@@ -1240,7 +1261,7 @@ function resetMapPreview(){
   var wrap=document.getElementById('mapPreviewWrap');
   if(!wrap) return;
   wrap.style.display=rawPoints.length?'block':'none';
-  var id=rawPoints.length?(rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time):null;
+  var id=rawPoints.length?trackKennung():null;
   if(mapLoaded&&id===lastMapTrackId) return;
   lastMapTrackId=id;
   mapLoaded=false;
@@ -1249,6 +1270,21 @@ function resetMapPreview(){
   var note=document.getElementById('mapNote');
   if(note) note.textContent=translateStaticValue('Loading map…',uiLanguage);
   if(rawPoints.length) showMapPreview();
+}
+
+// Punktzahl und Randzeiten allein unterscheiden zwei Tracks nicht: dieselbe
+// Tour als GPX und als FIT trifft in allen dreien zusammen, und die Karte
+// zeigte dann weiter die alte Route. Die Kennung fasst deshalb auch den
+// Streckenverlauf zusammen.
+function trackKennung(){
+  var h=0x811c9dc5;
+  for(var i=0;i<rawPoints.length;i++){
+    var p=rawPoints[i];
+    h^=Math.round(p.lat*1e5)|0; h=(h*0x01000193)>>>0;
+    h^=Math.round(p.lon*1e5)|0; h=(h*0x01000193)>>>0;
+  }
+  return rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time
+       +'|'+h.toString(16)+'|'+currentFilename;
 }
 
 function showMapPreview(){
