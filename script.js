@@ -277,6 +277,7 @@ function localizeRuntimeText(message){
   if(message.indexOf('Ready — ')===0) return 'Bereit — '+message.slice(8).replace(' points · ',' Punkte · ');
   if(message.indexOf('Downloaded ')===0) return message.slice(11)+' heruntergeladen';
   if(message.indexOf('FIT parse error: ')===0) return 'FIT-Verarbeitungsfehler: '+message.slice(17);
+  if(message.indexOf('Export failed: ')===0) return 'Export fehlgeschlagen: '+message.slice(15);
   if(message.indexOf('File too large: ')===0) return 'Datei zu groß: '+message.slice(16).replace(' — the limit is ',' — das Maximum sind ');
   if(message.indexOf('File could not be read to the end')===0)
     return message.replace('File could not be read to the end — only ','Datei konnte nicht bis zum Ende gelesen werden — nur ')
@@ -520,11 +521,15 @@ document.getElementById('syncCalc').addEventListener('click',function(){
   var res=document.getElementById('syncResult');
   var applyBtn=document.getElementById('syncApply');
   if(isNaN(v1)||isNaN(g1)){res.textContent=localizeRuntimeText('Enter event 1 values');res.style.color='var(--danger)';applyBtn.disabled=true;return;}
-  var offset=Math.round((v1-g1)*100)/100;
+  // Modell: video = gps * drift + offset. Mit zwei Ereignissen ergibt sich der
+  // Faktor aus beiden Differenzen; erst danach laesst sich der Versatz bestimmen.
+  // Vorher wurde der Versatz so berechnet, als waere der Faktor 1 - dadurch lag
+  // das erste Ereignis daneben, sobald es nicht am Trackanfang lag.
   var drift=1.0;
   if(!isNaN(v2)&&!isNaN(g2)&&g2!==g1){
-    drift=Math.round(((v2-offset)/g2)*100000)/100000;
+    drift=Math.round(((v2-v1)/(g2-g1))*100000)/100000;
   }
+  var offset=Math.round((v1-drift*g1)*100)/100;
   syncCalcResult={offset:offset,drift:drift};
   var msg=(uiLanguage==='de'?'GPS-Versatz: ':'GPS Offset: ')+offset+'s';
   if(!isNaN(v2)&&!isNaN(g2)&&g2!==g1) msg+=(uiLanguage==='de'?'   Abweichung: ':'   Drift: ')+drift;
@@ -746,8 +751,14 @@ function parseFIT(buffer,name){
     }
     function tryEmit(rec,ts){
       var lat=rec[0],lon=rec[1];
-      var alt=rec[2]!==undefined?rec[2]:rec[78];
-      var spd=rec[6]!==undefined?rec[6]:rec[73];
+      // Erst die Gueltigkeit pruefen, dann waehlen: Ein ungueltiges Standardfeld
+      // darf einen gueltigen Enhanced-Wert nicht verdraengen.
+      var altStd=(rec[2]!==undefined&&rec[2]!==0xFFFF)?rec[2]:undefined;
+      var altEnh=(rec[78]!==undefined&&rec[78]!==0xFFFFFFFF)?rec[78]:undefined;
+      var alt=(altStd!==undefined)?altStd:altEnh;
+      var spdStd=(rec[6]!==undefined&&rec[6]!==0xFFFF)?rec[6]:undefined;
+      var spdEnh=(rec[73]!==undefined&&rec[73]!==0xFFFFFFFF)?rec[73]:undefined;
+      var spd=(spdStd!==undefined)?spdStd:spdEnh;
       var hr=rec[3], cad=rec[4], pwr=rec[7], dst=rec[5], tmp=rec[13];
       if(ts!==undefined&&ts!==0xFFFFFFFF&&lat!==undefined&&lat!==0x7FFFFFFF&&lon!==undefined&&lon!==0x7FFFFFFF){
         var latDeg=(lat|0)*(180/Math.pow(2,31)), lonDeg=(lon|0)*(180/Math.pow(2,31));
@@ -779,18 +790,31 @@ function parseFIT(buffer,name){
 
       var isDefinition=(h&0x40)!==0, lmn=h&0x0F;
       if(isDefinition){
+        // Auch der Definitionssatz darf nicht ueber das Dateiende hinaus gelesen
+        // werden; sonst entstehen Felder aus Pruefsummenbytes.
+        if(pos+5>dataEnd){ truncated=true; break; }
         pos++;var arch=bytes[pos++];
         var gmn=arch===0?u16(pos):(bytes[pos]<<8)|bytes[pos+1]; pos+=2;
         var nf=bytes[pos++],flds=[],ds=0;
+        if(pos+nf*3>dataEnd){ truncated=true; break; }
         for(var f=0;f<nf;f++){var fn=bytes[pos++],fs=bytes[pos++],fb=bytes[pos++];flds.push({num:fn,size:fs,bt:fb,arch:arch});ds+=fs;}
-        if(h&0x20){var nd=bytes[pos++];for(var d=0;d<nd;d++){ds+=bytes[pos+1];pos+=3;}}
+        if(h&0x20){
+          if(pos+1>dataEnd){ truncated=true; break; }
+          var nd=bytes[pos++];
+          if(pos+nd*3>dataEnd){ truncated=true; break; }
+          for(var d=0;d<nd;d++){ds+=bytes[pos+1];pos+=3;}
+        }
         definitions[lmn]={globalMsgNum:gmn,fields:flds,dataSize:ds,arch:arch};
       } else {
         var def=definitions[lmn];
 
         if(!def){ truncated=true; break; }
         var rec=readFields(def);
-        if(def.globalMsgNum===20){var ts=rec[253];if(ts!==undefined&&ts!==0xFFFFFFFF)lastTimestamp=ts;tryEmit(rec,ts);}
+        // Die Referenzzeit fuer komprimierte Kopfbytes stammt laut Protokoll aus
+        // jeder Nachricht mit vollem Zeitstempel, nicht nur aus Messpunkten.
+        var ts=rec[253];
+        if(ts!==undefined&&ts!==0xFFFFFFFF) lastTimestamp=ts;
+        if(def.globalMsgNum===20) tryEmit(rec,ts);
         else if(def.globalMsgNum===19) tryEmitLap(rec);
       }
     }
@@ -811,12 +835,12 @@ function parseFIT(buffer,name){
 
 function getSpeedFromPoint(pt){
   var kids=pt.childNodes;
-  for(var i=0;i<kids.length;i++){if(kids[i].localName==='speed'){var v=parseFloat(kids[i].textContent);if(!isNaN(v))return v;}}
+  for(var i=0;i<kids.length;i++){if(kids[i].localName==='speed'){var v=parseFloat(kids[i].textContent);if(isFinite(v)&&v>=0&&v<=200)return v;}}
   for(var i=0;i<kids.length;i++){
     if(kids[i].localName==='extensions'){
       var all=kids[i].getElementsByTagName('*');
       for(var j=0;j<all.length;j++){
-        if(all[j].localName.toLowerCase()==='speed'){var v=parseFloat(all[j].textContent);if(!isNaN(v)&&v>=0)return v;}
+        if(all[j].localName.toLowerCase()==='speed'){var v=parseFloat(all[j].textContent);if(isFinite(v)&&v>=0&&v<=200)return v;}
       }
     }
   }
@@ -936,6 +960,13 @@ function parseGPX(text,name){
     jumpToSettings();
   }catch(e){console.error(e);setStatus('Error: '+e.message,'err');}
 }
+
+// Math.min.apply reicht das ganze Array als Argumentliste weiter und wirft bei
+// grossen Tracks einen RangeError. Schleife statt Argumentliste.
+function minOf(arr){ var m=Infinity; for(var i=0;i<arr.length;i++) if(arr[i]<m) m=arr[i]; return m; }
+function maxOf(arr){ var m=-Infinity; for(var i=0;i<arr.length;i++) if(arr[i]>m) m=arr[i]; return m; }
+
+function zahlOderVorgabe(v,vorgabe){ var n=parseFloat(v); return isFinite(n)?n:vorgabe; }
 
 function validElevation(e){
   return typeof e==='number'&&isFinite(e)&&e>=-500&&e<=20000;
@@ -1098,7 +1129,12 @@ function buildGradeData(pts){
 function reprocess(){
   var fps=parseFloat(document.getElementById('fps').value);
   var unit=document.getElementById('unit').value;
-  var win=(parseInt(document.getElementById('smooth').value)||0)*2+1;
+  // Die Angabe max="20" im Markup ist nur ein Hinweis fuer die Bedienung;
+  // ein getippter oder gespeicherter Wert kommt sonst ungebremst hier an.
+  var glaetten=parseInt(document.getElementById('smooth').value,10);
+  if(!isFinite(glaetten)||glaetten<0) glaetten=0;
+  if(glaetten>20) glaetten=20;
+  var win=glaetten*2+1;
   speedData=smooth(computeSpeeds(rawPoints,unit),win);
   hrData=rawPoints.filter(function(p){return p.hr!==null&&!isNaN(p.hr);}).map(function(p){return{time:p.time,hr:p.hr};});
   cadData=rawPoints.filter(function(p){return p.cad!==null&&p.cad!==undefined&&!isNaN(p.cad);}).map(function(p){return{time:p.time,cad:p.cad};});
@@ -1131,8 +1167,8 @@ function reprocess(){
 
 function project(pts,W,H){
   var lats=pts.map(function(p){return p.lat;}),lons=pts.map(function(p){return p.lon;});
-  var mnLa=Math.min.apply(null,lats),mxLa=Math.max.apply(null,lats);
-  var mnLo=Math.min.apply(null,lons),mxLo=Math.max.apply(null,lons);
+  var mnLa=minOf(lats),mxLa=maxOf(lats);
+  var mnLo=minOf(lons),mxLo=maxOf(lons);
   return pts.map(function(p){
     var x=(p.lon-mnLo)/(mxLo-mnLo||1)*W;
     var mr=Math.log(Math.tan(Math.PI/4+p.lat*Math.PI/360));
@@ -1175,8 +1211,8 @@ function drawRoute(){
   var ctx=setupHiDPICanvas(c,W,180);
   var pts=project(rawPoints,W-20,160);
   var xs=pts.map(function(p){return p.x;}),ys=pts.map(function(p){return p.y;});
-  var mnX=Math.min.apply(null,xs),mxX=Math.max.apply(null,xs);
-  var mnY=Math.min.apply(null,ys),mxY=Math.max.apply(null,ys);
+  var mnX=minOf(xs),mxX=maxOf(xs);
+  var mnY=minOf(ys),mxY=maxOf(ys);
   var mapped=pts.map(function(p,i){return{x:10+(p.x-mnX)/(mxX-mnX||1)*(W-20),y:10+(p.y-mnY)/(mxY-mnY||1)*160};});
   ctx.beginPath();
   for(var i=0;i<mapped.length;i++){if(i===0)ctx.moveTo(mapped[i].x,mapped[i].y);else ctx.lineTo(mapped[i].x,mapped[i].y);}
@@ -1187,8 +1223,8 @@ var mapInstance=null, mapRouteLayer=null, mapLoaded=false, lastMapTrackId=null;
 
 function trackBounds(){
   var la=rawPoints.map(function(p){return p.lat;}), lo=rawPoints.map(function(p){return p.lon;});
-  return{minLat:Math.min.apply(null,la),maxLat:Math.max.apply(null,la),
-         minLon:Math.min.apply(null,lo),maxLon:Math.max.apply(null,lo)};
+  return{minLat:minOf(la),maxLat:maxOf(la),
+         minLon:minOf(lo),maxLon:maxOf(lo)};
 }
 
 function jumpToSettings(){
@@ -1333,7 +1369,7 @@ function drawHR(){
   var c=document.getElementById('hrCanvas'),W=c.offsetWidth||620;
   var ctx=setupHiDPICanvas(c,W,60),pad=6,iW=W-pad*2,iH=60-pad*2;
   var hrs=hrData.map(function(p){return p.hr;});
-  var minHR=Math.min.apply(null,hrs),maxHR=Math.max.apply(null,hrs),hrRange=maxHR-minHR||1;
+  var minHR=minOf(hrs),maxHR=maxOf(hrs),hrRange=maxHR-minHR||1;
   var t0=hrData[0].time,tN=hrData[hrData.length-1].time,tRange=tN-t0||1;
   var hrColor=document.getElementById('hrColor').value;
   var r=parseInt(hrColor.slice(1,3),16),g=parseInt(hrColor.slice(3,5),16),b=parseInt(hrColor.slice(5,7),16);
@@ -1359,7 +1395,7 @@ function drawHR(){
 
 function buildElevXY(elevPts,iW,iH,pad){
   var eles=elevPts.map(function(p){return p.ele;});
-  var minEle=Math.min.apply(null,eles),maxEle=Math.max.apply(null,eles),eleRange=maxEle-minEle||1;
+  var minEle=minOf(eles),maxEle=maxOf(eles),eleRange=maxEle-minEle||1;
   var totalDKm=0;
   for(var i=1;i<elevPts.length;i++) totalDKm+=haversine(elevPts[i-1].lat,elevPts[i-1].lon,elevPts[i].lat,elevPts[i].lon)/1000;
   var cum=[0];
@@ -1995,7 +2031,7 @@ function buildRouteSetting(){
   var c=cfg();
   var tW=parseFloat(c.trackW)||4;
   var sW=tW*SHADOW_WIDTH_RATIO;
-  var sOf=parseFloat(c.shadowOffset)||5;
+  var sOf=zahlOderVorgabe(c.shadowOffset,5);
   var dR=parseFloat(c.dotR)||8;
   var tc=hexToRgb(c.trackColor);
   var sc=hexToRgb(c.shadowColor);
@@ -2082,7 +2118,7 @@ function buildElevSetting(){
   var fillC=hexToRgb(c.elevFillColor);
   var lw=parseFloat(c.elevLineW)||2;
   var sc=hexToRgb(c.elevShadowColor);
-  var sOf=parseFloat(c.elevShadowOffset)||4;
+  var sOf=zahlOderVorgabe(c.elevShadowOffset,4);
   var sw=lw*SHADOW_WIDTH_RATIO;
 
   var FULL_CW=1920, FULL_CH=1080;
@@ -2901,8 +2937,8 @@ function aeRoutePoints(pad){
   var merc=function(lat){ return Math.log(Math.tan(Math.PI/4+lat*Math.PI/360)); };
   var xs=[],ys=[];
   for(var i=0;i<rawPoints.length;i++){ xs.push(rawPoints[i].lon*Math.PI/180); ys.push(merc(rawPoints[i].lat)); }
-  var mnx=Math.min.apply(null,xs), mxx=Math.max.apply(null,xs);
-  var mny=Math.min.apply(null,ys), mxy=Math.max.apply(null,ys);
+  var mnx=minOf(xs), mxx=maxOf(xs);
+  var mny=minOf(ys), mxy=maxOf(ys);
   var sw=AE_W-2*pad, sh=AE_H-2*pad;
   var s=Math.min(sw/((mxx-mnx)||1), sh/((mxy-mny)||1));
   var ox=pad+(sw-(mxx-mnx)*s)/2, oy=pad+(sh-(mxy-mny)*s)/2;
@@ -2955,7 +2991,7 @@ function buildRouteJsx(){
   var pts=aeRoutePoints(90);
   var tw=parseFloat(c.trackW)||6;
   var dr=parseFloat(c.dotR)||12;
-  var so=parseFloat(c.shadowOffset)||4;
+  var so=zahlOderVorgabe(c.shadowOffset,5);
   var dotKf=aePathKeys(rawPoints,pts);
   var L=[aeHead('Route Overlay')];
   L.push('  var PTS='+aePts(pts)+';');
@@ -2981,7 +3017,7 @@ function buildElevJsx(){
   var iW=parseFloat(c.elevW)||1920;
   var iH=parseFloat(c.elevH)||300;
   var lw=parseFloat(c.elevLineW)||2;
-  var so=parseFloat(c.elevShadowOffset)||4;
+  var so=zahlOderVorgabe(c.elevShadowOffset,4);
   var fillOn=c.elevFill==='1';
   var ox=(AE_W-iW)/2, oy=AE_H-iH-120;
   var xy=buildElevXY(elevPts,iW,iH,0);
@@ -3530,26 +3566,35 @@ function exportSteps(){
 
 function runZipExport(kind, zipName){
   showExportProgress();
-  var steps=exportSteps().filter(function(s){ return !kind || s.kind===kind; });
-  var zip=new JSZip();
-  var folder=zip.folder('GPX Overlay');
-  var BUILD_SHARE=70;
-  steps.forEach(function(step,i){
-    updateExportProgress((i/steps.length)*BUILD_SHARE, step.label);
-    var content=step.run();
-    if(content) folder.file(step.name(),content);
-  });
-  updateExportProgress(BUILD_SHARE,'Compressing…');
-  zip.generateAsync({type:'blob'},function(meta){
-    updateExportProgress(BUILD_SHARE+(meta.percent/100)*(100-BUILD_SHARE),'Compressing… '+Math.round(meta.percent)+'%');
-  }).then(function(content){
-    updateExportProgress(100,'Done');
-    var u=URL.createObjectURL(content),a=document.createElement('a');
-    a.href=u; a.download=zipName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
-    setStatus('Downloaded '+zipName,'ok');
+  // Ohne Fehlerbehandlung bleibt die Fortschrittsanzeige bei einem Fehler
+  // sichtbar stehen und die alte Erfolgsmeldung daneben.
+  function abbruch(e){
+    console.error(e);
+    setStatus('Export failed: '+(e&&e.message?e.message:e),'err');
     hideExportProgress();
-    promptSupport();
-  });
+  }
+  try{
+    var steps=exportSteps().filter(function(s){ return !kind || s.kind===kind; });
+    var zip=new JSZip();
+    var folder=zip.folder('GPX Overlay');
+    var BUILD_SHARE=70;
+    steps.forEach(function(step,i){
+      updateExportProgress((i/steps.length)*BUILD_SHARE, step.label);
+      var content=step.run();
+      if(content) folder.file(step.name(),content);
+    });
+    updateExportProgress(BUILD_SHARE,'Compressing…');
+    zip.generateAsync({type:'blob'},function(meta){
+      updateExportProgress(BUILD_SHARE+(meta.percent/100)*(100-BUILD_SHARE),'Compressing… '+Math.round(meta.percent)+'%');
+    }).then(function(content){
+      updateExportProgress(100,'Done');
+      var u=URL.createObjectURL(content),a=document.createElement('a');
+      a.href=u; a.download=zipName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
+      setStatus('Downloaded '+zipName,'ok');
+      hideExportProgress();
+      promptSupport();
+    })['catch'](abbruch);
+  }catch(e){ abbruch(e); }
 }
 
 document.getElementById('btnDownloadFusion').addEventListener('click',function(){ runZipExport('fusion','DaVinci Resolve Overlays.zip'); });
