@@ -257,6 +257,9 @@ function localizeRuntimeText(message){
   if(message.indexOf('Downloaded ')===0) return message.slice(11)+' heruntergeladen';
   if(message.indexOf('FIT parse error: ')===0) return 'FIT-Verarbeitungsfehler: '+message.slice(17);
   if(message.indexOf('File too large: ')===0) return 'Datei zu groß: '+message.slice(16).replace(' — the limit is ',' — das Maximum sind ');
+  if(message.indexOf('File could not be read to the end')===0)
+    return message.replace('File could not be read to the end — only ','Datei konnte nicht bis zum Ende gelesen werden — nur ')
+                  .replace(' track points were used',' Routenpunkte verwendet');
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
@@ -515,7 +518,7 @@ function fitCrc(bytes,from,to){
 
 function parseFIT(buffer,name){
   try{
-    var bytes=new Uint8Array(buffer),definitions={},points=[],laps=[],lastTimestamp=undefined;
+    var bytes=new Uint8Array(buffer),definitions={},points=[],laps=[],lastTimestamp=undefined,truncated=false;
     if(bytes.length<14) throw new Error('file too short to be a FIT file');
     var headerSize=bytes[0];
     if(headerSize!==12&&headerSize!==14) throw new Error('unexpected FIT header size ('+headerSize+')');
@@ -582,7 +585,7 @@ function parseFIT(buffer,name){
       if(h&0x80){
         var lt=(h>>5)&0x03,to=h&0x1F,def=definitions[lt];
 
-        if(!def) break;
+        if(!def){ truncated=true; break; }
         var rts;
         if(lastTimestamp!==undefined){rts=(lastTimestamp&0xFFFFFFE0)|to;if(rts<lastTimestamp)rts+=32;lastTimestamp=rts;}
         var rec=readFields(def);
@@ -601,7 +604,7 @@ function parseFIT(buffer,name){
       } else {
         var def=definitions[lmn];
 
-        if(!def) break;
+        if(!def){ truncated=true; break; }
         var rec=readFields(def);
         if(def.globalMsgNum===20){var ts=rec[253];if(ts!==undefined&&ts!==0xFFFFFFFF)lastTimestamp=ts;tryEmit(rec,ts);}
         else if(def.globalMsgNum===19) tryEmitLap(rec);
@@ -616,6 +619,7 @@ function parseFIT(buffer,name){
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
+    if(truncated) setStatus('File could not be read to the end — only '+rawPoints.length+' track points were used','err');
     jumpToSettings();
   }catch(e){console.error(e);setStatus('FIT parse error: '+e.message,'err');}
 }
@@ -941,7 +945,6 @@ function jumpToSettings(){
   },120);
 }
 
-var lastMapTrackId=null;
 function resetMapPreview(){
   var wrap=document.getElementById('mapPreviewWrap');
   if(!wrap) return;
@@ -2169,6 +2172,7 @@ function buildMileSetting(){
   var totalDispDist = unit==='mph' ? totalDistM/1609.344 : totalDistM/1000;
   if(!isFinite(totalDispDist) || totalDispDist<=0) totalDispDist = 1;
   var mileKF=buildKeyframeList(distData,function(p){return unit==='mph' ? p.distM/1609.344 : p.distM/1000;});
+  var mileDec=parseInt(document.getElementById('mileDecimals').value,10)||1;
   var lineDistRgb=hexToRgb(document.getElementById('mileLineDistColor').value);
   var mileTextRgb=hexToRgb(document.getElementById('mileColor').value);
 
@@ -2246,7 +2250,7 @@ function buildMileSetting(){
   L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(mileTextRgb[1]/255).toFixed(6)+', },');
   L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(mileTextRgb[2]/255).toFixed(6)+', },');
   L.push('\t\t\t\t\t\tSoftness1 = Input { Value = 1, },');
-  L.push('\t\t\t\t\t\tStyledText = Input { Expression = "string.format(\\"%.1f\\", Rectangle3.SPLData)", },');
+  L.push('\t\t\t\t\t\tStyledText = Input { Expression = "string.format(\\"%.'+mileDec+'f\\", Rectangle3.SPLData)", },');
   L.push('\t\t\t\t\t\tFont = Input { Value = "Open Sans", },');
   L.push('\t\t\t\t\t\tStyle = Input { Value = "Bold", },');
   L.push('\t\t\t\t\t\tSize = Input { Value = 0.0472, },');
@@ -2634,7 +2638,7 @@ function buildRouteJsx(){
 function buildElevJsx(){
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});
   if(elevPts.length<2) return null;
-  var iW=parseFloat(document.getElementById('elevW').value)||1200;
+  var iW=parseFloat(document.getElementById('elevW').value)||1920;
   var iH=parseFloat(document.getElementById('elevH').value)||300;
   var lw=parseFloat(document.getElementById('elevLineW').value)||2;
   var so=parseFloat(document.getElementById('elevShadowOffset').value)||4;

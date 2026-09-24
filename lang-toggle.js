@@ -25,7 +25,7 @@
   document.querySelectorAll(btnSel).forEach(function(x){
     x.addEventListener('click',function(){ apply(x.getAttribute('data-'+key+'-lang')); });
   });
-  var saved='de';
-  try{ saved=localStorage.getItem('overlayUILanguage')||'de'; }catch(e){}
+  var saved='en';
+  try{ saved=localStorage.getItem('overlayUILanguage')||'en'; }catch(e){}
   apply(saved);
 })();
