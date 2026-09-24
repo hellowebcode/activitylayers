@@ -562,7 +562,7 @@ function parseFIT(buffer,name){
       var lat=rec[0],lon=rec[1];
       var alt=rec[2]!==undefined?rec[2]:rec[78];
       var spd=rec[6]!==undefined?rec[6]:rec[73];
-      var hr=rec[3], cad=rec[4], pwr=rec[7];
+      var hr=rec[3], cad=rec[4], pwr=rec[7], dst=rec[5];
       if(ts!==undefined&&ts!==0xFFFFFFFF&&lat!==undefined&&lat!==0x7FFFFFFF&&lon!==undefined&&lon!==0x7FFFFFFF){
         var latDeg=(lat|0)*(180/Math.pow(2,31)), lonDeg=(lon|0)*(180/Math.pow(2,31));
         if(!validLatLon(latDeg,lonDeg)) return;
@@ -573,7 +573,8 @@ function parseFIT(buffer,name){
           speed:(spd!==undefined&&spd!==0xFFFF&&spd!==0xFFFFFFFF)?spd/1000:null,
           hr:(hr!==undefined&&hr!==0xFF&&hr!==0xFFFF)?hr:null,
           cad:(cad!==undefined&&cad!==0xFF)?cad:null,
-          power:(pwr!==undefined&&pwr!==0xFFFF&&pwr!==0xFFFFFFFF)?pwr:null});
+          power:(pwr!==undefined&&pwr!==0xFFFF&&pwr!==0xFFFFFFFF)?pwr:null,
+          dist:(dst!==undefined&&dst!==0xFFFFFFFF)?dst/100:null});
       }
     }
     while(pos<dataEnd){
@@ -612,7 +613,6 @@ function parseFIT(buffer,name){
     laps.sort(function(a,b){return a.start-b.start;});
     lapData=laps;
     totalDistM=0;
-    for(var i=1;i<rawPoints.length;i++)totalDistM+=haversine(rawPoints[i-1].lat,rawPoints[i-1].lon,rawPoints[i].lat,rawPoints[i].lon);
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
@@ -667,7 +667,8 @@ function parseGPX(text,name){
         rawPoints.push({time:t,lat:lat,lon:lon,ele:(ele!==null&&validElevation(ele))?ele:null,speed:getSpeedFromPoint(pt),
           hr:getExtNumber(pt,['hr','heartrate'],1,255),
           cad:getExtNumber(pt,['cad','cadence'],0,254),
-          power:getExtNumber(pt,['power','pwr'],0,3000)});
+          power:getExtNumber(pt,['power','pwr'],0,3000),
+          dist:null});
       } else skipped++;
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});
@@ -675,7 +676,6 @@ function parseGPX(text,name){
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
     if(skipped)console.warn('Activity Layers: '+skipped+' track point(s) skipped, coordinates out of range or not finite');
     totalDistM=0;
-    for(var i=1;i<rawPoints.length;i++)totalDistM+=haversine(rawPoints[i-1].lat,rawPoints[i-1].lon,rawPoints[i].lat,rawPoints[i].lon);
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
@@ -802,6 +802,25 @@ function smooth(data, win) {
   return smoothSG(data, win);
 }
 
+function buildDistData(pts){
+  var hatGeraetewerte=false;
+  for(var i=0;i<pts.length;i++){
+    var v=pts[i].dist;
+    if(v!==null&&v!==undefined&&isFinite(v)){ hatGeraetewerte=true; break; }
+  }
+  var out=[],cum=0;
+  for(var i=0;i<pts.length;i++){
+    var d=pts[i].dist;
+    if(hatGeraetewerte){
+      if(d!==null&&d!==undefined&&isFinite(d)&&d>=0) cum=d;
+    } else if(i>0){
+      cum+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
+    }
+    out.push({time:pts[i].time, distM:cum});
+  }
+  return out;
+}
+
 function buildGradeData(pts){
   var elevPts=pts.filter(function(p){return p.ele!==null&&!isNaN(p.ele);});
   var n=elevPts.length;
@@ -831,14 +850,8 @@ function reprocess(){
   cadData=rawPoints.filter(function(p){return p.cad!==null&&p.cad!==undefined&&!isNaN(p.cad);}).map(function(p){return{time:p.time,cad:p.cad};});
   powerData=rawPoints.filter(function(p){return p.power!==null&&p.power!==undefined&&!isNaN(p.power);}).map(function(p){return{time:p.time,power:p.power};});
   gradeData=buildGradeData(rawPoints);
-  distData=(function(){
-    var out=[],cum=0;
-    for(var i=0;i<rawPoints.length;i++){
-      if(i>0) cum+=haversine(rawPoints[i-1].lat,rawPoints[i-1].lon,rawPoints[i].lat,rawPoints[i].lon);
-      out.push({time:rawPoints[i].time, distM:cum});
-    }
-    return out;
-  })();
+  distData=buildDistData(rawPoints);
+  totalDistM=distData.length?distData[distData.length-1].distM:0;
   var durSec=(speedData[speedData.length-1].time-speedData[0].time)/1000;
   var maxSpd=0;
   for(var i=0;i<speedData.length;i++)if(speedData[i].spd>maxSpd)maxSpd=speedData[i].spd;
@@ -1198,7 +1211,8 @@ function buildKeyframeList(dataArr, valueFn){
   var fps=parseFloat(document.getElementById('fps').value);
   var offset=parseFloat(document.getElementById('offset').value)||0;
   var drift=parseFloat(document.getElementById('driftFactor').value)||1.0;
-  var t0=dataArr[0].time,out=[],lf=-1;
+  var t0=(typeof rawPoints!=='undefined'&&rawPoints.length)?rawPoints[0].time:dataArr[0].time;
+  var out=[],lf=-1;
   for(var i=0;i<dataArr.length;i++){
     var fr=Math.round(((dataArr[i].time-t0)/1000*drift+offset)*fps);
     if(fr>=0&&fr!==lf){ out.push([fr, valueFn(dataArr[i], i)]); lf=fr; }
