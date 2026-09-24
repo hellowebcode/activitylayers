@@ -118,6 +118,15 @@ var UI_DE={
   'Power Overlay':'Leistungs-Overlay',
   'Temperature overlay style':'Temperatur-Overlay-Stil',
   'Temperature Overlay':'Temperatur-Overlay',
+  'Zone colours':'Zonenfarben',
+  'Off':'aus',
+  'On':'an',
+  'bpm zone 2 from':'bpm Zone 2 ab',
+  'bpm zone 3 from':'bpm Zone 3 ab',
+  'W zone 2 from':'W Zone 2 ab',
+  'W zone 3 from':'W Zone 3 ab',
+  'Zone 2 colour':'Farbe Zone 2',
+  'Zone 3 colour':'Farbe Zone 3',
   'Pace overlay style':'Pace-Overlay-Stil',
   'Pace Overlay':'Pace-Overlay',
   'Pace follows the speed unit: minutes per kilometre, or minutes per mile when MPH is selected.':'Pace folgt der Geschwindigkeitseinheit: Minuten je Kilometer, bei MPH Minuten je Meile.',
@@ -346,6 +355,16 @@ var CONTROL_IDS=[
   'powerSize',
   'sg1',
   'sg2',
+  'hrColor2',
+  'hrColor3',
+  'hrZone2',
+  'hrZone3',
+  'hrZones',
+  'powerColor2',
+  'powerColor3',
+  'powerZone2',
+  'powerZone3',
+  'powerZones',
   'paceColor',
   'paceSize',
   'shadowColor',
@@ -1433,6 +1452,51 @@ function cfg(){
   return c;
 }
 
+// Stufenweise Farbkanaele fuer Zonenfaerbung. Die Farbe soll springen, nicht
+// ueberblenden, deshalb ein zweiter Keyframe ein Bild vor jedem Wechsel.
+function zonenFarbkanaele(daten, wertFn, grenze2, grenze3, farbe1, farbe2, farbe3){
+  var kf=buildKeyframeList(daten,function(p,i){
+    var v=wertFn(p,i);
+    return (v>=grenze3)?2:((v>=grenze2)?1:0);
+  });
+  if(!kf.length) return null;
+  var farben=[farbe1,farbe2,farbe3];
+  var r=[],g=[],b=[],letzte=-1;
+  for(var i=0;i<kf.length;i++){
+    var bild=kf[i][0], zone=kf[i][1];
+    if(zone===letzte) continue;
+    if(letzte>=0 && bild>0){
+      var vor=bild-1, f=farben[letzte];
+      r.push([vor,f[0]/255]); g.push([vor,f[1]/255]); b.push([vor,f[2]/255]);
+    }
+    var n=farben[zone];
+    r.push([bild,n[0]/255]); g.push([bild,n[1]/255]); b.push([bild,n[2]/255]);
+    letzte=zone;
+  }
+  return {r:r,g:g,b:b};
+}
+
+// Fuer After Effects: je Zone eine Ebene, umgeschaltet ueber die Deckkraft.
+// Harte Wechsel, deshalb auch hier ein Keyframe ein Bild vor dem Sprung.
+function zonenDeckkraft(daten, wertFn, grenze2, grenze3){
+  var kf=buildKeyframeList(daten,function(p,i){
+    var v=wertFn(p,i);
+    return (v>=grenze3)?2:((v>=grenze2)?1:0);
+  });
+  if(!kf.length) return null;
+  var aus=[[],[],[]], letzte=-1;
+  for(var i=0;i<kf.length;i++){
+    var bild=kf[i][0], zone=kf[i][1];
+    if(zone===letzte) continue;
+    for(var z=0;z<3;z++){
+      if(letzte>=0 && bild>0) aus[z].push([bild-1, (z===letzte)?100:0]);
+      aus[z].push([bild, (z===zone)?100:0]);
+    }
+    letzte=zone;
+  }
+  return aus;
+}
+
 function buildKeyframeList(dataArr, valueFn){
   var c=cfg();
   if(!dataArr || !dataArr.length) return [];
@@ -2088,6 +2152,9 @@ function buildHRSetting(){
   var textSize=parseFloat(c.hrSize)||0.07;
 
   var heartRgb=hexToRgb(c.hrHeartColor);
+  var hrZonen = c.hrZones ? zonenFarbkanaele(hrData,function(p){return p.hr;},
+    parseFloat(c.hrZone2)||140, parseFloat(c.hrZone3)||165,
+    hexToRgb(c.hrColor), hexToRgb(c.hrColor2), hexToRgb(c.hrColor3)) : null;
   var L=[];
   L.push('{');
   L.push('\tTools = ordered() {');
@@ -2168,9 +2235,15 @@ function buildHRSetting(){
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tLayoutRotation = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tTransformRotation = Input { Value = 1, },');
-  L.push('\t\t\t\t\t\tRed1 = Input { Value = '+(textRgb[0]/255).toFixed(6)+', },');
-  L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(textRgb[1]/255).toFixed(6)+', },');
-  L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(textRgb[2]/255).toFixed(6)+', },');
+  if(hrZonen){
+    L.push('\t\t\t\t\t\tRed1 = '+bezierSourceRefInput('Text2ZoneR')+',');
+    L.push('\t\t\t\t\t\tGreen1 = '+bezierSourceRefInput('Text2ZoneG')+',');
+    L.push('\t\t\t\t\t\tBlue1 = '+bezierSourceRefInput('Text2ZoneB')+',');
+  } else {
+    L.push('\t\t\t\t\t\tRed1 = Input { Value = '+(textRgb[0]/255).toFixed(6)+', },');
+    L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(textRgb[1]/255).toFixed(6)+', },');
+    L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(textRgb[2]/255).toFixed(6)+', },');
+  }
   L.push('\t\t\t\t\t\tSoftness1 = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tStyledText = Input {');
   L.push('\t\t\t\t\t\t\tValue = "0",');
@@ -2219,6 +2292,11 @@ function buildHRSetting(){
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 1124.29, 81.2339 } },');
   L.push('\t\t\t\t},');
   L.push(buildBezierSplineTool('Text2NumberDrive', hrKF, false));
+  if(hrZonen){
+    L.push(buildBezierSplineTool('Text2ZoneR', hrZonen.r, false));
+    L.push(buildBezierSplineTool('Text2ZoneG', hrZonen.g, false));
+    L.push(buildBezierSplineTool('Text2ZoneB', hrZonen.b, false));
+  }
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push('\t}');
@@ -2927,8 +3005,19 @@ function buildHRJsx(){
   L.push('  var hl=shapeLayer("Heart"), hg=grpOf(hl,"Heart");');
   L.push('  addPath(hg,'+aePts(heart)+',true);');
   L.push('  addFill(hg,'+aeCol(c.hrHeartColor)+');');
-  L.push('  var num=textLayer("HR Value","0",['+aeNum(HX+size*1.2)+','+aeNum(HY+size*0.4)+'],'+aeNum(size)+','+aeCol(c.hrColor)+',false);');
-  L.push('  driveText(num,"Heart Rate",'+aeKf(kf,0)+',"Math.round(v)+\\"\\";");');
+  var zonen = c.hrZones ? zonenDeckkraft(hrData,function(p){return p.hr;},
+    parseFloat(c.hrZone2)||140, parseFloat(c.hrZone3)||165) : null;
+  if(zonen){
+    var farben=[c.hrColor,c.hrColor2,c.hrColor3];
+    for(var z=0;z<3;z++){
+      L.push('  var z'+z+'=textLayer("HR zone '+(z+1)+'","0",['+aeNum(HX+size*1.2)+','+aeNum(HY+size*0.4)+'],'+aeNum(size)+','+aeCol(farben[z])+',false);');
+      L.push('  driveText(z'+z+',"HR zone '+(z+1)+'",'+aeKf(kf,0)+',"Math.round(v)+\\"\\";");');
+      L.push('  keys(tf(z'+z+',"ADBE Opacity"),'+aeKf(zonen[z],0)+');');
+    }
+  } else {
+    L.push('  var num=textLayer("HR Value","0",['+aeNum(HX+size*1.2)+','+aeNum(HY+size*0.4)+'],'+aeNum(size)+','+aeCol(c.hrColor)+',false);');
+    L.push('  driveText(num,"Heart Rate",'+aeKf(kf,0)+',"Math.round(v)+\\"\\";");');
+  }
   L.push(aeTail());
   return L.join('\n');
 }
@@ -3087,9 +3176,15 @@ function buildTextOverlaySetting(cfg){
   L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tLayoutRotation = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tTransformRotation = Input { Value = 1, },');
-  L.push('\t\t\t\t\t\tRed1 = Input { Value = '+(cfg.rgb[0]/255).toFixed(6)+', },');
-  L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(cfg.rgb[1]/255).toFixed(6)+', },');
-  L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(cfg.rgb[2]/255).toFixed(6)+', },');
+  if(cfg.farbkanaele){
+    L.push('\t\t\t\t\t\tRed1 = '+bezierSourceRefInput('Text2ZoneR')+',');
+    L.push('\t\t\t\t\t\tGreen1 = '+bezierSourceRefInput('Text2ZoneG')+',');
+    L.push('\t\t\t\t\t\tBlue1 = '+bezierSourceRefInput('Text2ZoneB')+',');
+  } else {
+    L.push('\t\t\t\t\t\tRed1 = Input { Value = '+(cfg.rgb[0]/255).toFixed(6)+', },');
+    L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(cfg.rgb[1]/255).toFixed(6)+', },');
+    L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(cfg.rgb[2]/255).toFixed(6)+', },');
+  }
   L.push('\t\t\t\t\t\tSoftness1 = Input { Value = 1, },');
   L.push('\t\t\t\t\t\tStyledText = Input {');
   L.push('\t\t\t\t\t\t\tValue = "0",');
@@ -3129,6 +3224,11 @@ function buildTextOverlaySetting(cfg){
   L.push('\t\t\t\t},');
   for(var k=0;k<cfg.drives.length;k++)
     L.push(buildBezierSplineTool('Text2'+cfg.drives[k].name, cfg.drives[k].kf, false));
+  if(cfg.farbkanaele){
+    L.push(buildBezierSplineTool('Text2ZoneR', cfg.farbkanaele.r, false));
+    L.push(buildBezierSplineTool('Text2ZoneG', cfg.farbkanaele.g, false));
+    L.push(buildBezierSplineTool('Text2ZoneB', cfg.farbkanaele.b, false));
+  }
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push('\t}');
@@ -3183,6 +3283,9 @@ function buildPowerSetting(){
   if(!powerData.length) return null;
   return buildTextOverlaySetting({
     group:'Power',
+    farbkanaele: c.powerZones ? zonenFarbkanaele(powerData,function(p){return p.power;},
+      parseFloat(c.powerZone2)||200, parseFloat(c.powerZone3)||280,
+      hexToRgb(c.powerColor), hexToRgb(c.powerColor2), hexToRgb(c.powerColor3)) : null,
     rgb:hexToRgb(c.powerColor),
     size:parseFloat(c.powerSize)||0.07,
     expr:'string.format("%d '+overlayLabels().power+'", floor(Power))',
@@ -3250,8 +3353,20 @@ function buildPowerJsx(){
   var size=(parseFloat(c.powerSize)||0.07)*AE_H;
   var kf=buildKeyframeList(powerData,function(p){return p.power;});
   var L=[aeHead('Power Overlay')];
-  L.push('  var num=textLayer("Power","0",[250,880],'+aeNum(size)+','+aeCol(c.powerColor)+',false);');
-  L.push('  driveText(num,"Power",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().power+'";')+');');
+  var zonen = c.powerZones ? zonenDeckkraft(powerData,function(p){return p.power;},
+    parseFloat(c.powerZone2)||200, parseFloat(c.powerZone3)||280) : null;
+  var ausdruck=aeStr('Math.round(v)+" '+overlayLabels().power+'";');
+  if(zonen){
+    var farben=[c.powerColor,c.powerColor2,c.powerColor3];
+    for(var z=0;z<3;z++){
+      L.push('  var z'+z+'=textLayer("Power zone '+(z+1)+'","0",[250,880],'+aeNum(size)+','+aeCol(farben[z])+',false);');
+      L.push('  driveText(z'+z+',"Power zone '+(z+1)+'",'+aeKf(kf,0)+','+ausdruck+');');
+      L.push('  keys(tf(z'+z+',"ADBE Opacity"),'+aeKf(zonen[z],0)+');');
+    }
+  } else {
+    L.push('  var num=textLayer("Power","0",[250,880],'+aeNum(size)+','+aeCol(c.powerColor)+',false);');
+    L.push('  driveText(num,"Power",'+aeKf(kf,0)+','+ausdruck+');');
+  }
   L.push(aeTail());
   return L.join('\n');
 }
