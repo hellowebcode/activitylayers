@@ -628,6 +628,27 @@ function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).
 
 var MAX_FILE_BYTES=32*1024*1024;
 
+// Ausgangsbeschriftung der Ablegeflaeche, einmal beim Laden gesichert.
+var DROP_LABEL_HTML=null, DROP_SUB_HTML=null;
+(function(){
+  var l=dropZone&&dropZone.querySelector('.drop-label'), u=dropZone&&dropZone.querySelector('.drop-sub');
+  if(l) DROP_LABEL_HTML=l.innerHTML;
+  if(u) DROP_SUB_HTML=u.innerHTML;
+})();
+
+// Vor jedem Einlesen: alles der vorherigen Aktivitaet verwerfen. Sonst bleiben
+// bei einem fehlgeschlagenen Import die alten Daten unter neuem Dateinamen
+// exportierbar.
+function resetTrackState(){
+  rawPoints=[]; speedData=[]; hrData=[]; cadData=[]; powerData=[]; tempData=[];
+  paceData=[]; gradeData=[]; distData=[]; lapData=[];
+  totalDistM=0; currentFilename=''; lastMapTrackId=null;
+  try{ setEnabled(false); }catch(e){}
+  var l=dropZone&&dropZone.querySelector('.drop-label'), u=dropZone&&dropZone.querySelector('.drop-sub');
+  if(l&&DROP_LABEL_HTML!==null) l.innerHTML=DROP_LABEL_HTML;
+  if(u&&DROP_SUB_HTML!==null) u.innerHTML=DROP_SUB_HTML;
+}
+
 function handleFile(file){
   var name=file.name.toLowerCase();
   if(!name.endsWith('.gpx')&&!name.endsWith('.fit')&&!name.endsWith('.tcx')){setStatus('Please upload a .gpx, .fit or .tcx file','err');return;}
@@ -635,7 +656,7 @@ function handleFile(file){
     setStatus('File too large: '+Math.round(file.size/1048576)+' MB — the limit is '+Math.round(MAX_FILE_BYTES/1048576)+' MB','err');
     return;
   }
-  currentFilename=file.name.replace(/\.[^.]+$/,'');
+  resetTrackState();
   setStatus('Reading '+file.name+'...');
   var reader=new FileReader();
   if(name.endsWith('.fit')){
@@ -779,6 +800,7 @@ function parseFIT(buffer,name){
     laps.sort(function(a,b){return a.start-b.start;});
     lapData=laps;
     totalDistM=0;
+    currentFilename=name.replace(/\.[^.]+$/,'');
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
@@ -872,6 +894,7 @@ function parseTCX(text,name){
     lapData.sort(function(a,b){return a.start-b.start;});
     if(uebersprungen)console.warn('Activity Layers: '+uebersprungen+' track point(s) skipped, coordinates out of range or not finite');
     totalDistM=0;
+    currentFilename=name.replace(/\.[^.]+$/,'');
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
@@ -906,6 +929,7 @@ function parseGPX(text,name){
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
     if(skipped)console.warn('Activity Layers: '+skipped+' track point(s) skipped, coordinates out of range or not finite');
     totalDistM=0;
+    currentFilename=name.replace(/\.[^.]+$/,'');
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
     reprocess();
