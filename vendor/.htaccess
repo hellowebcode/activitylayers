@@ -1,0 +1,9 @@
+# Fremdbibliotheken und Schriften aendern sich nur, wenn sie bewusst
+# ausgetauscht werden. Sie duerfen lange im Browser bleiben.
+# FilesMatch, damit diese Regel die gleichnamige des Elternverzeichnisses
+# ueberschreibt statt von ihr ueberschrieben zu werden.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|woff2|png|svg)$">
+    Header always set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
