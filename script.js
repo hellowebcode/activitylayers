@@ -14,7 +14,7 @@ var UI_DE={
   'into every frame.':'in jedem Frame sichtbar.',
   'Create nine animated overlays for':'Erstelle aus GPX- und FIT-Dateien neun animierte Overlays für',
   'and':'und',
-  'from GPX and FIT files — processed locally in your browser. Lap markers need a .fit file; every other overlay works with both formats.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit-Datei, alle übrigen Overlays funktionieren mit beiden Formaten.',
+  'from GPX and FIT files — processed locally in your browser. Lap markers need a .fit file - every other overlay works with both formats.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit-Datei, alle übrigen Overlays funktionieren mit beiden Formaten.',
   '⏱ GPS Sync Calibration Helper':'⏱ GPS-Synchronisierung kalibrieren',
   'Enter timecodes in':'Timecodes im Format',
   'format (e.g.':'eingeben (z. B.',
@@ -122,6 +122,8 @@ var UI_DE={
   '.jsx script (.fit files only)':'.jsx-Skript (nur .fit-Dateien)',
   'Lap markers are read from the lap records inside a .fit file. GPX files carry no lap information, so this overlay stays unavailable for them.':'Rundenmarken stammen aus den Runden-Datens\u00e4tzen einer .fit-Datei. GPX-Dateien enthalten keine Rundeninformationen, dieses Overlay bleibt dort also ohne Funktion.',
   'Download All Files':'Alle Dateien herunterladen',
+  'Download DaVinci Resolve files':'DaVinci-Resolve-Dateien herunterladen',
+  'Download After Effects files':'After-Effects-Dateien herunterladen',
   'Preparing files…':'Dateien werden vorbereitet …',
   'Studio navigation':'Studio-Navigation',
   'Activity Layers home':'Activity Layers Startseite',
@@ -474,7 +476,8 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
 });
 
 function setStatus(msg,cls){statusEl.textContent=localizeRuntimeText(msg);statusEl.className='status'+(cls?' '+cls:'');}
-function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).disabled=!on;});document.getElementById('btnDownloadAll').disabled=!on;}
+function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).disabled=!on;});
+  ['btnDownloadAll','btnDownloadFusion','btnDownloadAe'].forEach(function(id){document.getElementById(id).disabled=!on;});}
 
 var MAX_FILE_BYTES=32*1024*1024;
 
@@ -3021,29 +3024,32 @@ function hideExportProgress(){
   setTimeout(function(){document.getElementById('exportProgressWrap').style.display='none';},600);
 }
 
-document.getElementById('btnDownloadAll').addEventListener('click',function(){
-  showExportProgress();
-
-  var steps=[
-    {label:'Building Speed overlay…',run:function(){return buildSetting();},name:function(){return makeFilename('Speed_Overlay','setting');}},
-    {label:'Building Route overlay…',run:function(){return buildRouteSetting();},name:function(){return makeFilename('Route_Overlay','setting');}},
-    {label:'Building Elevation overlay…',run:function(){return buildElevSetting();},name:function(){return makeFilename('Elevation_Overlay','setting');},optional:true},
-    {label:'Building HR overlay…',run:function(){return hrData.length?buildHRSetting():null;},name:function(){return makeFilename('HR_Overlay','setting');},optional:true},
-    {label:'Building Incline overlay…',run:function(){return gradeData.length?buildInclineSetting():null;},name:function(){return makeFilename('Incline_Overlay','setting');},optional:true},
-    {label:'Building Mile Marker overlay…',run:function(){return distData.length?buildMileSetting():null;},name:function(){return makeFilename('Mile_Marker_Overlay','setting');},optional:true},
-    {label:'Building Cadence overlay…',run:function(){return buildCadenceSetting();},name:function(){return makeFilename('Cadence_Overlay','setting');},optional:true},
-    {label:'Building Power overlay…',run:function(){return buildPowerSetting();},name:function(){return makeFilename('Power_Overlay','setting');},optional:true},
-    {label:'Building Lap Marker overlay…',run:function(){return buildLapSetting();},name:function(){return makeFilename('Lap_Marker_Overlay','setting');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildSpeedJsx();},name:function(){return makeFilename('Speed_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildRouteJsx();},name:function(){return makeFilename('Route_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildElevJsx();},name:function(){return makeFilename('Elevation_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildHRJsx();},name:function(){return makeFilename('HR_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildInclineJsx();},name:function(){return makeFilename('Incline_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildMileJsx();},name:function(){return makeFilename('Mile_Marker_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildCadenceJsx();},name:function(){return makeFilename('Cadence_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildPowerJsx();},name:function(){return makeFilename('Power_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildLapJsx();},name:function(){return makeFilename('Lap_Marker_Overlay_AE','jsx');},optional:true}
+function exportSteps(){
+  return [
+    {kind:'fusion',label:'Building Speed overlay…',run:function(){return buildSetting();},name:function(){return makeFilename('Speed_Overlay','setting');}},
+    {kind:'fusion',label:'Building Route overlay…',run:function(){return buildRouteSetting();},name:function(){return makeFilename('Route_Overlay','setting');}},
+    {kind:'fusion',label:'Building Elevation overlay…',run:function(){return buildElevSetting();},name:function(){return makeFilename('Elevation_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building HR overlay…',run:function(){return hrData.length?buildHRSetting():null;},name:function(){return makeFilename('HR_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Incline overlay…',run:function(){return gradeData.length?buildInclineSetting():null;},name:function(){return makeFilename('Incline_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Mile Marker overlay…',run:function(){return distData.length?buildMileSetting():null;},name:function(){return makeFilename('Mile_Marker_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Cadence overlay…',run:function(){return buildCadenceSetting();},name:function(){return makeFilename('Cadence_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Power overlay…',run:function(){return buildPowerSetting();},name:function(){return makeFilename('Power_Overlay','setting');},optional:true},
+    {kind:'fusion',label:'Building Lap Marker overlay…',run:function(){return buildLapSetting();},name:function(){return makeFilename('Lap_Marker_Overlay','setting');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildSpeedJsx();},name:function(){return makeFilename('Speed_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildRouteJsx();},name:function(){return makeFilename('Route_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildElevJsx();},name:function(){return makeFilename('Elevation_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildHRJsx();},name:function(){return makeFilename('HR_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildInclineJsx();},name:function(){return makeFilename('Incline_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildMileJsx();},name:function(){return makeFilename('Mile_Marker_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildCadenceJsx();},name:function(){return makeFilename('Cadence_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildPowerJsx();},name:function(){return makeFilename('Power_Overlay_AE','jsx');},optional:true},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildLapJsx();},name:function(){return makeFilename('Lap_Marker_Overlay_AE','jsx');},optional:true}
   ];
+}
+
+function runZipExport(kind, zipName){
+  showExportProgress();
+  var steps=exportSteps().filter(function(s){ return !kind || s.kind===kind; });
   var zip=new JSZip();
   var folder=zip.folder('GPX Overlay');
   var BUILD_SHARE=70;
@@ -3058,9 +3064,13 @@ document.getElementById('btnDownloadAll').addEventListener('click',function(){
   }).then(function(content){
     updateExportProgress(100,'Done');
     var u=URL.createObjectURL(content),a=document.createElement('a');
-    a.href=u; a.download='GPX Overlay.zip'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
-    setStatus('Downloaded GPX Overlay.zip','ok');
+    a.href=u; a.download=zipName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
+    setStatus('Downloaded '+zipName,'ok');
     hideExportProgress();
     promptSupport();
   });
-});
+}
+
+document.getElementById('btnDownloadFusion').addEventListener('click',function(){ runZipExport('fusion','DaVinci Resolve Overlays.zip'); });
+document.getElementById('btnDownloadAe').addEventListener('click',function(){ runZipExport('ae','After Effects Overlays.zip'); });
+document.getElementById('btnDownloadAll').addEventListener('click',function(){ runZipExport(null,'GPX Overlay.zip'); });

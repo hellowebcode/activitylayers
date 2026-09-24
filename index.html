@@ -102,7 +102,6 @@
   <div class="headline">
     <p class="eyebrow">DaVinci Resolve · Fusion · After Effects</p>
     <h1>Layer your activity<br><span>into every frame.</span></h1>
-    <p class="subtitle">Create nine animated overlays for <a href="https://www.blackmagicdesign.com/de/products/davinciresolve" target="_blank" rel="noopener">DaVinci Resolve</a> and <a href="https://www.adobe.com/de/products/aftereffects.html" target="_blank" rel="noopener">After Effects</a> from GPX and FIT files — processed locally in your browser. Lap markers need a .fit file; every other overlay works with both formats.</p>
   </div>
   <div class="header-tools">
     <a class="header-info" href="hilfe.html" aria-label="How does it work" title="How does it work"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M192,96c0,28.51-24.47,52.11-56,55.56V160a8,8,0,0,1-16,0V144a8,8,0,0,1,8-8c26.47,0,48-17.94,48-40s-21.53-40-48-40S80,73.94,80,96a8,8,0,0,1-16,0c0-30.88,28.71-56,64-56S192,65.12,192,96Zm-64,96a16,16,0,1,0,16,16A16,16,0,0,0,128,192Z"/></svg></a>
@@ -114,6 +113,7 @@
       <img src="assets/icons/flaticon-coffee-cup.png" alt=""><span class="coffee-label">Buy me a Coffee</span>
     </button>
   </div>
+  <p class="subtitle">Create nine animated overlays for <a href="https://www.blackmagicdesign.com/de/products/davinciresolve" target="_blank" rel="noopener">DaVinci Resolve</a> and <a href="https://www.adobe.com/de/products/aftereffects.html" target="_blank" rel="noopener">After Effects</a> from GPX and FIT files — processed locally in your browser. Lap markers need a .fit file - every other overlay works with both formats.</p>
 </div>
 
 <div class="modal-bg" id="syncModal">
@@ -453,6 +453,10 @@
     <button class="dl-btn" id="btnCadJsx" disabled>Cadence Overlay<div class="dl-sub">.jsx script (cadence value)</div></button>
     <button class="dl-btn" id="btnPowerJsx" disabled>Power Overlay<div class="dl-sub">.jsx script (power value)</div></button>
     <button class="dl-btn" id="btnLapJsx" disabled>Lap Marker Overlay<div class="dl-sub">.jsx script (.fit files only)</div></button>
+  </div>
+  <div class="dl-split">
+    <button class="dl-all-btn dl-all-secondary" id="btnDownloadFusion" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download DaVinci Resolve files</button>
+    <button class="dl-all-btn dl-all-secondary" id="btnDownloadAe" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download After Effects files</button>
   </div>
   <button class="dl-all-btn" id="btnDownloadAll" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download All Files</button>
   <div class="export-progress-wrap" id="exportProgressWrap" style="display:none">

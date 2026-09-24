@@ -138,6 +138,32 @@
       Vorschauen aktualisieren sich sofort. Ein Tipp aus der Praxis: Schatten und eine kr&auml;ftige
       Kontrastfarbe halten die Anzeige auch &uuml;ber unruhigem Bildmaterial lesbar.</p>
 
+      <h2 id="die-overlays">Die neun Overlays</h2>
+      <p>Jedes Overlay ist eine eigene Ebene und l&auml;sst sich einzeln herunterladen. Fehlen die
+      passenden Werte in deiner Datei, bleibt das Overlay leer und wird beim Sammelexport
+      weggelassen &ndash; du bekommst dann eben sieben statt neun Dateien.</p>
+      <ul>
+        <li><strong>Tacho</strong> &ndash; Rundinstrument mit Nadel und Zahl. Die Skala richtet sich nach dem
+        H&ouml;chstwert deiner Aufzeichnung, die Einheit nach deiner Auswahl in Schritt&nbsp;02.</li>
+        <li><strong>Streckenverlauf</strong> &ndash; die gefahrene Strecke als Linie, auf der ein Punkt
+        mitwandert. Braucht nur Koordinaten und funktioniert deshalb mit jeder Aufzeichnung.</li>
+        <li><strong>H&ouml;henprofil</strong> &ndash; die H&ouml;he &uuml;ber der Distanz als Kurve, mit wanderndem Punkt
+        und Beschriftung f&uuml;r h&ouml;chsten und tiefsten Wert. Braucht H&ouml;hendaten.</li>
+        <li><strong>Herzfrequenz</strong> &ndash; Herzsymbol und Zahl in Schl&auml;gen pro Minute. Braucht einen
+        Brustgurt oder einen optischen Sensor am Handgelenk.</li>
+        <li><strong>Steigung</strong> &ndash; ein Keil, der sich mit der Neigung kippt, dazu die Zahl in Prozent
+        oder Grad. Wird aus H&ouml;he und Distanz &uuml;ber ein gleitendes Fenster berechnet, damit einzelne
+        Ausrei&szlig;er die Anzeige nicht zappeln lassen.</li>
+        <li><strong>Distanzmarker</strong> &ndash; die zur&uuml;ckgelegte Strecke als Zahl, in Kilometern oder
+        Meilen.</li>
+        <li><strong>Trittfrequenz</strong> &ndash; Zahl in Umdrehungen pro Minute. Braucht einen
+        Trittfrequenzsensor.</li>
+        <li><strong>Leistung</strong> &ndash; Zahl in Watt. Braucht einen Leistungsmesser.</li>
+        <li><strong>Rundenmarken</strong> &ndash; Rundennummer und die mitlaufende Zeit der aktuellen Runde.
+        Die Runden stehen nur in <code>.fit</code>-Dateien; GPX kennt keine Runden, dort bleibt dieses
+        Overlay ohne Funktion.</li>
+      </ul>
+
       <h2 id="schritt-05"><span class="step">05</span>Exportieren und einbauen</h2>
       <p>Im letzten Abschnitt w&auml;hlst du, welche Ebenen du brauchst. Es gibt zwei Formate:</p>
       <h3>DaVinci Resolve</h3>
@@ -153,7 +179,9 @@
       <p>Die Animationen sind danach frei editierbar &ndash; du kannst Farben, Position und Gr&ouml;&szlig;e im
       Schnittprogramm weiter anpassen, ohne dass die Werte verloren gehen.</p>
       <p class="hint-box">&Auml;nderst du hier eine Einstellung, exportier die betroffene Datei einfach neu.
-      Der Button &bdquo;Alle Dateien herunterladen&ldquo; packt alles in ein ZIP.</p>
+      Ganz unten packt &bdquo;Alle Dateien herunterladen&ldquo; alles in ein ZIP; dar&uuml;ber liegen zwei
+      weitere Buttons, die nur die Resolve-Dateien beziehungsweise nur die After-Effects-Skripte
+      enthalten.</p>
     </section>
     <section data-help="en" hidden>
       <h1>How does it work?</h1>
@@ -199,6 +227,31 @@
       you go. One practical tip: a shadow plus a strong contrasting colour keeps the readout legible even
       over busy footage.</p>
 
+      <h2 id="the-overlays">The nine overlays</h2>
+      <p>Each overlay is its own layer and can be downloaded on its own. If your file has no matching
+      values, the overlay stays empty and is left out of the bulk export &ndash; you simply get seven
+      files instead of nine.</p>
+      <ul>
+        <li><strong>Speedometer</strong> &ndash; a dial with a needle and a number. The scale follows the
+        fastest moment in your recording, the unit follows your choice in step&nbsp;02.</li>
+        <li><strong>Route</strong> &ndash; the whole track as a line with a dot travelling along it. It needs
+        nothing but coordinates, so it works with any recording.</li>
+        <li><strong>Elevation</strong> &ndash; height over distance as a curve, with a moving dot and labels
+        for the highest and lowest point. Needs elevation data.</li>
+        <li><strong>Heart rate</strong> &ndash; a heart symbol and the value in beats per minute. Needs a chest
+        strap or an optical sensor on the wrist.</li>
+        <li><strong>Incline</strong> &ndash; a wedge that tilts with the gradient, plus the value in percent or
+        degrees. Calculated from elevation and distance over a sliding window, so single outliers do not
+        make the readout jitter.</li>
+        <li><strong>Distance marker</strong> &ndash; the distance covered as a number, in kilometres or
+        miles.</li>
+        <li><strong>Cadence</strong> &ndash; the value in revolutions per minute. Needs a cadence sensor.</li>
+        <li><strong>Power</strong> &ndash; the value in watts. Needs a power meter.</li>
+        <li><strong>Lap markers</strong> &ndash; the lap number and the running time of the current lap. Laps
+        only exist inside <code>.fit</code> files; GPX has no notion of them, so this overlay stays
+        unavailable there.</li>
+      </ul>
+
       <h2 id="step-05"><span class="step">05</span>Export and bring it in</h2>
       <p>In the last section you pick the layers you need. Two formats are available:</p>
       <h3>DaVinci Resolve</h3>
@@ -213,8 +266,9 @@
       the values. Drop it over your footage.</p>
       <p>Everything stays editable afterwards &ndash; you can change colours, position and size in your
       editor without losing the animation.</p>
-      <p class="hint-box">Changed a setting here? Just export that file again. The &ldquo;Download All
-      Files&rdquo; button wraps everything into one ZIP.</p>
+      <p class="hint-box">Changed a setting here? Just export that file again. At the bottom, &ldquo;Download All Files&rdquo; wraps everything into one
+      ZIP; above it sit two more buttons holding only the Resolve files or only the After Effects
+      scripts.</p>
     </section>
   </main>
   <footer class="site-footer">
