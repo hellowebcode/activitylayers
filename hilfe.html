@@ -8,6 +8,63 @@
 <title>Wie funktioniert das? — Activity Layers</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Wie funktioniert Activity Layers?",
+  "description": "Schritt für Schritt von der GPS-Aufzeichnung zum fertigen Overlay in DaVinci Resolve oder After Effects.",
+  "inLanguage": "de",
+  "totalTime": "PT10M",
+  "tool": [
+    {
+      "@type": "HowToTool",
+      "name": "GPX- oder FIT-Datei einer GPS-Uhr"
+    },
+    {
+      "@type": "HowToTool",
+      "name": "DaVinci Resolve oder Adobe After Effects"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "position": 1,
+      "name": "Datei laden",
+      "text": "Zieh die GPS-Daten deiner Uhr oder deines Radcomputers in das Uploadfeld oder klick hinein und wähl sie aus. Unterstützt werden .gpx und .fit – also praktisch alles, was Garmin, Wahoo, Polar, Suunto oder Strava ausgeben.",
+      "url": "https://activitylayers.com/hilfe.html#schritt-01"
+    },
+    {
+      "@type": "HowToStep",
+      "position": 2,
+      "name": "Video- und GPS-Einstellungen",
+      "text": "Bildrate des Schnittprojekts, Geschwindigkeitseinheit und Glättungsfenster festlegen.",
+      "url": "https://activitylayers.com/hilfe.html#schritt-02"
+    },
+    {
+      "@type": "HowToStep",
+      "position": 3,
+      "name": "Auf das Video synchronisieren",
+      "text": "GPS-Versatz und Zeitabweichungsfaktor über zwei wiedererkennbare Ereignisse bestimmen.",
+      "url": "https://activitylayers.com/hilfe.html#schritt-03"
+    },
+    {
+      "@type": "HowToStep",
+      "position": 4,
+      "name": "Aussehen anpassen",
+      "text": "Farben, Linienstärken und Größen je Overlay wählen; die Vorschauen aktualisieren sich sofort.",
+      "url": "https://activitylayers.com/hilfe.html#schritt-04"
+    },
+    {
+      "@type": "HowToStep",
+      "position": 5,
+      "name": "Exportieren und einbauen",
+      "text": "Als .setting für die Fusion-Seite in DaVinci Resolve oder als .jsx für After Effects herunterladen.",
+      "url": "https://activitylayers.com/hilfe.html#schritt-05"
+    }
+  ]
+}
+</script>
 </head>
 <body class="light">
 <div class="legal-page">
@@ -39,7 +96,7 @@
       <p class="lead">In f&uuml;nf Schritten von der Aufzeichnung deiner Uhr zum fertigen Overlay im
       Schnittprogramm. Alles l&auml;uft in deinem Browser &ndash; deine Aufzeichnung verl&auml;sst dein Ger&auml;t nicht.</p>
 
-      <h2><span class="step">01</span>Datei laden</h2>
+      <h2 id="schritt-01"><span class="step">01</span>Datei laden</h2>
       <p>Zieh die Datei deiner Uhr oder deines Radcomputers in das Feld ganz oben, oder klick hinein und
       w&auml;hl sie aus. Unterst&uuml;tzt werden <code>.gpx</code> und <code>.fit</code> &ndash; also praktisch alles,
       was Garmin, Wahoo, Polar, Suunto oder Strava ausgeben.</p>
@@ -47,7 +104,7 @@
       Kartenvorschau, den Streckenverlauf, die Geschwindigkeitskurve und &ndash; falls vorhanden &ndash;
       Herzfrequenz und H&ouml;henprofil. Daran erkennst du sofort, ob die richtige Aufzeichnung geladen ist.</p>
 
-      <h2><span class="step">02</span>Video- und GPS-Einstellungen</h2>
+      <h2 id="schritt-02"><span class="step">02</span>Video- und GPS-Einstellungen</h2>
       <p>Drei Angaben entscheiden dar&uuml;ber, ob das Overlay sp&auml;ter zu deinem Material passt:</p>
       <ul>
         <li><strong>Bildrate</strong> &ndash; stell hier exakt die Bildrate deines Schnittprojekts ein.
@@ -58,7 +115,7 @@
         zwischen 3 und 7 beruhigt die Nadel, ohne echte Beschleunigungen zu verschlucken.</li>
       </ul>
 
-      <h2><span class="step">03</span>Auf das Video synchronisieren</h2>
+      <h2 id="schritt-03"><span class="step">03</span>Auf das Video synchronisieren</h2>
       <p>Deine Uhr und deine Kamera haben nicht gleichzeitig gestartet. Zwei Werte bringen beides
       zusammen:</p>
       <ul>
@@ -76,12 +133,12 @@
       Abweichungsfaktor.</p>
       <p class="hint-box">Alle sechs Overlays nutzen denselben Versatz. Einmal synchronisieren gen&uuml;gt.</p>
 
-      <h2><span class="step">04</span>Aussehen anpassen</h2>
+      <h2 id="schritt-04"><span class="step">04</span>Aussehen anpassen</h2>
       <p>F&uuml;r jedes Overlay gibt es eine eigene Karte mit Farben, Linienst&auml;rken und Gr&ouml;&szlig;en. Die
       Vorschauen aktualisieren sich sofort. Ein Tipp aus der Praxis: Schatten und eine kr&auml;ftige
       Kontrastfarbe halten die Anzeige auch &uuml;ber unruhigem Bildmaterial lesbar.</p>
 
-      <h2><span class="step">05</span>Exportieren und einbauen</h2>
+      <h2 id="schritt-05"><span class="step">05</span>Exportieren und einbauen</h2>
       <p>Im letzten Abschnitt w&auml;hlst du, welche Ebenen du brauchst. Es gibt zwei Formate:</p>
       <h3>DaVinci Resolve</h3>
       <p>Lad die <code>.setting</code>-Dateien herunter. In Resolve legst du deinen Clip auf die Timeline,
@@ -103,7 +160,7 @@
       <p class="lead">Five steps from your watch recording to a finished overlay in your editor.
       Everything runs in your browser &ndash; your recording never leaves your device.</p>
 
-      <h2><span class="step">01</span>Load your file</h2>
+      <h2 id="step-01"><span class="step">01</span>Load your file</h2>
       <p>Drop the file from your watch or bike computer into the field at the top, or click it and pick
       the file. <code>.gpx</code> and <code>.fit</code> are supported &ndash; which covers just about
       anything Garmin, Wahoo, Polar, Suunto or Strava will give you.</p>
@@ -111,7 +168,7 @@
       speed curve and &ndash; where present &ndash; heart rate and elevation. That tells you at a glance
       whether you loaded the right recording.</p>
 
-      <h2><span class="step">02</span>Video and GPS settings</h2>
+      <h2 id="step-02"><span class="step">02</span>Video and GPS settings</h2>
       <p>Three values decide whether the overlay will match your footage:</p>
       <ul>
         <li><strong>Frame rate</strong> &ndash; set this to exactly the frame rate of your edit. Get it
@@ -122,7 +179,7 @@
         7 calms the needle without swallowing real acceleration.</li>
       </ul>
 
-      <h2><span class="step">03</span>Sync to your video</h2>
+      <h2 id="step-03"><span class="step">03</span>Sync to your video</h2>
       <p>Your watch and your camera did not start at the same moment. Two values bring them together:</p>
       <ul>
         <li><strong>GPS offset</strong> shifts the data along the timeline. Positive when the camera was
@@ -137,12 +194,12 @@
       the end of the clip gives you the drift factor as well.</p>
       <p class="hint-box">All six overlays share the same offset. Syncing once is enough.</p>
 
-      <h2><span class="step">04</span>Style it</h2>
+      <h2 id="step-04"><span class="step">04</span>Style it</h2>
       <p>Every overlay has its own card with colours, line weights and sizes, and the previews update as
       you go. One practical tip: a shadow plus a strong contrasting colour keeps the readout legible even
       over busy footage.</p>
 
-      <h2><span class="step">05</span>Export and bring it in</h2>
+      <h2 id="step-05"><span class="step">05</span>Export and bring it in</h2>
       <p>In the last section you pick the layers you need. Two formats are available:</p>
       <h3>DaVinci Resolve</h3>
       <p>Download the <code>.setting</code> files. In Resolve, put your clip on the timeline, switch to
