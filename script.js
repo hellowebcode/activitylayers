@@ -121,6 +121,7 @@ var UI_DE={
   '1 (e.g. 3.2)':'1 (z. B. 3,2)',
   '2 (e.g. 3.24)':'2 (z. B. 3,24)',
   'How does it work':'Wie funktioniert das',
+  'DaVinci Resolve is a registered trademark of Blackmagic Design Pty Ltd. Adobe and After Effects are registered trademarks of Adobe Inc. Activity Layers is not affiliated with Blackmagic Design or Adobe.':'DaVinci Resolve ist eine eingetragene Marke von Blackmagic Design Pty Ltd. Adobe und After Effects sind eingetragene Marken von Adobe Inc. Activity Layers steht in keiner Verbindung zu Blackmagic Design oder Adobe.',
   'Map preview':'Kartenvorschau',
   'Loading map…':'Karte wird geladen …',
   'DaVinci Resolve · Fusion · After Effects':'DaVinci Resolve · Fusion · After Effects',
