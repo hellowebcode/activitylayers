@@ -1,6 +1,6 @@
 # Activity Layers
 
-Browser-Tool, das aus GPX- und FIT-Aufzeichnungen sechs animierte Overlays für
+Browser-Tool, das aus GPX- und FIT-Aufzeichnungen neun animierte Overlays für
 DaVinci Resolve (Fusion `.setting`) und After Effects (ExtendScript `.jsx`)
 erzeugt. Die Verarbeitung findet vollständig im Browser statt – es gibt keinen
 Upload.

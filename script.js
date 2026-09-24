@@ -8,13 +8,13 @@ var UI_DE={
   'Export':'Export',
   'Local by design':'Bewusst lokal',
   'Your activity data stays in this browser.':'Deine Aktivitätsdaten bleiben in diesem Browser.',
-  'Six data layers.':'Sechs Datenebenen.',
+  'Nine data layers.':'Neun Datenebenen.',
   'Ready for the edit.':'Bereit für den Schnitt.',
   'Layer your activity':'Deine Aktivität –',
   'into every frame.':'in jedem Frame sichtbar.',
-  'Create six animated overlays for':'Erstelle aus GPX- und FIT-Dateien sechs animierte Overlays für',
+  'Create nine animated overlays for':'Erstelle aus GPX- und FIT-Dateien neun animierte Overlays für',
   'and':'und',
-  'from GPX and FIT files — processed locally in your browser.':'– lokal in deinem Browser.',
+  'from GPX and FIT files — processed locally in your browser. Lap markers need a .fit file; every other overlay works with both formats.':'– lokal in deinem Browser. Rundenmarken brauchen eine .fit-Datei, alle übrigen Overlays funktionieren mit beiden Formaten.',
   '⏱ GPS Sync Calibration Helper':'⏱ GPS-Synchronisierung kalibrieren',
   'Enter timecodes in':'Timecodes im Format',
   'format (e.g.':'eingeben (z. B.',
@@ -110,6 +110,17 @@ var UI_DE={
   'HR Overlay':'HF-Overlay',
   'Incline Overlay':'Steigungs-Overlay',
   'Mile Marker Overlay':'Distanzmarker-Overlay',
+  'Cadence overlay style':'Trittfrequenz-Overlay-Stil',
+  'Power overlay style':'Leistungs-Overlay-Stil',
+  'Lap Marker overlay style':'Rundenmarken-Overlay-Stil',
+  'Cadence Overlay':'Trittfrequenz-Overlay',
+  'Power Overlay':'Leistungs-Overlay',
+  'Lap Marker Overlay':'Rundenmarken-Overlay',
+  '.setting file (.fit files only)':'.setting-Datei (nur .fit-Dateien)',
+  '.jsx script (cadence value)':'.jsx-Skript (Trittfrequenzwert)',
+  '.jsx script (power value)':'.jsx-Skript (Leistungswert)',
+  '.jsx script (.fit files only)':'.jsx-Skript (nur .fit-Dateien)',
+  'Lap markers are read from the lap records inside a .fit file. GPX files carry no lap information, so this overlay stays unavailable for them.':'Rundenmarken stammen aus den Runden-Datens\u00e4tzen einer .fit-Datei. GPX-Dateien enthalten keine Rundeninformationen, dieses Overlay bleibt dort also ohne Funktion.',
   'Download All Files':'Alle Dateien herunterladen',
   'Preparing files…':'Dateien werden vorbereitet …',
   'Studio navigation':'Studio-Navigation',
@@ -134,7 +145,7 @@ var UI_DE={
   '.jsx script (heart + value)':'.jsx-Skript (Herz + Wert)',
   '.jsx script (wedge + value)':'.jsx-Skript (Keil + Wert)',
   '.jsx script (distance value)':'.jsx-Skript (Distanzwert)',
-  'Visualisation only — this map is never part of an export. The six overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die sechs Overlays oben bleiben davon unberührt.'
+  'Visualisation only — this map is never part of an export. The nine overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die neun Overlays oben bleiben davon unberührt.'
 };
 
 var lastMaxSpeedValue=null;
@@ -217,6 +228,12 @@ function localizeRuntimeText(message){
     'No heart rate data in this file':'Diese Datei enthält keine Herzfrequenzdaten',
     'No elevation data in this file (incline requires elevation)':'Diese Datei enthält keine Höhendaten (Steigung benötigt Höhendaten)',
     'No GPS data in this file':'Diese Datei enthält keine GPS-Daten',
+    'No cadence data in this file':'Diese Datei enth\u00e4lt keine Trittfrequenzdaten',
+    'No power data in this file':'Diese Datei enth\u00e4lt keine Leistungsdaten',
+    'No lap data in this file (.fit files only)':'Diese Datei enth\u00e4lt keine Rundendaten (nur .fit-Dateien)',
+    'Building Cadence overlay\u2026':'Trittfrequenz-Overlay wird erstellt \u2026',
+    'Building Power overlay\u2026':'Leistungs-Overlay wird erstellt \u2026',
+    'Building Lap Marker overlay\u2026':'Rundenmarken-Overlay wird erstellt \u2026',
     'Preparing files…':'Dateien werden vorbereitet …',
     'Building Speed overlay…':'Tacho-Overlay wird erstellt …',
     'Building Route overlay…':'Routen-Overlay wird erstellt …',
@@ -266,9 +283,11 @@ var savedUILanguage='en';
 try{savedUILanguage=localStorage.getItem('overlayUILanguage')||'en';}catch(e){}
 applyUILanguage(savedUILanguage);
 
-var rawPoints=[], speedData=[], hrData=[], gradeData=[], distData=[], totalDistM=0, currentFilename='';
+var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';
 var btnIds=['btnSetting','btnRouteSetting','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
-  'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx'];
+  'btnCadSetting','btnPowerSetting','btnLapSetting',
+  'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
+  'btnCadJsx','btnPowerJsx','btnLapJsx'];
 var syncCalcResult={offset:null,drift:null};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0'};
@@ -389,6 +408,18 @@ document.getElementById('resetHR').addEventListener('click',function(){
   document.getElementById('hrSize').value='0.07';
   if(hrData.length) drawHR();
 });
+document.getElementById('resetCad').addEventListener('click',function(){
+  document.getElementById('cadColor').value='#a855f7';
+  document.getElementById('cadSize').value='0.07';
+});
+document.getElementById('resetPower').addEventListener('click',function(){
+  document.getElementById('powerColor').value='#f59e0b';
+  document.getElementById('powerSize').value='0.07';
+});
+document.getElementById('resetLap').addEventListener('click',function(){
+  document.getElementById('lapColor').value='#38bdf8';
+  document.getElementById('lapSize').value='0.06';
+});
 ['hrColor','hrHeartColor'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener('input',function(){if(hrData.length) drawHR();});
@@ -481,7 +512,7 @@ function fitCrc(bytes,from,to){
 
 function parseFIT(buffer,name){
   try{
-    var bytes=new Uint8Array(buffer),definitions={},points=[],lastTimestamp=undefined;
+    var bytes=new Uint8Array(buffer),definitions={},points=[],laps=[],lastTimestamp=undefined;
     if(bytes.length<14) throw new Error('file too short to be a FIT file');
     var headerSize=bytes[0];
     if(headerSize!==12&&headerSize!==14) throw new Error('unexpected FIT header size ('+headerSize+')');
@@ -514,6 +545,16 @@ function parseFIT(buffer,name){
       pos=sp+def.dataSize; return rec;
     }
     var FIT_EPOCH=631065600;
+    function tryEmitLap(rec){
+      var st=rec[2], en=rec[253], el=rec[7];
+      if(st===undefined||st===0xFFFFFFFF) return;
+      var startMs=(st+FIT_EPOCH)*1000;
+      var elapsed=(el!==undefined&&el!==0xFFFFFFFF)?el/1000:null;
+      var endMs=(en!==undefined&&en!==0xFFFFFFFF)?(en+FIT_EPOCH)*1000:null;
+      if(endMs===null&&elapsed!==null) endMs=startMs+elapsed*1000;
+      if(endMs===null||!(endMs>startMs)) return;
+      laps.push({start:startMs,end:endMs,elapsed:elapsed!==null?elapsed:(endMs-startMs)/1000});
+    }
     function tryEmit(rec,ts){
       var lat=rec[0],lon=rec[1];
       var alt=rec[2]!==undefined?rec[2]:rec[78];
@@ -559,11 +600,15 @@ function parseFIT(buffer,name){
         if(!def) break;
         var rec=readFields(def);
         if(def.globalMsgNum===20){var ts=rec[253];if(ts!==undefined&&ts!==0xFFFFFFFF)lastTimestamp=ts;tryEmit(rec,ts);}
+        else if(def.globalMsgNum===19) tryEmitLap(rec);
       }
     }
     if(points.length<2){setStatus('No GPS track points found in FIT file','err');return;}
     points.sort(function(a,b){return a.time-b.time;});
-    rawPoints=points; totalDistM=0;
+    rawPoints=points;
+    laps.sort(function(a,b){return a.start-b.start;});
+    lapData=laps;
+    totalDistM=0;
     for(var i=1;i<rawPoints.length;i++)totalDistM+=haversine(rawPoints[i-1].lat,rawPoints[i-1].lon,rawPoints[i].lat,rawPoints[i].lon);
     dropZone.querySelector('.drop-label').textContent=name;
     dropZone.querySelector('.drop-sub').textContent=localizeRuntimeText(rawPoints.length+' track points loaded');
@@ -623,6 +668,7 @@ function parseGPX(text,name){
       } else skipped++;
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});
+    lapData=[];
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
     if(skipped)console.warn('Activity Layers: '+skipped+' track point(s) skipped, coordinates out of range or not finite');
     totalDistM=0;
@@ -779,6 +825,8 @@ function reprocess(){
   var win=(parseInt(document.getElementById('smooth').value)||0)*2+1;
   speedData=smooth(computeSpeeds(rawPoints,unit),win);
   hrData=rawPoints.filter(function(p){return p.hr!==null&&!isNaN(p.hr);}).map(function(p){return{time:p.time,hr:p.hr};});
+  cadData=rawPoints.filter(function(p){return p.cad!==null&&p.cad!==undefined&&!isNaN(p.cad);}).map(function(p){return{time:p.time,cad:p.cad};});
+  powerData=rawPoints.filter(function(p){return p.power!==null&&p.power!==undefined&&!isNaN(p.power);}).map(function(p){return{time:p.time,power:p.power};});
   gradeData=buildGradeData(rawPoints);
   distData=(function(){
     var out=[],cum=0;
@@ -2606,7 +2654,7 @@ function buildElevJsx(){
 
 function buildHRJsx(){
   if(!hrData.length) return null;
-  var size=parseFloat(document.getElementById('hrSize').value)||60;
+  var size=(parseFloat(document.getElementById('hrSize').value)||0.07)*AE_H;
   var kf=buildKeyframeList(hrData,function(p){return p.hr;});
   var HX=250, HY=880, s=size/22;
   var heart=[],t;
@@ -2619,7 +2667,7 @@ function buildHRJsx(){
   L.push('  var hl=shapeLayer("Heart"), hg=grpOf(hl,"Heart");');
   L.push('  addPath(hg,'+aePts(heart)+',true);');
   L.push('  addFill(hg,'+aeCol(document.getElementById('hrHeartColor').value)+');');
-  L.push('  var num=textLayer("HR Value","0",['+(HX+size*1.2)+','+(HY+size*0.4)+'],'+aeNum(size*1.6)+','+aeCol(document.getElementById('hrColor').value)+',false);');
+  L.push('  var num=textLayer("HR Value","0",['+aeNum(HX+size*1.2)+','+aeNum(HY+size*0.4)+'],'+aeNum(size)+','+aeCol(document.getElementById('hrColor').value)+',false);');
   L.push('  driveText(num,"Heart Rate",'+aeKf(kf,0)+',"Math.round(v)+\\"\\";");');
   L.push(aeTail());
   return L.join('\n');
@@ -2679,12 +2727,237 @@ function promptSupport(){
   },700);
 }
 
+function overlayLabels(){
+  var de=(typeof uiLanguage!=='undefined'&&uiLanguage==='de');
+  return { cad: de?'U/min':'rpm', power:'W', lap: de?'Runde':'Lap' };
+}
+
+function timeToFrame(tMs,t0){
+  var fps=parseFloat(document.getElementById('fps').value)||30;
+  var offset=parseFloat(document.getElementById('offset').value)||0;
+  var drift=parseFloat(document.getElementById('driftFactor').value)||1.0;
+  return Math.round(((tMs-t0)/1000*drift+offset)*fps);
+}
+
+function buildLapKeyframes(){
+  if(!lapData.length||!rawPoints.length) return null;
+  var fps=parseFloat(document.getElementById('fps').value)||30;
+  var t0=rawPoints[0].time, num=[], sec=[], last=-1;
+  for(var i=0;i<lapData.length;i++){
+    var a=timeToFrame(lapData[i].start,t0), b=timeToFrame(lapData[i].end,t0);
+    if(b<=a) b=a+1;
+    if(b<1) continue;
+    if(a<0) a=0;
+    if(a<=last) a=last+1;
+    if(b-1<=a) continue;
+    num.push([a,i+1]); num.push([b-1,i+1]);
+    sec.push([a,0]);   sec.push([b-1,(b-1-a)/fps]);
+    last=b-1;
+  }
+  return num.length?{num:num,sec:sec}:null;
+}
+
+function buildTextOverlaySetting(cfg){
+  var L=[];
+  L.push('{');
+  L.push('\tTools = ordered() {');
+  L.push('\t\t'+cfg.group+' = GroupOperator {');
+  L.push('\t\t\tCtrlWZoom = false,');
+  L.push('\t\t\tNameSet = true,');
+  L.push('\t\t\tOutputs = {');
+  L.push('\t\t\t\tOutput1 = InstanceOutput {');
+  L.push('\t\t\t\t\tSourceOp = "Merge3",');
+  L.push('\t\t\t\t\tSource = "Output",');
+  L.push('\t\t\t\t}');
+  L.push('\t\t\t},');
+  L.push('\t\t\tViewInfo = GroupInfo {');
+  L.push('\t\t\t\tPos = { 1148.97, 18.5755 },');
+  L.push('\t\t\t\tFlags = {');
+  L.push('\t\t\t\t\tAllowPan = false,');
+  L.push('\t\t\t\t\tAutoSnap = true,');
+  L.push('\t\t\t\t\tRemoveRouters = true');
+  L.push('\t\t\t\t},');
+  L.push('\t\t\t\tSize = { 393.511, 139.781, 196.756, 24.2424 },');
+  L.push('\t\t\t\tDirection = "Horizontal",');
+  L.push('\t\t\t\tPipeStyle = "Direct",');
+  L.push('\t\t\t\tScale = 1,');
+  L.push('\t\t\t\tOffset = { -990.532, -3.75992 }');
+  L.push('\t\t\t},');
+  L.push('\t\t\tTools = ordered() {');
+  L.push('\t\t\t\tRectangle1 = RectangleMask {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
+  L.push('\t\t\t\t\t\tBorderWidth = Input { Value = -0.181, },');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = 1920, },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
+  L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
+  L.push('\t\t\t\t\t\tCenter = Input { Value = { 0.494180407371484, 0.5 }, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+(cfg.boxWidth||0.378).toFixed(3)+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = 0.472, },');
+  L.push('\t\t\t\t\t\tCornerRadius = Input { Value = 1, }');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 861.394, 10.919 } },');
+  L.push('\t\t\t\t},');
+  L.push('\t\t\t\tBackground2 = Background {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tEffectMask = Input {');
+  L.push('\t\t\t\t\t\t\tSourceOp = "Rectangle1",');
+  L.push('\t\t\t\t\t\t\tSource = "Mask",');
+  L.push('\t\t\t\t\t\t},');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
+  L.push('\t\t\t\t\t\tTopLeftAlpha = Input { Value = 0.433, }');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 856.776, 84.493 } },');
+  L.push('\t\t\t\t},');
+  L.push('\t\t\t\tText2 = TextPlus {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = 1920, },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = 1080, },');
+  L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
+  L.push('\t\t\t\t\t\tWrap = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tLayoutRotation = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tTransformRotation = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tRed1 = Input { Value = '+(cfg.rgb[0]/255).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(cfg.rgb[1]/255).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(cfg.rgb[2]/255).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tSoftness1 = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tStyledText = Input {');
+  L.push('\t\t\t\t\t\t\tValue = "0",');
+  L.push('\t\t\t\t\t\t\tExpression = "'+cfg.expr.replace(/"/g,'\\"')+'",');
+  L.push('\t\t\t\t\t\t},');
+  L.push('\t\t\t\t\t\tFont = Input { Value = "Open Sans", },');
+  L.push('\t\t\t\t\t\tStyle = Input { Value = "Bold", },');
+  L.push('\t\t\t\t\t\tSize = Input { Value = '+cfg.size.toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tVerticalJustificationNew = Input { Value = 3, },');
+  L.push('\t\t\t\t\t\tHorizontalJustificationNew = Input { Value = 3, },');
+  L.push('\t\t\t\t\t\tAdvancedFontControls = Input { Value = 1, },');
+  for(var d=0;d<cfg.drives.length;d++)
+    L.push('\t\t\t\t\t\t'+cfg.drives[d].name+' = '+bezierSourceRefInput('Text2'+cfg.drives[d].name)+',');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 1122.34, 17.956 } },');
+  var uc=[];
+  for(var u=0;u<cfg.drives.length;u++){
+    var dr=cfg.drives[u];
+    uc.push(dr.name+' = { LINKS_Name = "'+dr.label+'", LINKID_DataType = "Number", INPID_InputControl = "SliderControl", INP_Integer = false, INP_MinScale = '+dr.min+', INP_MaxScale = '+dr.max+', INP_MinAllowed = -1000000, INP_MaxAllowed = 1000000, INP_SplineType = "Default", ICS_ControlPage = "Text" }');
+  }
+  L.push('\t\t\t\t\tUserControls = ordered() { '+uc.join(', ')+' }');
+  L.push('\t\t\t\t},');
+  L.push('\t\t\t\tMerge3 = Merge {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tBackground = Input {');
+  L.push('\t\t\t\t\t\t\tSourceOp = "Background2",');
+  L.push('\t\t\t\t\t\t\tSource = "Output",');
+  L.push('\t\t\t\t\t\t},');
+  L.push('\t\t\t\t\t\tForeground = Input {');
+  L.push('\t\t\t\t\t\t\tSourceOp = "Text2",');
+  L.push('\t\t\t\t\t\t\tSource = "Output",');
+  L.push('\t\t\t\t\t\t},');
+  L.push('\t\t\t\t\t\tCenter = Input { Value = { 0.532, 0.5 }, },');
+  L.push('\t\t\t\t\t\tPerformDepthMerge = Input { Value = 0, }');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 1124.29, 81.2339 } },');
+  L.push('\t\t\t\t},');
+  for(var k=0;k<cfg.drives.length;k++)
+    L.push(buildBezierSplineTool('Text2'+cfg.drives[k].name, cfg.drives[k].kf, false));
+  L.push('\t\t\t},');
+  L.push('\t\t},');
+  L.push('\t}');
+  L.push('}');
+  return L.join('\n');
+}
+
+function buildCadenceSetting(){
+  if(!cadData.length) return null;
+  return buildTextOverlaySetting({
+    group:'Cadence',
+    rgb:hexToRgb(document.getElementById('cadColor').value),
+    size:parseFloat(document.getElementById('cadSize').value)||0.07,
+    expr:'string.format("%d '+overlayLabels().cad+'", floor(Cadence))',
+    drives:[{name:'Cadence',label:'Cadence',min:0,max:200,
+             kf:buildKeyframeList(cadData,function(p){return Math.round(p.cad);})}]
+  });
+}
+
+function buildPowerSetting(){
+  if(!powerData.length) return null;
+  return buildTextOverlaySetting({
+    group:'Power',
+    rgb:hexToRgb(document.getElementById('powerColor').value),
+    size:parseFloat(document.getElementById('powerSize').value)||0.07,
+    expr:'string.format("%d '+overlayLabels().power+'", floor(Power))',
+    drives:[{name:'Power',label:'Power',min:0,max:1500,
+             kf:buildKeyframeList(powerData,function(p){return Math.round(p.power);})}]
+  });
+}
+
+function buildLapSetting(){
+  var k=buildLapKeyframes();
+  if(!k) return null;
+  return buildTextOverlaySetting({
+    group:'LapMarker',
+    boxWidth:0.5,
+    rgb:hexToRgb(document.getElementById('lapColor').value),
+    size:parseFloat(document.getElementById('lapSize').value)||0.06,
+    expr:'string.format("'+overlayLabels().lap+' %d   %d:%02d", floor(LapNumber), floor(LapTime/60), floor(LapTime - floor(LapTime/60)*60))',
+    drives:[{name:'LapNumber',label:'Lap Number',min:0,max:99,kf:k.num},
+            {name:'LapTime',label:'Lap Time (s)',min:0,max:3600,kf:k.sec}]
+  });
+}
+
+function buildCadenceJsx(){
+  if(!cadData.length) return null;
+  var size=(parseFloat(document.getElementById('cadSize').value)||0.07)*AE_H;
+  var kf=buildKeyframeList(cadData,function(p){return p.cad;});
+  var L=[aeHead('Cadence Overlay')];
+  L.push('  var num=textLayer("Cadence","0",[250,880],'+aeNum(size)+','+aeCol(document.getElementById('cadColor').value)+',false);');
+  L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
+function buildPowerJsx(){
+  if(!powerData.length) return null;
+  var size=(parseFloat(document.getElementById('powerSize').value)||0.07)*AE_H;
+  var kf=buildKeyframeList(powerData,function(p){return p.power;});
+  var L=[aeHead('Power Overlay')];
+  L.push('  var num=textLayer("Power","0",[250,880],'+aeNum(size)+','+aeCol(document.getElementById('powerColor').value)+',false);');
+  L.push('  driveText(num,"Power",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().power+'";')+');');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
+function buildLapJsx(){
+  var k=buildLapKeyframes();
+  if(!k) return null;
+  var size=(parseFloat(document.getElementById('lapSize').value)||0.06)*AE_H;
+  var expr='var n=Math.floor(effect("Lap Number")(1).value); '+
+           'var t=effect("Lap Time")(1).value; '+
+           'var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
+           '"'+overlayLabels().lap+' "+n+"   "+m+":"+(s<10?"0":"")+s;';
+  var L=[aeHead('Lap Marker Overlay')];
+  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+',[250,880],'+aeNum(size)+','+aeCol(document.getElementById('lapColor').value)+',false);');
+  L.push('  slider(lap,"Lap Number",'+aeKf(k.num,0)+');');
+  L.push('  slider(lap,"Lap Time",'+aeKf(k.sec,2)+');');
+  L.push('  lap.property("ADBE Text Properties").property("ADBE Text Document").expression = '+aeStr(expr)+';');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
 [['btnSpeedJsx',buildSpeedJsx,'Speed_Overlay'],
  ['btnRouteJsx',buildRouteJsx,'Route_Overlay'],
  ['btnElevJsx',buildElevJsx,'Elevation_Overlay'],
  ['btnHRJsx',buildHRJsx,'HR_Overlay'],
  ['btnInclineJsx',buildInclineJsx,'Incline_Overlay'],
- ['btnMileJsx',buildMileJsx,'Mile_Marker_Overlay']
+ ['btnMileJsx',buildMileJsx,'Mile_Marker_Overlay'],
+ ['btnCadJsx',buildCadenceJsx,'Cadence_Overlay'],
+ ['btnPowerJsx',buildPowerJsx,'Power_Overlay'],
+ ['btnLapJsx',buildLapJsx,'Lap_Marker_Overlay']
 ].forEach(function(spec){
   document.getElementById(spec[0]).addEventListener('click',function(){
     var content=spec[1]();
@@ -2715,6 +2988,27 @@ document.getElementById('btnMileSetting').addEventListener('click',function(){
   setStatus('Downloaded Mile_Marker_Overlay.setting','ok');
 });
 
+document.getElementById('btnCadSetting').addEventListener('click',function(){
+  var c=buildCadenceSetting();
+  if(!c){setStatus('No cadence data in this file','err');return;}
+  dl(c,makeFilename('Cadence_Overlay','setting'));
+  setStatus('Downloaded Cadence_Overlay.setting','ok');
+});
+
+document.getElementById('btnPowerSetting').addEventListener('click',function(){
+  var c=buildPowerSetting();
+  if(!c){setStatus('No power data in this file','err');return;}
+  dl(c,makeFilename('Power_Overlay','setting'));
+  setStatus('Downloaded Power_Overlay.setting','ok');
+});
+
+document.getElementById('btnLapSetting').addEventListener('click',function(){
+  var c=buildLapSetting();
+  if(!c){setStatus('No lap data in this file (.fit files only)','err');return;}
+  dl(c,makeFilename('Lap_Marker_Overlay','setting'));
+  setStatus('Downloaded Lap_Marker_Overlay.setting','ok');
+});
+
 function showExportProgress(){
   document.getElementById('exportProgressWrap').style.display='block';
   updateExportProgress(0,'Preparing files…');
@@ -2737,12 +3031,18 @@ document.getElementById('btnDownloadAll').addEventListener('click',function(){
     {label:'Building HR overlay…',run:function(){return hrData.length?buildHRSetting():null;},name:function(){return makeFilename('HR_Overlay','setting');},optional:true},
     {label:'Building Incline overlay…',run:function(){return gradeData.length?buildInclineSetting():null;},name:function(){return makeFilename('Incline_Overlay','setting');},optional:true},
     {label:'Building Mile Marker overlay…',run:function(){return distData.length?buildMileSetting():null;},name:function(){return makeFilename('Mile_Marker_Overlay','setting');},optional:true},
+    {label:'Building Cadence overlay…',run:function(){return buildCadenceSetting();},name:function(){return makeFilename('Cadence_Overlay','setting');},optional:true},
+    {label:'Building Power overlay…',run:function(){return buildPowerSetting();},name:function(){return makeFilename('Power_Overlay','setting');},optional:true},
+    {label:'Building Lap Marker overlay…',run:function(){return buildLapSetting();},name:function(){return makeFilename('Lap_Marker_Overlay','setting');},optional:true},
     {label:'Building After Effects scripts…',run:function(){return buildSpeedJsx();},name:function(){return makeFilename('Speed_Overlay_AE','jsx');},optional:true},
     {label:'Building After Effects scripts…',run:function(){return buildRouteJsx();},name:function(){return makeFilename('Route_Overlay_AE','jsx');},optional:true},
     {label:'Building After Effects scripts…',run:function(){return buildElevJsx();},name:function(){return makeFilename('Elevation_Overlay_AE','jsx');},optional:true},
     {label:'Building After Effects scripts…',run:function(){return buildHRJsx();},name:function(){return makeFilename('HR_Overlay_AE','jsx');},optional:true},
     {label:'Building After Effects scripts…',run:function(){return buildInclineJsx();},name:function(){return makeFilename('Incline_Overlay_AE','jsx');},optional:true},
-    {label:'Building After Effects scripts…',run:function(){return buildMileJsx();},name:function(){return makeFilename('Mile_Marker_Overlay_AE','jsx');},optional:true}
+    {label:'Building After Effects scripts…',run:function(){return buildMileJsx();},name:function(){return makeFilename('Mile_Marker_Overlay_AE','jsx');},optional:true},
+    {label:'Building After Effects scripts…',run:function(){return buildCadenceJsx();},name:function(){return makeFilename('Cadence_Overlay_AE','jsx');},optional:true},
+    {label:'Building After Effects scripts…',run:function(){return buildPowerJsx();},name:function(){return makeFilename('Power_Overlay_AE','jsx');},optional:true},
+    {label:'Building After Effects scripts…',run:function(){return buildLapJsx();},name:function(){return makeFilename('Lap_Marker_Overlay_AE','jsx');},optional:true}
   ];
   var zip=new JSZip();
   var folder=zip.folder('GPX Overlay');
