@@ -46,14 +46,15 @@ var UI_DE={
   'Max gauge speed (auto)':'Maximale Tachogeschwindigkeit (automatisch)',
   'What do these mean?':'Was bedeuten diese Werte?',
   'GPS offset':'GPS-Versatz',
-  '= video timecode in seconds at the moment you pressed start on your watch. Negative if watch started before the camera.':'= Video-Timecode in Sekunden zu dem Zeitpunkt, an dem du die Aktivität auf deiner Uhr gestartet hast. Negativ, wenn die Uhr vor der Kamera gestartet wurde.',
-  '= corrects the GPS clock running at a slightly different rate than the camera clock. Even a 0.1% difference causes ~6 seconds of drift over 10 minutes — this is the most common cause of sync that\'s perfect at the start but gets progressively worse.':'= korrigiert eine leicht abweichende Geschwindigkeit der GPS-Uhr gegenüber der Kamera. Schon 0,1 % Unterschied verursachen etwa 6 Sekunden Abweichung in 10 Minuten.',
-    'To calibrate':'So kalibrierst du',
-    ': find a':': Suche ein',
-  'second':'zweites',
-  'sync event late in the clip. Note its video timecode and GPS elapsed time, then use the ⏱ Sync Helper button to calculate both values automatically, or use:':'Synchronisationsereignis am Ende des Clips. Notiere Video-Timecode und verstrichene GPS-Zeit und berechne beide Werte über die Schaltfläche zur Synchronisierung oder mit:',
-  'factor = (videoTimecode − offset) ÷ gpsElapsed':'Faktor = (Video-Timecode − Versatz) ÷ verstrichene GPS-Zeit',
-  'Example: second sync at video 9:04 (544s), GPS elapsed 9:10 (550s), offset = 5s → factor = (544 − 5) ÷ 550 = 0.9800':'Beispiel: zweite Synchronisierung bei Video 9:04 (544 s), GPS-Zeit 9:10 (550 s), Versatz = 5 s → Faktor = (544 − 5) ÷ 550 = 0,9800',
+  'The GPS offset':'Der GPS-Versatz',
+  'tells the overlay where your recording sits on the video timeline. It is the video timecode, in seconds, at the moment the watch started recording. If the watch was already running before you hit record on the camera, the value is negative.':'legt fest, wo deine Aufzeichnung auf der Video-Zeitachse liegt. Es ist der Video-Timecode in Sekunden zu dem Zeitpunkt, an dem die Uhr zu zeichnen begann. Lief die Uhr schon, bevor du die Kamera gestartet hast, ist der Wert negativ.',
+  'The clock drift factor':'Der Zeitabweichungsfaktor',
+  'compensates for the two clocks running at slightly different rates. A deviation of just 0.1 percent adds up to roughly six seconds over ten minutes. That is why a sync that looks perfect at the start slowly falls apart towards the end. A value of 1.0 means both clocks agree; below 1.0 the data is slowed down, above 1.0 it is sped up.':'gleicht aus, dass beide Uhren minimal unterschiedlich schnell laufen. Schon 0,1 Prozent Abweichung summieren sich in zehn Minuten auf etwa sechs Sekunden. Genau deshalb sitzt eine Synchronisierung am Anfang perfekt und läuft zum Ende hin auseinander. Der Wert 1,0 bedeutet Gleichlauf; unter 1,0 werden die Daten verlangsamt, über 1,0 beschleunigt.',
+  'You do not have to work these out by hand.':'Du musst nichts davon ausrechnen.',
+  'Look for a moment you can identify in both the video and the recording — pulling away, a distinctive corner, a braking point. Note its video timecode and the elapsed time in the recording, then enter both under Sync Helper. Adding a second moment near the end of the clip gives you the drift factor as well.':'Such dir einen Moment, den du im Video und in der Aufzeichnung wiedererkennst — ein Anfahren, eine markante Kurve, einen Bremspunkt. Notiere den Video-Timecode und die verstrichene Zeit in der Aufzeichnung und trag beides unter Synchronisierung ein. Ein zweiter Moment am Ende des Clips liefert zusätzlich den Abweichungsfaktor.',
+  'The maths behind it, if you want to check the result:':'Die Rechnung dahinter, falls du das Ergebnis nachprüfen willst:',
+  'drift factor = (video timecode − offset) ÷ elapsed GPS time':'Abweichungsfaktor = (Video-Timecode − Versatz) ÷ verstrichene GPS-Zeit',
+  'Say the second moment appears at 9:04 in the video (544 seconds) and at 9:10 in the recording (550 seconds), with an offset of 5 seconds. That gives (544 − 5) ÷ 550 = 0.9800.':'Erscheint der zweite Moment im Video bei 9:04 (544 Sekunden) und in der Aufzeichnung bei 9:10 (550 Sekunden), bei einem Versatz von 5 Sekunden, ergibt das (544 − 5) ÷ 550 = 0,9800.',
   'Speedometer style':'Tacho-Stil',
   'Dial backdrop':'Zifferblatt-Hintergrund',
   'Ring color':'Ringfarbe',
@@ -241,6 +242,20 @@ function localizeRuntimeText(message){
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
   return message;
 }
+
+(function(){
+  var mq=window.matchMedia('(max-width:640px)');
+  var tools=document.querySelector('.header-tools');
+  var bar=document.querySelector('.studio-sidebar');
+  if(!tools||!bar) return;
+  var home=tools.parentElement;
+  function place(){
+    if(mq.matches){ if(tools.parentElement!==bar) bar.appendChild(tools); }
+    else if(tools.parentElement!==home) home.appendChild(tools);
+  }
+  if(mq.addEventListener) mq.addEventListener('change',place); else mq.addListener(place);
+  place();
+})();
 
 collectInterfaceText();
 document.querySelectorAll('.language-option').forEach(function(button){
@@ -2329,6 +2344,9 @@ function aeHead(compName){
 '// ─────────────────────────────────────────────────────────────────────────────',
 '(function(){',
 '  if (typeof app === "undefined" || !app.project) { alert("Please run this from inside After Effects."); return; }',
+'  var STEP = "starting up";',
+'  function step(name, fn){ STEP = name; return fn(); }',
+'  try {',
 '  app.beginUndoGroup("Activity Layers – '+compName+'");',
 '  var W='+AE_W+', H='+AE_H+', FPS='+aeNum(fps)+', DUR='+aeNum(aeDuration())+';',
 '  var comp = app.project.items.addComp('+aeStr(compName)+', W, H, 1, DUR, FPS);',
@@ -2336,6 +2354,7 @@ function aeHead(compName){
 '',
 '  function tf(L,mn){ return L.property("ADBE Transform Group").property(mn); }',
 '  function shapeLayer(name){',
+'    STEP = "creating shape layer \\"" + name + "\\"";',
 '    var L=comp.layers.addShape(); L.name=name;',
 '    tf(L,"ADBE Anchor Point").setValue([0,0]); tf(L,"ADBE Position").setValue([0,0]);',
 '    return L;',
@@ -2346,6 +2365,7 @@ function aeHead(compName){
 '    return g.property("ADBE Vectors Group");',
 '  }',
 '  function addPath(c,verts,closed){',
+'    STEP = "drawing a path (" + verts.length + " points)";',
 '    var p=c.addProperty("ADBE Vector Shape - Group");',
 '    var s=new Shape(); s.vertices=verts; s.closed=!!closed;',
 '    var z=[]; for(var i=0;i<verts.length;i++) z.push([0,0]);',
@@ -2354,6 +2374,7 @@ function aeHead(compName){
 '    return p;',
 '  }',
 '  function addEllipse(c,size,pos){',
+'    STEP = "drawing an ellipse";',
 '    var e=c.addProperty("ADBE Vector Shape - Ellipse");',
 '    e.property("ADBE Vector Ellipse Size").setValue(size);',
 '    if(pos) e.property("ADBE Vector Ellipse Position").setValue(pos);',
@@ -2367,11 +2388,13 @@ function aeHead(compName){
 '    return r;',
 '  }',
 '  function addFill(c,color){',
+'    STEP = "applying a fill colour";',
 '    var f=c.addProperty("ADBE Vector Graphic - Fill");',
 '    f.property("ADBE Vector Fill Color").setValue(color);',
 '    return f;',
 '  }',
 '  function addStroke(c,color,width){',
+'    STEP = "applying a stroke";',
 '    var s=c.addProperty("ADBE Vector Graphic - Stroke");',
 '    s.property("ADBE Vector Stroke Color").setValue(color);',
 '    s.property("ADBE Vector Stroke Width").setValue(width);',
@@ -2380,18 +2403,21 @@ function aeHead(compName){
 '    return s;',
 '  }',
 '  function addTrim(c,start,end,offset){',
+'    STEP = "adding Trim Paths";',
 '    var t=c.addProperty("ADBE Vector Filter - Trim");',
 '    if(start!=null) t.property("ADBE Vector Trim Start").setValue(start);',
 '    if(end!=null) t.property("ADBE Vector Trim End").setValue(end);',
 '    if(offset!=null) t.property("ADBE Vector Trim Offset").setValue(offset);',
 '    return t;',
 '  }',
-'  function keys(prop,kfs){ for(var i=0;i<kfs.length;i++) prop.setValueAtTime(kfs[i][0]*F, kfs[i][1]); return prop; }',
+'  function keys(prop,kfs){ STEP = "writing " + kfs.length + " keyframes"; for(var i=0;i<kfs.length;i++) prop.setValueAtTime(kfs[i][0]*F, kfs[i][1]); return prop; }',
 '  function slider(L,name,kfs){',
+'    STEP = "adding the slider control \\"" + name + "\\"";',
 '    var e=L.property("ADBE Effect Parade").addProperty("ADBE Slider Control"); e.name=name;',
 '    return keys(e.property("ADBE Slider Control-0001"), kfs);',
 '  }',
 '  function textLayer(name,str,pos,size,color,center){',
+'    STEP = "creating text layer \\"" + name + "\\"";',
 '    var L=comp.layers.addText(str); L.name=name;',
 '    var td=L.property("ADBE Text Properties").property("ADBE Text Document");',
 '    var d=td.value;',
@@ -2403,6 +2429,7 @@ function aeHead(compName){
 '    return L;',
 '  }',
 '  function driveText(L,fx,kfs,expr){',
+'    STEP = "linking the text to the slider \\"" + fx + "\\"";',
 '    slider(L,fx,kfs);',
 '    L.property("ADBE Text Properties").property("ADBE Text Document").expression =',
 '      \'var v = effect("\'+fx+\'")(1).value; \'+expr;',
@@ -2410,7 +2437,19 @@ function aeHead(compName){
 ''].join('\n');
 }
 function aeTail(){
-  return ['','  comp.openInViewer();','  app.endUndoGroup();','})();',''].join('\n');
+  return ['',
+'  comp.openInViewer();',
+'  app.endUndoGroup();',
+'  } catch (err) {',
+'    try { app.endUndoGroup(); } catch (e) {}',
+'    alert("Activity Layers could not finish this overlay.\\n\\n"',
+'      + "Step: " + STEP + "\\n"',
+'      + "After Effects said: " + (err && err.message ? err.message : String(err)) + "\\n"',
+'      + (err && err.line ? "Line: " + err.line + "\\n" : "")',
+'      + "\\nPlease report this message at\\n"',
+'      + "https://github.com/hellowebcode/activitylayers/issues");',
+'  }',
+'})();',''].join('\n');
 }
 
 function aeRoutePoints(pad){

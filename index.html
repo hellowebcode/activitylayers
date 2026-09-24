@@ -217,11 +217,12 @@
   </div>
   <div id="syncInfoBody" style="display:none">
     <div class="hint" style="margin-top:8px">
-      <strong>GPS offset</strong> = video timecode in seconds at the moment you pressed start on your watch. Negative if watch started before the camera.<br><br>
-      <strong>Clock drift factor</strong> = corrects the GPS clock running at a slightly different rate than the camera clock. Even a 0.1% difference causes ~6 seconds of drift over 10 minutes — this is the most common cause of sync that's perfect at the start but gets progressively worse.<br><br>
-      <strong>To calibrate</strong>: find a <em>second</em> sync event late in the clip. Note its video timecode and GPS elapsed time, then use the <svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z"/></svg>Sync Helper button to calculate both values automatically, or use:<br>
-      <strong>factor = (videoTimecode − offset) ÷ gpsElapsed</strong><br>
-      Example: second sync at video 9:04 (544s), GPS elapsed 9:10 (550s), offset = 5s → factor = (544 − 5) ÷ 550 = 0.9800
+      <p><strong>The GPS offset</strong> tells the overlay where your recording sits on the video timeline. It is the video timecode, in seconds, at the moment the watch started recording. If the watch was already running before you hit record on the camera, the value is negative.</p>
+      <p><strong>The clock drift factor</strong> compensates for the two clocks running at slightly different rates. A deviation of just 0.1 percent adds up to roughly six seconds over ten minutes. That is why a sync that looks perfect at the start slowly falls apart towards the end. A value of 1.0 means both clocks agree; below 1.0 the data is slowed down, above 1.0 it is sped up.</p>
+      <p><strong>You do not have to work these out by hand.</strong> Look for a moment you can identify in both the video and the recording — pulling away, a distinctive corner, a braking point. Note its video timecode and the elapsed time in the recording, then enter both under Sync Helper. Adding a second moment near the end of the clip gives you the drift factor as well.</p>
+      <p>The maths behind it, if you want to check the result:</p>
+      <p class="sync-formula">drift factor = (video timecode − offset) ÷ elapsed GPS time</p>
+      <p>Say the second moment appears at 9:04 in the video (544 seconds) and at 9:10 in the recording (550 seconds), with an offset of 5 seconds. That gives (544 − 5) ÷ 550 = 0.9800.</p>
     </div>
   </div>
 </div>
