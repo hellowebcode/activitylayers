@@ -301,6 +301,66 @@ try{savedUILanguage=localStorage.getItem('overlayUILanguage')||'en';}catch(e){}
 applyUILanguage(savedUILanguage);
 
 var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], tempData=[], paceData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';
+
+// Einstellungen bleiben zwischen Besuchen erhalten. Nur im Browser des Nutzers,
+// nichts verlaesst das Geraet. Die Sprache hat ihren eigenen Schluessel.
+var EINSTELLUNGEN_SCHLUESSEL='activitylayersSettings';
+
+// Jedes Bedienelement, das ein Generator liest, gehoert in diese Liste.
+var CONTROL_IDS=[
+  'cadColor',
+  'cadSize',
+  'dotColor',
+  'dotR',
+  'driftFactor',
+  'elevColor',
+  'elevDotColor',
+  'elevFill',
+  'elevFillColor',
+  'elevH',
+  'elevLabels',
+  'elevLineW',
+  'elevShadowColor',
+  'elevShadowOffset',
+  'elevW',
+  'fps',
+  'gaugeArcColor',
+  'gaugeBgColor',
+  'gaugeNumberColor',
+  'gaugeRingColor',
+  'gaugeUnitColor',
+  'hrColor',
+  'hrHeartColor',
+  'hrSize',
+  'inclineNumberColor',
+  'inclineUnit',
+  'inclineWedgeColor',
+  'lapColor',
+  'lapSize',
+  'maxSpeed',
+  'mileColor',
+  'mileDecimals',
+  'mileLineDistColor',
+  'offset',
+  'powerColor',
+  'powerSize',
+  'sg1',
+  'sg2',
+  'paceColor',
+  'paceSize',
+  'shadowColor',
+  'tempColor',
+  'tempSize',
+  'shadowOffset',
+  'smooth',
+  'sv1',
+  'sv2',
+  'trackColor',
+  'trackW',
+  'unit'
+];
+
+stelleEinstellungenWiederHer();
 var btnIds=['btnSetting','btnRouteSetting','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
   'btnCadSetting','btnPowerSetting','btnTempSetting','btnPaceSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
@@ -313,6 +373,51 @@ var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#a
 var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFill:'1',elevFillColor:'#ffffff',elevDotColor:'#38bdf8',elevShadowColor:'#000000',elevShadowOffset:'4'};
 
 function applyDefaults(defs){ Object.keys(defs).forEach(function(id){var el=document.getElementById(id);if(el)el.value=defs[id];}); }
+
+function speichereEinstellungen(){
+  try{
+    var werte={};
+    for(var i=0;i<CONTROL_IDS.length;i++){
+      var el=document.getElementById(CONTROL_IDS[i]);
+      if(el) werte[CONTROL_IDS[i]]=(el.type==='checkbox')?el.checked:el.value;
+    }
+    localStorage.setItem(EINSTELLUNGEN_SCHLUESSEL, JSON.stringify(werte));
+  }catch(e){}
+}
+
+function stelleEinstellungenWiederHer(){
+  var werte=null;
+  try{ werte=JSON.parse(localStorage.getItem(EINSTELLUNGEN_SCHLUESSEL)||'null'); }catch(e){}
+  if(!werte||typeof werte!=='object') return false;
+  var uebernommen=0;
+  for(var i=0;i<CONTROL_IDS.length;i++){
+    var id=CONTROL_IDS[i], el=document.getElementById(id);
+    if(!el||!(id in werte)) continue;
+    if(el.type==='checkbox') el.checked=!!werte[id];
+    else if(el.tagName==='SELECT'){
+      // nur uebernehmen, wenn die Option noch existiert
+      var ok=false;
+      for(var o=0;o<el.options.length;o++) if(el.options[o].value===String(werte[id])) ok=true;
+      if(ok) el.value=String(werte[id]);
+    } else el.value=String(werte[id]);
+    uebernommen++;
+  }
+  return uebernommen>0;
+}
+
+(function(){
+  ['input','change'].forEach(function(art){
+    document.addEventListener(art,function(e){
+      if(e.target&&e.target.id&&CONTROL_IDS.indexOf(e.target.id)>=0) speichereEinstellungen();
+    },true);
+  });
+  // Die Zuruecksetzen-Knoepfe setzen Werte direkt und loesen kein Ereignis aus.
+  // Dieser Zuhoerer laeuft beim Hochblubbern, also nach ihnen.
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    while(t&&t!==document){ if(t.className&&String(t.className).indexOf('reset-btn')>=0){ speichereEinstellungen(); return; } t=t.parentNode; }
+  });
+})();
 
 document.getElementById('syncInfoHeader').addEventListener('click',function(){
   var body=document.getElementById('syncInfoBody'), arrow=document.getElementById('syncInfoArrow');
@@ -1316,59 +1421,6 @@ function makeFilename(suffix,ext){
   return (nm||'overlay')+'.'+ext;
 }
 
-// Jedes Bedienelement, das ein Generator liest, gehoert in diese Liste.
-var CONTROL_IDS=[
-  'cadColor',
-  'cadSize',
-  'dotColor',
-  'dotR',
-  'driftFactor',
-  'elevColor',
-  'elevDotColor',
-  'elevFill',
-  'elevFillColor',
-  'elevH',
-  'elevLabels',
-  'elevLineW',
-  'elevShadowColor',
-  'elevShadowOffset',
-  'elevW',
-  'fps',
-  'gaugeArcColor',
-  'gaugeBgColor',
-  'gaugeNumberColor',
-  'gaugeRingColor',
-  'gaugeUnitColor',
-  'hrColor',
-  'hrHeartColor',
-  'hrSize',
-  'inclineNumberColor',
-  'inclineUnit',
-  'inclineWedgeColor',
-  'lapColor',
-  'lapSize',
-  'maxSpeed',
-  'mileColor',
-  'mileDecimals',
-  'mileLineDistColor',
-  'offset',
-  'powerColor',
-  'powerSize',
-  'sg1',
-  'sg2',
-  'paceColor',
-  'paceSize',
-  'shadowColor',
-  'tempColor',
-  'tempSize',
-  'shadowOffset',
-  'smooth',
-  'sv1',
-  'sv2',
-  'trackColor',
-  'trackW',
-  'unit'
-];
 
 function cfg(){
   var c={}, el;
