@@ -56,16 +56,13 @@ a[href^="http"]:not([class]):hover::after{opacity:1}
 .studio-mark svg{width:34px;height:34px;overflow:visible;fill:none;stroke:#fff;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}
 .studio-brand-copy{display:flex;align-items:baseline}.studio-brand-copy b{color:var(--accent);font-weight:800}.studio-brand-copy>span{color:var(--faint);font-weight:580}
 .studio-nav{display:grid;gap:8px;margin-top:46px}
-.studio-nav a{position:relative;display:flex;min-height:50px;align-items:center;gap:13px;padding:0 14px;border-radius:13px;color:var(--muted);font-weight:550;text-decoration:none;transition:color .18s,background .18s,transform .18s}
-.studio-nav a::before{position:absolute;left:-18px;width:3px;height:24px;border-radius:0 3px 3px 0;background:var(--accent);content:'';opacity:0;transition:opacity .18s}
-.studio-nav a:hover,.studio-nav a:focus-visible{color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
-.studio-nav a:hover::before{opacity:1}
-.studio-nav a span{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em}
-.studio-extra{display:flex;margin-top:auto;min-height:46px;align-items:center;gap:11px;padding:0 14px;
-  border-radius:13px;color:var(--muted);font-weight:550;text-decoration:none;
-  transition:color .18s,background .18s}
-.studio-extra .ico{width:18px;height:18px;flex:none}
-.studio-extra:hover,.studio-extra:focus-visible{color:var(--accent);background:var(--accent-soft)}
+.studio-nav a,.studio-extra{position:relative;display:flex;min-height:50px;align-items:center;gap:13px;padding:0 14px;border-radius:13px;color:var(--muted);font-weight:550;text-decoration:none;transition:color .18s,background .18s,transform .18s}
+.studio-nav a::before,.studio-extra::before{position:absolute;left:-18px;width:3px;height:24px;border-radius:0 3px 3px 0;background:var(--accent);content:'';opacity:0;transition:opacity .18s}
+.studio-nav a:hover,.studio-nav a:focus-visible,.studio-extra:hover,.studio-extra:focus-visible{color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
+.studio-nav a:hover::before,.studio-extra:hover::before{opacity:1}
+.studio-nav a span,.studio-extra span{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em}
+/* Nutzt die Regeln der Navigation, ist aber keiner der vier Schritte. */
+.studio-extra{margin-top:auto}
 .privacy-note{margin-top:14px;padding:15px 14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 78%,transparent);box-shadow:var(--shadow)}
 .privacy-note strong{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:-.01em}.privacy-note p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
 .privacy-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px color-mix(in srgb,var(--success) 14%,transparent)}

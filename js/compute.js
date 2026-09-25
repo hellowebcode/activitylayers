@@ -246,6 +246,35 @@ function klemme(wert, ausdehnung, gesamt){
 function fusionVersatz(c, schluessel, mass, altX, altY, istMitteN){
   var v=ankerVersatz(c, schluessel, mass, altX, altY);
   var m=istMitteN||{x:0.5,y:0.5};
-  return { dx: (altX+v.dx)/ENTWURF_W - m.x,
-           dy: (1-(altY+v.dy)/ENTWURF_H) - m.y };
+  // Dieselbe Abbildung wie in After Effects: ein Faktor fuer beide Achsen,
+  // verankert unten links. Mit getrennten Faktoren fuer Breite und Hoehe liefen
+  // die Lagen auf jeder Leinwand auseinander, die nicht 16:9 ist.
+  var k=entwurfsFaktor(c);
+  var x=(altX+v.dx)*k, y=c.H-(ENTWURF_H-(altY+v.dy))*k;
+  return { dx: x/c.W - m.x, dy: (1-y/c.H) - m.y };
+}
+
+function entwurfsFaktor(c){ return Math.min(c.W/ENTWURF_W, c.H/ENTWURF_H); }
+
+// Strecke in einen Kreis einpassen. Die Diagonale des umschliessenden Rechtecks
+// passt in den Durchmesser - so wird die Kreisflaeche besser genutzt als mit dem
+// einbeschriebenen Quadrat, und nichts wird abgeschnitten. Rueckgabe ist eine
+// Funktion, die einen Punkt in den Versatz vom Kreismittelpunkt umrechnet
+// (Leinwandpixel, y nach unten).
+function kreisEinpassung(durchmesser, rand){
+  var alle=rawPoints.concat(ghostPoints);
+  if(!alle.length) return null;
+  var mnLa=Infinity,mxLa=-Infinity,mnLo=Infinity,mxLo=-Infinity;
+  for(var i=0;i<alle.length;i++){
+    if(alle[i].lat<mnLa)mnLa=alle[i].lat; if(alle[i].lat>mxLa)mxLa=alle[i].lat;
+    if(alle[i].lon<mnLo)mnLo=alle[i].lon; if(alle[i].lon>mxLo)mxLo=alle[i].lon;
+  }
+  var laR=(mxLa-mnLa)||0.0001, loR=(mxLo-mnLo)||0.0001;
+  var v=loR/laR;
+  var platz=Math.max(2, durchmesser-2*rand);
+  var hoehe=platz/Math.sqrt(1+v*v), breite=v*hoehe;
+  return function(p){
+    return { x:((p.lon-mnLo)/loR-0.5)*breite,
+             y:(0.5-(p.lat-mnLa)/laR)*hoehe };
+  };
 }

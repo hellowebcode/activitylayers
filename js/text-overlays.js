@@ -155,7 +155,8 @@ function buildTextOverlaySetting(cfg){
     L.push(buildBezierSplineTool('Text2ZoneG', cfg.farbkanaele.g, false));
     L.push(buildBezierSplineTool('Text2ZoneB', cfg.farbkanaele.b, false));
   }
-  var vp=fusionVersatz(lageFelder(cfg.schluessel), cfg.schluessel, OVERLAY_MASSE.text, 250, 880);
+  var lage=lageFelder(cfg.schluessel); lage.W=W; lage.H=H;
+  var vp=fusionVersatz(lage, cfg.schluessel, OVERLAY_MASSE.text, 250, 880);
   L.push(buildTransformNode('OverlayPosition', 'Merge3', vp.dx, vp.dy, [1400,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');

@@ -131,6 +131,7 @@ for (const datei of DATEIEN) {
 const GENERATOREN = [
   ['Speed_Overlay.setting',        'buildSetting'],
   ['Route_Overlay.setting',        'buildRouteSetting'],
+  ['Route_Disc_Overlay.setting',   'buildRouteDiscSetting'],
   ['Elevation_Overlay.setting',    'buildElevSetting'],
   ['HR_Overlay.setting',           'buildHRSetting'],
   ['Incline_Overlay.setting',      'buildInclineSetting'],
@@ -142,6 +143,7 @@ const GENERATOREN = [
   ['Lap_Marker_Overlay.setting',   'buildLapSetting'],
   ['Speed_Overlay_AE.jsx',         'buildSpeedJsx'],
   ['Route_Overlay_AE.jsx',         'buildRouteJsx'],
+  ['Route_Disc_Overlay_AE.jsx',    'buildRouteDiscJsx'],
   ['Elevation_Overlay_AE.jsx',     'buildElevJsx'],
   ['HR_Overlay_AE.jsx',            'buildHRJsx'],
   ['Incline_Overlay_AE.jsx',       'buildInclineJsx'],

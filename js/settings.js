@@ -66,6 +66,21 @@ var CONTROL_IDS=[
   'ghostAlpha',
   'smooth',
   'compPreset',
+  'discSize',
+  'discTrackW',
+  'discDotR',
+  'discTrackColor',
+  'discDotColor',
+  'discShadowOffset',
+  'discShadowColor',
+  'discBgColor',
+  'discBgAlpha',
+  'discRing',
+  'discRingColor',
+  'discRingW',
+  'discAnchor',
+  'discOffX',
+  'discOffY',
   'speedAnchor',
   'speedOffX',
   'speedOffY',
@@ -106,7 +121,7 @@ var CONTROL_IDS=[
 ];
 
 stelleEinstellungenWiederHer();
-var btnIds=['btnSetting','btnRouteSetting','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
+var btnIds=['btnSetting','btnRouteSetting','btnDiscSetting','btnDiscJsx','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
   'btnCadSetting','btnPowerSetting','btnTempSetting','btnPaceSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
   'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
@@ -114,6 +129,10 @@ var syncCalcResult={offset:null,drift:null};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0',
                compPreset:'1920x1080',compW:'1920',compH:'1080'};
+var DEF_DISC={discSize:'0.34',discTrackW:'3',discDotR:'6',discTrackColor:'#ff6600',
+              discDotColor:'#fca300',discShadowOffset:'3',discShadowColor:'#000000',
+              discBgColor:'#000000',discBgAlpha:'0.45',discRing:'0',
+              discRingColor:'#ffffff',discRingW:'3'};
 var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColor:'#fca300',shadowColor:'#000000',
                ghostW:'4',ghostColor:'#8892a4',ghostAlpha:'0.55'};
 var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#aa0000',gaugeNumberColor:'#ffffff',gaugeUnitColor:'#6d6d7e'};
@@ -122,7 +141,7 @@ var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFil
 // Lage aller Overlays. Sie ist bewusst fuer beide Ausgabeformate dieselbe -
 // vorher sass dasselbe Overlay in Resolve mittig und in After Effects unten
 // links.
-var POSITION_SCHLUESSEL=['speed','elev','hr','incline','mile','cad','power','temp','pace','lap'];
+var POSITION_SCHLUESSEL=['speed','elev','hr','incline','mile','cad','power','temp','pace','lap','disc'];
 var DEF_POSITION={elev:'bottom-center'};
 // Die drei Lagefelder eines Overlays einzeln lesen. buildTextOverlaySetting
 // hat einen Parameter namens cfg und kommt deshalb nicht an die Funktion cfg().
@@ -507,6 +526,11 @@ document.getElementById('resetMile').addEventListener('click',function(){
   document.getElementById('mileColor').value='#38bdf8';
   document.getElementById('mileLineDistColor').value='#111111';
   document.getElementById('mileDecimals').value='1';
+});
+
+document.getElementById('resetDisc').addEventListener('click',function(){
+  applyDefaults(DEF_DISC);
+  positionZuruecksetzen('disc');
 });
 
 document.getElementById('resetElev').addEventListener('click',function(){

@@ -258,6 +258,70 @@ function buildRouteJsx(){
   return L.join('\n');
 }
 
+// Rundes Streckenoverlay fuer After Effects. Der Mittelpunkt kommt aus dem
+// Anker, alles andere liegt relativ dazu.
+function buildRouteDiscJsx(){
+  var c=cfg();
+  if(rawPoints.length<2) return null;
+  var k=aeFaktor(c);
+  var dEntwurf=Math.max(0.08, Math.min(1, zahlOderVorgabe(c.discSize,0.34)))*AE_H;
+  var D=dEntwurf*k;
+
+  var tW=(parseFloat(c.discTrackW)||3)*k;
+  var sOf=zahlOderVorgabe(c.discShadowOffset,3)*k;
+  var dR=(parseFloat(c.discDotR)||6)*k;
+  var ringAn=(c.discRing==='1');
+  var ringW=(parseFloat(c.discRingW)||3)*k;
+  var bgAlpha=Math.max(0, Math.min(1, zahlOderVorgabe(c.discBgAlpha,0.45)));
+  var gW=(parseFloat(c.ghostW)||4)*k;
+  var gAlpha=Math.max(0.05, Math.min(1, zahlOderVorgabe(c.ghostAlpha,0.55)));
+
+  var rand=Math.ceil(dR*1.15)+Math.ceil(sOf)+Math.ceil(ringAn?ringW:0)+4*k;
+  var einpassen=kreisEinpassung(D, rand);
+  if(!einpassen) return null;
+
+  var altX=ANKER_RAND+dEntwurf/2, altY=AE_H-ANKER_RAND-dEntwurf/2;
+  var vs=ankerVersatz(c,'disc',{b:dEntwurf,h:dEntwurf},altX,altY);
+  var mitte=aePunkt(c, altX+vs.dx, altY+vs.dy);
+
+  function auf(p){ var v=einpassen(p); return [mitte[0]+v.x, mitte[1]+v.y]; }
+  var pts=[], i;
+  for(i=0;i<rawPoints.length;i++) pts.push(auf(rawPoints[i]));
+  var geist=ghostPoints.map(auf);
+  var dotKf=aePathKeys(rawPoints, pts);
+
+  var L=[aeHead('Route Disc Overlay')];
+  L.push('  var disc=shapeLayer("Route Disc"), dcg=grpOf(disc,"Disc");');
+  L.push('  addEllipse(dcg,['+aeNum(D)+','+aeNum(D)+'],'+aeXY(mitte)+');');
+  L.push('  addFill(dcg,'+aeCol(c.discBgColor||'#000000')+');');
+  L.push('  tf(disc,"ADBE Opacity").setValue('+aeNum(bgAlpha*100)+');');
+  if(ringAn){
+    L.push('  var ring=shapeLayer("Route Disc Ring"), rg=grpOf(ring,"Ring");');
+    L.push('  addEllipse(rg,['+aeNum(D-ringW)+','+aeNum(D-ringW)+'],'+aeXY(mitte)+');');
+    L.push('  addStroke(rg,'+aeCol(c.discRingColor||'#ffffff')+','+aeNum(ringW)+');');
+  }
+  if(geist.length>1){
+    L.push('  var gh=shapeLayer("Route Disc Ghost"), gg=grpOf(gh,"Path");');
+    L.push('  addPath(gg,'+aePts(geist)+',false);');
+    L.push('  addStroke(gg,'+aeCol(c.ghostColor||'#8892a4')+','+aeNum(gW)+');');
+    L.push('  tf(gh,"ADBE Opacity").setValue('+aeNum(gAlpha*100)+');');
+  }
+  L.push('  var PTS='+aePts(pts)+';');
+  L.push('  var sh=shapeLayer("Route Disc Shadow"), sg=grpOf(sh,"Path");');
+  L.push('  addPath(sg,PTS,false);');
+  L.push('  addStroke(sg,'+aeCol(c.discShadowColor||'#000000')+','+aeNum(tW*SHADOW_WIDTH_RATIO)+');');
+  L.push('  tf(sh,"ADBE Position").setValue(['+aeNum(sOf)+','+aeNum(sOf)+']);');
+  L.push('  var tr=shapeLayer("Route Disc Track"), tg=grpOf(tr,"Path");');
+  L.push('  addPath(tg,PTS,false);');
+  L.push('  addStroke(tg,'+aeCol(c.discTrackColor||'#ff6600')+','+aeNum(tW)+');');
+  L.push('  var dot=shapeLayer("Route Disc Dot"), dg=grpOf(dot,"Dot");');
+  L.push('  addEllipse(dg,['+aeNum(dR*2)+','+aeNum(dR*2)+'],[0,0]);');
+  L.push('  addFill(dg,'+aeCol(c.discDotColor||'#fca300')+');');
+  L.push('  keys(tf(dot,"ADBE Position"),'+aeKf(dotKf,2)+');');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
 function buildElevJsx(){
   var c=cfg();
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});

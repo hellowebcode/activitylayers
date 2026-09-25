@@ -697,6 +697,140 @@ function buildRouteSetting(){
   return L.join('\n');
 }
 
+// Rundes Streckenoverlay: dieselbe Strecke wie das grosse, aber in eine Scheibe
+// eingepasst statt auf die ganze Leinwand. Alles entsteht um die Bildmitte
+// herum, der Transform am Ende bringt die Gruppe an ihren Ankerpunkt.
+function buildRouteDiscSetting(){
+  var c=cfg();
+  var W=c.W, H=c.H;
+  if(rawPoints.length<2) return null;
+  var k=Math.min(W/ENTWURF_W, H/ENTWURF_H);
+  var dEntwurf=Math.max(0.08, Math.min(1, zahlOderVorgabe(c.discSize,0.34)))*ENTWURF_H;
+  var D=dEntwurf*k;
+
+  var tW=parseFloat(c.discTrackW)||3;
+  var sW=tW*SHADOW_WIDTH_RATIO;
+  var sOf=zahlOderVorgabe(c.discShadowOffset,3);
+  var dR=parseFloat(c.discDotR)||6;
+  var ringAn=(c.discRing==='1');
+  var ringW=parseFloat(c.discRingW)||3;
+  var tc=hexToRgb(c.discTrackColor||'#ff6600');
+  var sc=hexToRgb(c.discShadowColor||'#000000');
+  var dc=hexToRgb(c.discDotColor||'#fca300');
+  var bg=hexToRgb(c.discBgColor||'#000000');
+  var rc=hexToRgb(c.discRingColor||'#ffffff');
+  var bgAlpha=Math.max(0, Math.min(1, zahlOderVorgabe(c.discBgAlpha,0.45)));
+
+  var rand=Math.ceil(dR*1.15)+Math.ceil(sOf)+Math.ceil(ringAn?ringW:0)+4;
+  var einpassen=kreisEinpassung(D, rand);
+  if(!einpassen) return null;
+  var mx=W/2, my=H/2;
+  function aufLeinwand(p){ var v=einpassen(p); return {px:mx+v.x, py:my+v.y}; }
+
+  var pxPts=[], i;
+  for(i=0;i<rawPoints.length;i++) pxPts.push(aufLeinwand(rawPoints[i]));
+  var maskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px,p.py,W,H);});
+  var shadowMaskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px+sOf,p.py+sOf,W,H);});
+  var dotCenter01=pxPts.map(function(p){return {x:p.px/W, y:1-(p.py/H)};});
+  var geistPts=ghostPoints.map(function(p){ var q=aufLeinwand(p); return toFusionMaskCoord(q.px,q.py,W,H); });
+  var gW=parseFloat(c.ghostW)||4;
+  var gc=hexToRgb(c.ghostColor||'#8892a4');
+  var gAlpha=Math.max(0.05, Math.min(1, zahlOderVorgabe(c.ghostAlpha,0.55)));
+  var dispKF=buildDisplacementKeyframes(rawPoints);
+
+  var geistShape=geistPts.length>1
+    ? buildPolylineShapeNodes('GhostPath','GhostPathPolyline',geistPts,false,false,(gW*k)/H,false,[0,300],W,H)
+    : null;
+  var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,(tW*k)/H,false,[0,50],W,H,'Publish1');
+  var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,(sW*k)/H,false,[0,150],W,H,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
+
+  function ellipse(name, durchmesser, solide, randbreite, pos){
+    var L=[];
+    L.push('\t\t\t\t'+name+' = EllipseMask {');
+    L.push('\t\t\t\t\tInputs = {');
+    L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
+    if(!solide){
+      L.push('\t\t\t\t\t\tBorderWidth = Input { Value = '+(randbreite/W).toFixed(6)+', },');
+      L.push('\t\t\t\t\t\tSolid = Input { Value = 0, },');
+    }
+    L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+    L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
+    L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
+    L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
+    L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
+    L.push('\t\t\t\t\t\tWidth = Input { Value = '+(durchmesser/W).toFixed(6)+', },');
+    L.push('\t\t\t\t\t\tHeight = Input { Value = '+(durchmesser/W).toFixed(6)+', Expression = "Width", }');
+    L.push('\t\t\t\t\t},');
+    L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
+    L.push('\t\t\t\t},');
+    return L.join('\n');
+  }
+
+  var L=[];
+  L.push('{');
+  L.push('\tTools = ordered() {');
+  L.push('\t\tRouteDiscOverlay = GroupOperator {');
+  L.push('\t\t\tCtrlWZoom = false,');
+  L.push('\t\t\tNameSet = true,');
+  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "OverlayPosition", Source = "Output", }, },');
+  L.push('\t\t\tViewInfo = GroupInfo {');
+  L.push('\t\t\t\tPos = { 0, 0 },');
+  L.push('\t\t\t\tFlags = { AllowPan = false, AutoSnap = true, RemoveRouters = true },');
+  L.push('\t\t\t\tSize = { 566, 132.364, 283, 24.2424 },');
+  L.push('\t\t\t\tDirection = "Horizontal",');
+  L.push('\t\t\t\tPipeStyle = "Direct",');
+  L.push('\t\t\t\tScale = 1,');
+  L.push('\t\t\t\tOffset = { 0, 0 }');
+  L.push('\t\t\t},');
+  L.push('\t\t\tTools = ordered() {');
+  L.push(buildBackgroundNode('BackgroundCanvas', null, [0,0,0], [-100,100], 0, W, H));
+  var lastBg='BackgroundCanvas', mergeN=0, xPos=0;
+  function chain(nextBg){
+    mergeN++; xPos+=100;
+    var name='Merge'+mergeN;
+    L.push(buildMergeNode(name, lastBg, nextBg, [xPos,100]));
+    lastBg=name;
+  }
+  L.push(ellipse('DiscMask', D, true, 0, [0,-50]));
+  L.push(buildBackgroundNode('BackgroundDisc', 'DiscMask', bg, [100,-50], bgAlpha, W, H));
+  chain('BackgroundDisc');
+  if(ringAn){
+    L.push(ellipse('RingMask', D, false, ringW*k, [0,-150]));
+    L.push(buildBackgroundNode('BackgroundRing', 'RingMask', rc, [100,-150], undefined, W, H));
+    chain('BackgroundRing');
+  }
+  if(geistShape){
+    L.push(geistShape.node);
+    L.push(buildBackgroundNode('BackgroundGhost', 'GhostPath', gc, [100,300], gAlpha, W, H));
+    chain('BackgroundGhost');
+  }
+  L.push(shadowShape.node);
+  L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, W, H));
+  chain('BackgroundShadow');
+  L.push(mainShape.node);
+  L.push(buildBackgroundNode('BackgroundMain', 'MainPath', tc, [100,50], undefined, W, H));
+  chain('BackgroundMain');
+  L.push(buildDotMaskNode('OutlineDotMask', 'Input { Value = { '+dotCenter01[0].x.toFixed(6)+', '+dotCenter01[0].y.toFixed(6)+' }, Expression = "MainDotMask.Center", }', dR*2*1.15*k, [400,150], W, H));
+  L.push(buildBackgroundNode('BackgroundOutlineDot', 'OutlineDotMask', sc, [500,150], undefined, W, H));
+  chain('BackgroundOutlineDot');
+  L.push(buildDotMaskNode('MainDotMask', polyPathPositionInput('Path1'), dR*2*k, [400,50], W, H));
+  L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [500,50], undefined, W, H));
+  chain('BackgroundMainDot');
+  L.push(buildBrightnessNode('BrightAdjust', lastBg, [xPos+100,100]));
+  var altX=ANKER_RAND+dEntwurf/2, altY=ENTWURF_H-ANKER_RAND-dEntwurf/2;
+  var vp=fusionVersatz(c,'disc',{b:dEntwurf,h:dEntwurf},altX,altY);
+  L.push(buildTransformNode('OverlayPosition', 'BrightAdjust', vp.dx, vp.dy, [xPos+200,100]));
+  L.push('\t\t\t},');
+  L.push('\t\t},');
+  L.push(buildPublishPolyLineTool('Publish1', maskPts, false));
+  L.push(buildPolyPathTool('Path1', 'Path1Displacement', 'Publish1'));
+  L.push(buildBezierSplineTool('Path1Displacement', dispKF, false, 2));
+  L.push('\t},');
+  L.push('\tActiveTool = "RouteDiscOverlay",');
+  L.push('}');
+  return L.join('\n');
+}
+
 function buildElevSetting(){
   var c=cfg();
   var W=c.W, H=c.H;
@@ -716,7 +850,8 @@ function buildElevSetting(){
   var GRAPH_W=Math.min(W, parseInt(c.elevW)||W);
   var GRAPH_H=Math.min(H, parseInt(c.elevH)||300);
   // Derselbe Bodenabstand wie in After Effects, im Entwurfsmass gerechnet.
-  var MARGIN_BOTTOM=120*FULL_CH/ENTWURF_H;
+  var EK=entwurfsFaktor(c);
+  var MARGIN_BOTTOM=120*EK;
   var OFFSET_X=Math.max(0,(FULL_CW-GRAPH_W)/2);
   var BAND_TOP=FULL_CH-MARGIN_BOTTOM-GRAPH_H, BAND_BOTTOM=FULL_CH-MARGIN_BOTTOM;
   var CW=FULL_CW, CH=FULL_CH;
@@ -804,7 +939,7 @@ function buildElevSetting(){
   // Das Profil liegt in der Vorgabe unten und ueber die ganze Breite. Sein
   // Mittelpunkt ist nicht die Bildmitte, deshalb bekommt die Rechnung die
   // tatsaechliche Lage mit.
-  var massElev={b:GRAPH_W/CW*ENTWURF_W, h:GRAPH_H/CH*ENTWURF_H};
+  var massElev={b:GRAPH_W/EK, h:GRAPH_H/EK};
   var vp=fusionVersatz(c,'elev',massElev,
                        ANKER_RAND+massElev.b/2, ENTWURF_H-120-massElev.h/2,
                        {x:(OFFSET_X+GRAPH_W/2)/CW, y:1-((BAND_TOP+GRAPH_H/2)/CH)});
