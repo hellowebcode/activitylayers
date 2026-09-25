@@ -315,3 +315,8 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .card .grid2+.grid2,.card .grid3+.grid3,.card .grid4+.grid4,
 .card .grid2+.grid3,.card .grid3+.grid4,.card .grid4+.grid3,
 .card .grid3+.grid2,.card .grid4+.grid2{margin-top:10px}
+/* Ein Feld belegt zwei Rasterzeilen. Gehoert mehr als ein Bedienelement
+   darunter, kommt es in diesen Stapel - sonst landet das dritte Kind in
+   derselben Zeile und liegt auf dem Eingabefeld. */
+.field-stack{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field-stack .reset-btn{width:100%;justify-content:center;text-align:center;margin-top:0}

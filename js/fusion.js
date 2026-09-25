@@ -737,6 +737,14 @@ function buildRouteDiscSetting(){
   var gc=hexToRgb(c.ghostColor||'#8892a4');
   var gAlpha=Math.max(0.05, Math.min(1, zahlOderVorgabe(c.ghostAlpha,0.55)));
   var dispKF=buildDisplacementKeyframes(rawPoints);
+  // Anteil der zurueckgelegten Strecke in Prozent, fuer den Ring am Rand.
+  var fortschrittAn=(c.discProgress!=='0');
+  var pW=parseFloat(c.discProgressW)||5;
+  var pc=hexToRgb(c.discProgressColor||'#ff6600');
+  var fortschrittKF=(fortschrittAn&&distData.length&&totalDistM>0)
+    ? buildKeyframeList(distData,function(p){ return Math.max(0,Math.min(100,p.distM/totalDistM*100)); })
+    : null;
+  if(!fortschrittKF||!fortschrittKF.length) fortschrittAn=false;
 
   var geistShape=geistPts.length>1
     ? buildPolylineShapeNodes('GhostPath','GhostPathPolyline',geistPts,false,false,(gW*k)/H,false,[0,300],W,H)
@@ -744,7 +752,7 @@ function buildRouteDiscSetting(){
   var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,(tW*k)/H,false,[0,50],W,H,'Publish1');
   var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,(sW*k)/H,false,[0,150],W,H,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
 
-  function ellipse(name, durchmesser, solide, randbreite, pos){
+  function ellipse(name, durchmesser, solide, randbreite, pos, treiber){
     var L=[];
     L.push('\t\t\t\t'+name+' = EllipseMask {');
     L.push('\t\t\t\t\tInputs = {');
@@ -752,6 +760,13 @@ function buildRouteDiscSetting(){
     if(!solide){
       L.push('\t\t\t\t\t\tBorderWidth = Input { Value = '+(randbreite/W).toFixed(6)+', },');
       L.push('\t\t\t\t\t\tSolid = Input { Value = 0, },');
+    }
+    if(treiber){
+      // Oben beginnen und im Uhrzeigersinn fuellen. Der Anteil kommt als
+      // Prozentwert aus einer Keyframe-Kurve, wie beim Bogen des Tachos.
+      L.push('\t\t\t\t\t\tWritePosition = Input { Value = 0.25, },');
+      L.push('\t\t\t\t\t\tWriteLength = Input { Value = 0, Expression = "(-1/100)*Fortschritt" },');
+      L.push('\t\t\t\t\t\tFortschritt = '+bezierSourceRefInput(treiber)+',');
     }
     L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
     L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
@@ -762,6 +777,8 @@ function buildRouteDiscSetting(){
     L.push('\t\t\t\t\t\tHeight = Input { Value = '+(durchmesser/W).toFixed(6)+', Expression = "Width", }');
     L.push('\t\t\t\t\t},');
     L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
+    if(treiber)
+      L.push('\t\t\t\t\tUserControls = ordered() { Fortschritt = { LINKS_Name = "Progress", LINKID_DataType = "Number", INPID_InputControl = "SliderControl", INP_Integer = false, INP_MinScale = 0, INP_MaxScale = 100, INP_MinAllowed = 0, INP_MaxAllowed = 100, ICS_ControlPage = "Controls" } }');
     L.push('\t\t\t\t},');
     return L.join('\n');
   }
@@ -804,6 +821,11 @@ function buildRouteDiscSetting(){
     L.push(buildBackgroundNode('BackgroundGhost', 'GhostPath', gc, [100,300], gAlpha, W, H));
     chain('BackgroundGhost');
   }
+  if(fortschrittAn){
+    L.push(ellipse('ProgressMask', D, false, pW*k, [0,-250], 'ProgressDrive'));
+    L.push(buildBackgroundNode('BackgroundProgress', 'ProgressMask', pc, [100,-250], undefined, W, H));
+    chain('BackgroundProgress');
+  }
   L.push(shadowShape.node);
   L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, W, H));
   chain('BackgroundShadow');
@@ -817,6 +839,7 @@ function buildRouteDiscSetting(){
   L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [500,50], undefined, W, H));
   chain('BackgroundMainDot');
   L.push(buildBrightnessNode('BrightAdjust', lastBg, [xPos+100,100]));
+  if(fortschrittAn) L.push(buildBezierSplineTool('ProgressDrive', fortschrittKF, false));
   var altX=ANKER_RAND+dEntwurf/2, altY=ENTWURF_H-ANKER_RAND-dEntwurf/2;
   var vp=fusionVersatz(c,'disc',{b:dEntwurf,h:dEntwurf},altX,altY);
   L.push(buildTransformNode('OverlayPosition', 'BrightAdjust', vp.dx, vp.dy, [xPos+200,100]));

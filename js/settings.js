@@ -78,6 +78,9 @@ var CONTROL_IDS=[
   'discRing',
   'discRingColor',
   'discRingW',
+  'discProgress',
+  'discProgressColor',
+  'discProgressW',
   'discAnchor',
   'discOffX',
   'discOffY',
@@ -132,7 +135,8 @@ var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0',
 var DEF_DISC={discSize:'0.34',discTrackW:'3',discDotR:'6',discTrackColor:'#ff6600',
               discDotColor:'#fca300',discShadowOffset:'3',discShadowColor:'#000000',
               discBgColor:'#000000',discBgAlpha:'0.45',discRing:'0',
-              discRingColor:'#ffffff',discRingW:'3'};
+              discRingColor:'#ffffff',discRingW:'3',
+              discProgress:'1',discProgressColor:'#ff6600',discProgressW:'5'};
 var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColor:'#fca300',shadowColor:'#000000',
                ghostW:'4',ghostColor:'#8892a4',ghostAlpha:'0.55'};
 var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#aa0000',gaugeNumberColor:'#ffffff',gaugeUnitColor:'#6d6d7e'};

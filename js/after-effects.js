@@ -300,6 +300,20 @@ function buildRouteDiscJsx(){
     L.push('  addEllipse(rg,['+aeNum(D-ringW)+','+aeNum(D-ringW)+'],'+aeXY(mitte)+');');
     L.push('  addStroke(rg,'+aeCol(c.discRingColor||'#ffffff')+','+aeNum(ringW)+');');
   }
+  // Der Anteil der zurueckgelegten Strecke am Rand. Trim Paths beginnt bei
+  // einer Ellipse oben und laeuft im Uhrzeigersinn.
+  var fortschrittAn=(c.discProgress!=='0');
+  var fortschrittKF=(fortschrittAn&&distData.length&&totalDistM>0)
+    ? buildKeyframeList(distData,function(p){ return Math.max(0,Math.min(100,p.distM/totalDistM*100)); })
+    : null;
+  if(fortschrittAn&&fortschrittKF&&fortschrittKF.length){
+    var pW=(parseFloat(c.discProgressW)||5)*k;
+    L.push('  var prg=shapeLayer("Route Disc Progress"), pg=grpOf(prg,"Progress");');
+    L.push('  addEllipse(pg,['+aeNum(D-pW)+','+aeNum(D-pW)+'],'+aeXY(mitte)+');');
+    L.push('  addStroke(pg,'+aeCol(c.discProgressColor||'#ff6600')+','+aeNum(pW)+');');
+    L.push('  var pt=addTrim(pg,0,0,0);');
+    L.push('  keys(pt.property("ADBE Vector Trim End"),'+aeKf(fortschrittKF,2)+');');
+  }
   if(geist.length>1){
     L.push('  var gh=shapeLayer("Route Disc Ghost"), gg=grpOf(gh,"Path");');
     L.push('  addPath(gg,'+aePts(geist)+',false);');
