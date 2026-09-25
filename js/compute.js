@@ -129,20 +129,24 @@ function smooth(data, win) {
   return smoothSG(data, win);
 }
 
+// Geraetewerte haben Vorrang, aber nur dort, wo es sie gibt. In Luecken zaehlt
+// die aus GPS gerechnete Strecke weiter, Ruecksprunge bleiben unbeachtet.
 function buildDistData(pts){
-  var hatGeraetewerte=false;
-  for(var i=0;i<pts.length;i++){
+  function geraet(i){
     var v=pts[i].dist;
-    if(v!==null&&v!==undefined&&isFinite(v)){ hatGeraetewerte=true; break; }
+    return (v!==null&&v!==undefined&&isFinite(v)&&v>=0)?v:null;
   }
-  var out=[],cum=0;
+  var out=[], cum=0, letzterGeraetewert=null;
   for(var i=0;i<pts.length;i++){
-    var d=pts[i].dist;
-    if(hatGeraetewerte){
-      if(d!==null&&d!==undefined&&isFinite(d)&&d>=0) cum=d;
-    } else if(i>0&&!istGrenze(pts[i-1],pts[i])){
+    var g=geraet(i);
+    if(i===0){
+      cum=(g!==null)?g:0;
+    } else if(g!==null&&letzterGeraetewert!==null&&g>=letzterGeraetewert){
+      cum+=g-letzterGeraetewert;                  // gewoehnlicher Fall
+    } else if(!istGrenze(pts[i-1],pts[i])){
       cum+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
     }
+    if(g!==null) letzterGeraetewert=g;
     out.push({time:pts[i].time, distM:cum});
   }
   return out;
@@ -211,7 +215,7 @@ function reprocess(){
   document.getElementById('statSpd').textContent=maxSpd.toFixed(1)+' '+unitDisplay(unit);
   document.getElementById('maxSpeed').value=(Math.max(0.5,Math.ceil(maxSpd*2)/2)).toFixed(1);
   document.getElementById('statsWrap').style.display='block';
-  drawRoute(); drawSpeed(maxSpd); drawElev(); drawHR(); resetMapPreview(); setEnabled(true);
+  drawRoute(); drawGauge(); drawSpeed(maxSpd); drawElev(); drawHR(); resetMapPreview(); setEnabled(true);
   setStatus('Ready — '+rawPoints.length+' points · '+tc+' · '+distDisplay,'ok');
 }
 
@@ -245,9 +249,8 @@ var OVERLAY_MASSE={
   mile:{b:320,h:200}, text:{b:340,h:130}
 };
 
-// Zielmittelpunkt in Entwurfskoordinaten, Ursprung oben links. Die bisherige
-// Lage eines Overlays gilt als "unten links" - damit bleibt die Vorgabe genau
-// das, was sie war, und die uebrigen acht Anker richten sich danach.
+// Zielmittelpunkt in Entwurfskoordinaten, Ursprung oben links. Der Anker
+// "unten links" entspricht der Vorgabelage; die uebrigen acht richten sich daran aus.
 function ankerVersatz(c, schluessel, mass, altX, altY){
   var a=ANKER_ANTEILE[c[schluessel+'Anchor']]||ANKER_ANTEILE['bottom-left'];
   var xWerte=[altX, ENTWURF_W/2, ENTWURF_W-ANKER_RAND-mass.b/2];
@@ -273,8 +276,7 @@ function fusionVersatz(c, schluessel, mass, altX, altY, istMitteN){
   var v=ankerVersatz(c, schluessel, mass, altX, altY);
   var m=istMitteN||{x:0.5,y:0.5};
   // Dieselbe Abbildung wie in After Effects: ein Faktor fuer beide Achsen,
-  // verankert unten links. Mit getrennten Faktoren fuer Breite und Hoehe liefen
-  // die Lagen auf jeder Leinwand auseinander, die nicht 16:9 ist.
+  // verankert unten links. Nur so stimmen die Lagen auch abseits von 16:9.
   var k=entwurfsFaktor(c);
   var x=(altX+v.dx)*k, y=c.H-(ENTWURF_H-(altY+v.dy))*k;
   return { dx: x/c.W - m.x, dy: (1-y/c.H) - m.y };

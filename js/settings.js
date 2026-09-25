@@ -139,6 +139,7 @@ var btnIds=['btnSetting','btnRouteSetting','btnDiscSetting','btnDiscJsx','btnCom
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
   'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
 var syncCalcResult={offset:null,drift:null};
+var syncDialogSchliessen=function(){};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0',
                compPreset:'1920x1080',compW:'1920',compH:'1080'};
@@ -155,9 +156,7 @@ var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColo
 var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#aa0000',gaugeNumberColor:'#ffffff',gaugeUnitColor:'#6d6d7e'};
 var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFill:'1',elevFillColor:'#ffffff',elevDotColor:'#38bdf8',elevShadowColor:'#000000',elevShadowOffset:'4'};
 
-// Lage aller Overlays. Sie ist bewusst fuer beide Ausgabeformate dieselbe -
-// vorher sass dasselbe Overlay in Resolve mittig und in After Effects unten
-// links.
+// Lage aller Overlays, fuer beide Ausgabeformate dieselbe.
 var POSITION_SCHLUESSEL=['speed','elev','hr','incline','mile','cad','power','temp','pace','lap','disc','compass'];
 var DEF_POSITION={elev:'bottom-center',compass:'bottom-right'};
 // Die drei Lagefelder eines Overlays einzeln lesen. buildTextOverlaySetting
@@ -368,31 +367,58 @@ document.getElementById('copyDur').addEventListener('click',function(){
   });
 });
 
-document.getElementById('btnSyncHelper').addEventListener('click',function(){document.getElementById('syncModal').classList.add('open');});
-document.getElementById('syncClose').addEventListener('click',function(){document.getElementById('syncModal').classList.remove('open');});
-document.getElementById('syncModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+function macheDialog(modal, rueckfall){
+  var vorher=null;
+  function bedienbare(){
+    return [].slice.call(modal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(function(el){ return !el.disabled && el.offsetParent!==null; });
+  }
+  function offen(){ return modal.classList.contains('open'); }
+  function oeffne(ausloeser){
+    vorher=ausloeser||document.activeElement;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    var f=bedienbare();
+    if(f.length) f[0].focus();
+  }
+  function schliesse(){
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+    var ziel=(vorher&&vorher!==document.body&&vorher.focus)?vorher:rueckfall;
+    if(ziel&&ziel.focus) ziel.focus();
+  }
+  modal.addEventListener('click',function(e){ if(e.target===this) schliesse(); });
+  document.addEventListener('keydown',function(e){
+    if(!offen()) return;
+    if(e.key==='Escape'){ e.preventDefault(); schliesse(); return; }
+    if(e.key!=='Tab') return;
+    var f=bedienbare();
+    if(!f.length) return;
+    var erste=f[0], letzte=f[f.length-1];
+    if(e.shiftKey && document.activeElement===erste){ e.preventDefault(); letzte.focus(); }
+    else if(!e.shiftKey && document.activeElement===letzte){ e.preventDefault(); erste.focus(); }
+  });
+  return { oeffne:oeffne, schliesse:schliesse, offen:offen };
+}
 
-var supportButton=document.getElementById('btnSupport');
-var supportHeaderButton=document.getElementById('btnSupportHeader');
-var supportButtons=[supportButton,supportHeaderButton];
-var lastSupportTrigger=supportButton;
-var supportModal=document.getElementById('supportModal');
-function openSupportModal(){
-  supportModal.classList.add('open');
-  supportModal.setAttribute('aria-hidden','false');
-  document.getElementById('supportClose').focus();
-}
-function closeSupportModal(){
-  supportModal.classList.remove('open');
-  supportModal.setAttribute('aria-hidden','true');
-  if(lastSupportTrigger) lastSupportTrigger.focus();
-}
-supportButtons.forEach(function(button){
-  button.addEventListener('click',function(){lastSupportTrigger=this;openSupportModal();});
+var syncDialog=macheDialog(document.getElementById('syncModal'),
+                           document.getElementById('btnSyncHelper'));
+syncDialogSchliessen=syncDialog.schliesse;
+document.getElementById('btnSyncHelper').addEventListener('click',function(){
+  syncDialog.oeffne(this);
 });
+document.getElementById('syncClose').addEventListener('click',syncDialog.schliesse);
+
+var supportDialog=macheDialog(document.getElementById('supportModal'),
+                              document.getElementById('btnSupport'));
+function openSupportModal(ausloeser){ supportDialog.oeffne(ausloeser); }
+function closeSupportModal(){ supportDialog.schliesse(); }
+[document.getElementById('btnSupport'),document.getElementById('btnSupportHeader')]
+  .forEach(function(button){
+    button.addEventListener('click',function(){ supportDialog.oeffne(this); });
+  });
 document.getElementById('supportClose').addEventListener('click',closeSupportModal);
-supportModal.addEventListener('click',function(e){if(e.target===this)closeSupportModal();});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&supportModal.classList.contains('open'))closeSupportModal();});
 
 document.getElementById('btnSupportProject').addEventListener('click',function(){
   window.open('https://buymeacoffee.com/hellowebcode','_blank','noopener');
@@ -435,8 +461,6 @@ document.getElementById('syncCalc').addEventListener('click',function(){
   if(isNaN(v1)||isNaN(g1)){res.textContent=localizeRuntimeText('Enter event 1 values');res.style.color='var(--danger)';applyBtn.disabled=true;return;}
   // Modell: video = gps * drift + offset. Mit zwei Ereignissen ergibt sich der
   // Faktor aus beiden Differenzen; erst danach laesst sich der Versatz bestimmen.
-  // Vorher wurde der Versatz so berechnet, als waere der Faktor 1 - dadurch lag
-  // das erste Ereignis daneben, sobald es nicht am Trackanfang lag.
   var drift=1.0;
   if(!isNaN(v2)&&!isNaN(g2)&&g2!==g1){
     drift=Math.round(((v2-v1)/(g2-g1))*100000)/100000;
@@ -450,11 +474,22 @@ document.getElementById('syncCalc').addEventListener('click',function(){
 });
 
 document.getElementById('syncApply').addEventListener('click',function(){
-  document.getElementById('offset').value=syncCalcResult.offset;
-  document.getElementById('driftFactor').value=syncCalcResult.drift;
-  document.getElementById('syncModal').classList.remove('open');
+  // Das Feld laesst 0,9 bis 1,1 zu; ausserhalb entstehen rueckwaerts laufende
+  // oder leere Keyframes.
+  var d=Math.max(0.9, Math.min(1.1, syncCalcResult.drift));
+  if(!isFinite(d)||d<=0) d=1.0;
+  var o=isFinite(syncCalcResult.offset)?syncCalcResult.offset:0;
+  document.getElementById('offset').value=o;
+  document.getElementById('driftFactor').value=d;
+  syncDialogSchliessen();
+  // Das Setzen von .value loest kein Ereignis aus, das Merken muss von Hand
+  // angestossen werden.
+  speichereEinstellungen();
   if(rawPoints.length) reprocess();
-  setStatus('Sync applied — offset: '+syncCalcResult.offset+'s, drift: '+syncCalcResult.drift,'ok');
+  if(d!==syncCalcResult.drift)
+    setStatus('Sync applied — drift limited to '+d,'err');
+  else
+    setStatus('Sync applied — offset: '+o+'s, drift: '+d,'ok');
 });
 
 // Leinwandgroesse: die Auswahl fuellt die beiden Zahlenfelder, eine Eingabe
@@ -499,6 +534,11 @@ document.getElementById('resetHR').addEventListener('click',function(){
   document.getElementById('hrColor').value='#ef4444';
   document.getElementById('hrHeartColor').value='#ef4444';
   document.getElementById('hrSize').value='0.07';
+  document.getElementById('hrZones').value='';
+  document.getElementById('hrZone2').value='140';
+  document.getElementById('hrZone3').value='165';
+  document.getElementById('hrColor2').value='#f59e0b';
+  document.getElementById('hrColor3').value='#dc2626';
   if(hrData.length) drawHR();
 });
 document.getElementById('resetCad').addEventListener('click',function(){
@@ -510,6 +550,11 @@ document.getElementById('resetPower').addEventListener('click',function(){
   positionZuruecksetzen('power');
   document.getElementById('powerColor').value='#f59e0b';
   document.getElementById('powerSize').value='0.07';
+  document.getElementById('powerZones').value='';
+  document.getElementById('powerZone2').value='200';
+  document.getElementById('powerZone3').value='280';
+  document.getElementById('powerColor2').value='#f59e0b';
+  document.getElementById('powerColor3').value='#dc2626';
 });
 document.getElementById('resetTemp').addEventListener('click',function(){
   positionZuruecksetzen('temp');
@@ -558,6 +603,9 @@ document.getElementById('resetDisc').addEventListener('click',function(){
 document.getElementById('resetElev').addEventListener('click',function(){
   positionZuruecksetzen('elev');
   applyDefaults(DEF_ELEV);
+  // applyDefaults setzt .value; ein Haekchen braucht .checked.
+  document.getElementById('elevLabels').checked=true;
+  if(rawPoints.length) drawElev();
 });
 
 document.getElementById('elevLabels').addEventListener('change',function(){if(rawPoints.length) drawElev();});

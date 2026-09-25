@@ -12,7 +12,7 @@
   "Power_Overlay.setting": "7996fa00e4b81021  26511",
   "Temperature_Overlay.setting": "0c1a63aa122c6361  25829",
   "Pace_Overlay.setting": "3e0b7f9e165e99b3  26552",
-  "Lap_Marker_Overlay.setting": "a2d0fe2ec775cc35  4723",
+  "Lap_Marker_Overlay.setting": "f54e6d1748270ce3  4723",
   "Speed_Overlay_AE.jsx": "a2180b520718c882  26694",
   "Route_Overlay_AE.jsx": "73289c266333e423  40070",
   "Route_Disc_Overlay_AE.jsx": "46c67292843e4bea  49323",
@@ -25,5 +25,5 @@
   "Power_Overlay_AE.jsx": "46f14e7151bc8503  13482",
   "Temperature_Overlay_AE.jsx": "cf17a3873a404d72  12788",
   "Pace_Overlay_AE.jsx": "e48f0bdca5160022  13554",
-  "Lap_Marker_Overlay_AE.jsx": "76805dd3946e9f80  5635"
+  "Lap_Marker_Overlay_AE.jsx": "f9f496a44623baf4  5626"
 }

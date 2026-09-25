@@ -159,6 +159,7 @@ var UI_DE={
   'Distance':'Distanz',
   'Peak speed':'Höchstgeschwindigkeit',
   'copy':'kopieren',
+  'Speedometer preview':'Tacho-Vorschau',
   'Route preview':'Routenvorschau',
   'Speed curve':'Geschwindigkeitskurve',
   'Heart rate':'Herzfrequenz',
@@ -227,7 +228,7 @@ var UI_DE={
   '.jsx script (heart + value)':'.jsx-Skript (Herz + Wert)',
   '.jsx script (wedge + value)':'.jsx-Skript (Keil + Wert)',
   '.jsx script (distance value)':'.jsx-Skript (Distanzwert)',
-  'Visualisation only — this map is never part of an export. The eleven overlays above are unaffected.':'Nur zur Visualisierung — diese Karte ist nie Teil eines Exports. Die elf Overlays oben bleiben davon unberührt.'
+  'Visualisation only \u2014 this map is never part of an export. The overlays above are unaffected.':'Nur zur Visualisierung \u2014 diese Karte ist nie Teil eines Exports. Die Overlays oben bleiben davon unber\u00fchrt.'
 };
 
 var lastMaxSpeedValue=null;
@@ -246,7 +247,12 @@ function syncUnitOptions(){
     sel.insertBefore(mphOption, sel.firstChild);
     sel.value=before;
   }
-  if(sel.value!==before && typeof rawPoints!=='undefined' && rawPoints.length) reprocess();
+  // Die Umschaltung kann die Einheit aendern; ohne Sichern liefe der gemerkte
+  // Zustand vom sichtbaren auseinander.
+  if(sel.value!==before){
+    if(typeof speichereEinstellungen==='function'){ try{ speichereEinstellungen(); }catch(e){} }
+    if(typeof rawPoints!=='undefined' && rawPoints.length) reprocess();
+  }
 }
 
 function refreshUnitLabels(){
@@ -365,6 +371,8 @@ function localizeRuntimeText(message){
   if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
+  if(message.indexOf('Sync applied — drift limited to ')===0)
+    return 'Synchronisierung übernommen — Abweichung auf '+message.slice(32)+' begrenzt';
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
   return message;
 }

@@ -142,21 +142,21 @@
   <p class="subtitle">Create thirteen animated overlays for <a href="https://www.blackmagicdesign.com/de/products/davinciresolve" target="_blank" rel="noopener">DaVinci Resolve</a> and <a href="https://www.adobe.com/de/products/aftereffects.html" target="_blank" rel="noopener">After Effects</a> from GPX, FIT and TCX files — processed locally in your browser. Lap markers need a .fit or .tcx file - every other overlay works with all three.</p>
 </div>
 
-<div class="modal-bg" id="syncModal">
-  <div class="modal">
-    <h3>⏱ GPS Sync Calibration Helper</h3>
+<div class="modal-bg" id="syncModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+    <h3 id="syncTitle">⏱ GPS Sync Calibration Helper</h3>
     <div class="hint" style="margin-top:0;margin-bottom:10px">Enter timecodes in <strong>HH:MM:SS:FF</strong> format (e.g. <code>00:00:08:00</code>). GPS elapsed time is seconds from when you started the activity.</div>
-    <div class="field"><label>Event 1 — Video timecode (HH:MM:SS:FF)</label><input type="text" id="sv1" placeholder="00:00:08:00" maxlength="11"></div>
-    <div class="field"><label>Event 1 — GPS elapsed time (HH:MM:SS:FF)</label><input type="text" id="sg1" placeholder="00:00:00:00" maxlength="11"></div>
+    <div class="field"><label for="sv1">Event 1 — Video timecode (HH:MM:SS:FF)</label><input type="text" id="sv1" placeholder="00:00:08:00" maxlength="11"></div>
+    <div class="field"><label for="sg1">Event 1 — GPS elapsed time (HH:MM:SS:FF)</label><input type="text" id="sg1" placeholder="00:00:00:00" maxlength="11"></div>
     <hr class="modal-divider">
     <div class="hint" style="margin-top:0;margin-bottom:8px"><strong>Optional:</strong> second sync event late in the clip for drift correction.</div>
-    <div class="field"><label>Event 2 — Video timecode (HH:MM:SS:FF)</label><input type="text" id="sv2" placeholder="00:09:04:00" maxlength="11"></div>
-    <div class="field"><label>Event 2 — GPS elapsed time (HH:MM:SS:FF)</label><input type="text" id="sg2" placeholder="00:09:10:00" maxlength="11"></div>
+    <div class="field"><label for="sv2">Event 2 — Video timecode (HH:MM:SS:FF)</label><input type="text" id="sv2" placeholder="00:09:04:00" maxlength="11"></div>
+    <div class="field"><label for="sg2">Event 2 — GPS elapsed time (HH:MM:SS:FF)</label><input type="text" id="sg2" placeholder="00:09:10:00" maxlength="11"></div>
     <div class="modal-result" id="syncResult">—</div>
     <div class="modal-btns">
-      <button class="modal-btn" id="syncCalc">Calculate</button>
-      <button class="modal-btn accent" id="syncApply" disabled>Apply</button>
-      <button class="modal-btn" id="syncClose">Close</button>
+      <button type="button" class="modal-btn" id="syncCalc">Calculate</button>
+      <button type="button" class="modal-btn accent" id="syncApply" disabled>Apply</button>
+      <button type="button" class="modal-btn" id="syncClose">Close</button>
     </div>
   </div>
 </div>
@@ -197,12 +197,12 @@
   <span class="section-step" aria-hidden="true">02</span>
   <div class="card-title">Video &amp; GPS settings
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetVideo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetVideo"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
     <div class="field">
-      <label>Frame rate</label>
+      <label for="fps">Frame rate</label>
       <select id="fps">
         <option value="23.976">23.976</option>
         <option value="24">24</option>
@@ -214,31 +214,31 @@
       </select>
     </div>
     <div class="field">
-      <label>Speed unit</label>
+      <label for="unit">Speed unit</label>
       <select id="unit"><option value="mph" selected>MPH</option><option value="kph">KPH</option></select>
     </div>
     <div class="field">
-      <label>Smoothing window (0–20)</label>
+      <label for="smooth">Smoothing window (0–20)</label>
       <input type="number" id="smooth" value="3" step="1" min="0" max="20">
     </div>
   </div>
   <div class="grid3">
     <div class="field">
-      <label>GPS offset (seconds)</label>
+      <label for="offset">GPS offset (seconds)</label>
       <input type="number" id="offset" value="0" step="0.5">
     </div>
     <div class="field">
-      <label>Clock drift factor</label>
-      <div class="field-stack"><input type="number" id="driftFactor" value="1.0" step="0.0001" min="0.9" max="1.1"><button class="reset-btn" id="btnSyncHelper" style="border-color:var(--accent);color:var(--accent)"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z"/></svg>Sync Helper</button></div>
+      <label for="driftFactor">Clock drift factor</label>
+      <div class="field-stack"><input type="number" id="driftFactor" value="1.0" step="0.0001" min="0.9" max="1.1"><button type="button" class="reset-btn" id="btnSyncHelper" style="border-color:var(--accent);color:var(--accent)"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,40a96,96,0,1,0,96,96A96.11,96.11,0,0,0,128,40Zm0,176a80,80,0,1,1,80-80A80.09,80.09,0,0,1,128,216ZM173.66,90.34a8,8,0,0,1,0,11.32l-40,40a8,8,0,0,1-11.32-11.32l40-40A8,8,0,0,1,173.66,90.34ZM96,16a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,16Z"/></svg>Sync Helper</button></div>
     </div>
     <div class="field">
-      <label>Max gauge speed (auto)</label>
+      <label for="maxSpeed">Max gauge speed (auto)</label>
       <input type="number" id="maxSpeed" value="9" step="0.5" min="0.5" readonly style="opacity:0.6;cursor:default;">
     </div>
   </div>
   <div class="grid3">
     <div class="field">
-      <label>Canvas size</label>
+      <label for="compPreset">Canvas size</label>
       <select id="compPreset">
         <option value="1920x1080" selected>1920 × 1080 — HD</option>
         <option value="2560x1440">2560 × 1440 — QHD</option>
@@ -250,11 +250,11 @@
       </select>
     </div>
     <div class="field">
-      <label>Canvas width (px)</label>
+      <label for="compW">Canvas width (px)</label>
       <input type="number" id="compW" value="1920" step="2" min="64" max="16384">
     </div>
     <div class="field">
-      <label>Canvas height (px)</label>
+      <label for="compH">Canvas height (px)</label>
       <input type="number" id="compH" value="1080" step="2" min="64" max="16384">
     </div>
   </div>
@@ -280,11 +280,11 @@
   <p class="card-note">Save the complete look — every colour, size, position and the canvas — under a name and bring it back with one click. Presets live in this browser only; export one as a file to move it to another machine or share it.</p>
   <div class="grid3">
     <div class="field">
-      <label>Saved presets</label>
+      <label for="presetList">Saved presets</label>
       <select id="presetList"><option value="">None saved yet</option></select>
     </div>
     <div class="field">
-      <label>Name</label>
+      <label for="presetName">Name</label>
       <input type="text" id="presetName" placeholder="e.g. Road bike, dark" maxlength="60">
     </div>
     <div class="field preset-actions">
@@ -306,21 +306,21 @@
   <span class="section-step" aria-hidden="true">03</span>
   <div class="card-title">Speedometer style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetGauge"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetGauge"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Dial backdrop</label><input type="color" id="gaugeBgColor" value="#000000"></div>
-    <div class="field"><label>Ring color</label><input type="color" id="gaugeRingColor" value="#ffffff"></div>
-    <div class="field"><label>Active arc color</label><input type="color" id="gaugeArcColor" value="#aa0000"></div>
+    <div class="field"><label for="gaugeBgColor">Dial backdrop</label><input type="color" id="gaugeBgColor" value="#000000"></div>
+    <div class="field"><label for="gaugeRingColor">Ring color</label><input type="color" id="gaugeRingColor" value="#ffffff"></div>
+    <div class="field"><label for="gaugeArcColor">Active arc color</label><input type="color" id="gaugeArcColor" value="#aa0000"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="gaugeNumberColor" value="#ffffff"></div>
-    <div class="field"><label>Unit label color</label><input type="color" id="gaugeUnitColor" value="#6d6d7e"></div>
+    <div class="field"><label for="gaugeNumberColor">Number color</label><input type="color" id="gaugeNumberColor" value="#ffffff"></div>
+    <div class="field"><label for="gaugeUnitColor">Unit label color</label><input type="color" id="gaugeUnitColor" value="#6d6d7e"></div>
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="speedAnchor">Position</label>
       <select id="speedAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -333,27 +333,27 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="speedOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="speedOffY" value="0" step="10"></div>
+    <div class="field"><label for="speedOffX">Nudge X (px)</label><input type="number" id="speedOffX" value="0" step="10"></div>
+    <div class="field"><label for="speedOffY">Nudge Y (px)</label><input type="number" id="speedOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="route-card">
   <div class="card-title">Route style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetRoute"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetRoute"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="hint" style="margin-top:0;margin-bottom:10px">Auto-sizes to fill the canvas based on your GPS track's aspect ratio.</div>
   <div class="grid3">
-    <div class="field"><label>Track width</label><input type="number" id="trackW" value="4" step="1" min="1"></div>
-    <div class="field"><label>Dot radius</label><input type="number" id="dotR" value="8" step="1" min="2"></div>
-    <div class="field"><label>Shadow offset</label><input type="number" id="shadowOffset" value="5" step="1" min="0"></div>
+    <div class="field"><label for="trackW">Track width</label><input type="number" id="trackW" value="4" step="1" min="1"></div>
+    <div class="field"><label for="dotR">Dot radius</label><input type="number" id="dotR" value="8" step="1" min="2"></div>
+    <div class="field"><label for="shadowOffset">Shadow offset</label><input type="number" id="shadowOffset" value="5" step="1" min="0"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Track color</label><input type="color" id="trackColor" value="#ff6600"></div>
-    <div class="field"><label>Dot color</label><input type="color" id="dotColor" value="#fca300"></div>
-    <div class="field"><label>Shadow color</label><input type="color" id="shadowColor" value="#000000"></div>
+    <div class="field"><label for="trackColor">Track color</label><input type="color" id="trackColor" value="#ff6600"></div>
+    <div class="field"><label for="dotColor">Dot color</label><input type="color" id="dotColor" value="#fca300"></div>
+    <div class="field"><label for="shadowColor">Shadow color</label><input type="color" id="shadowColor" value="#000000"></div>
   </div>
 
   <div class="ghost-block">
@@ -368,9 +368,9 @@
       <button class="reset-btn" type="button" id="ghostRemove">Remove</button>
     </div>
     <div class="grid3">
-      <div class="field"><label>Ghost width</label><input type="number" id="ghostW" value="4" step="1" min="1"></div>
-      <div class="field"><label>Ghost color</label><input type="color" id="ghostColor" value="#8892a4"></div>
-      <div class="field"><label>Ghost opacity</label><input type="number" id="ghostAlpha" value="0.55" step="0.05" min="0.05" max="1"></div>
+      <div class="field"><label for="ghostW">Ghost width</label><input type="number" id="ghostW" value="4" step="1" min="1"></div>
+      <div class="field"><label for="ghostColor">Ghost color</label><input type="color" id="ghostColor" value="#8892a4"></div>
+      <div class="field"><label for="ghostAlpha">Ghost opacity</label><input type="number" id="ghostAlpha" value="0.55" step="0.05" min="0.05" max="1"></div>
     </div>
   </div>
 </div>
@@ -378,44 +378,44 @@
 <div class="card" id="discCard">
   <div class="card-title">Route disc overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetDisc"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetDisc"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <p class="card-note">The same track as the route overlay, but fitted into a disc so nothing is cut off. A ring on the rim shows how far along the whole route you are. A ghost track is drawn with it — that turns it into a small comparison map.</p>
   <div class="grid3">
-    <div class="field"><label>Diameter (share of height)</label><input type="number" id="discSize" value="0.34" step="0.02" min="0.08" max="1"></div>
-    <div class="field"><label>Track width</label><input type="number" id="discTrackW" value="3" step="1" min="1"></div>
-    <div class="field"><label>Dot radius</label><input type="number" id="discDotR" value="6" step="1" min="2"></div>
+    <div class="field"><label for="discSize">Diameter (share of height)</label><input type="number" id="discSize" value="0.34" step="0.02" min="0.08" max="1"></div>
+    <div class="field"><label for="discTrackW">Track width</label><input type="number" id="discTrackW" value="3" step="1" min="1"></div>
+    <div class="field"><label for="discDotR">Dot radius</label><input type="number" id="discDotR" value="6" step="1" min="2"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Track color</label><input type="color" id="discTrackColor" value="#ff6600"></div>
-    <div class="field"><label>Dot color</label><input type="color" id="discDotColor" value="#fca300"></div>
-    <div class="field"><label>Shadow offset</label><input type="number" id="discShadowOffset" value="3" step="1" min="0"></div>
+    <div class="field"><label for="discTrackColor">Track color</label><input type="color" id="discTrackColor" value="#ff6600"></div>
+    <div class="field"><label for="discDotColor">Dot color</label><input type="color" id="discDotColor" value="#fca300"></div>
+    <div class="field"><label for="discShadowOffset">Shadow offset</label><input type="number" id="discShadowOffset" value="3" step="1" min="0"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Shadow color</label><input type="color" id="discShadowColor" value="#000000"></div>
-    <div class="field"><label>Disc color</label><input type="color" id="discBgColor" value="#000000"></div>
-    <div class="field"><label>Disc opacity</label><input type="number" id="discBgAlpha" value="0.45" step="0.05" min="0" max="1"></div>
+    <div class="field"><label for="discShadowColor">Shadow color</label><input type="color" id="discShadowColor" value="#000000"></div>
+    <div class="field"><label for="discBgColor">Disc color</label><input type="color" id="discBgColor" value="#000000"></div>
+    <div class="field"><label for="discBgAlpha">Disc opacity</label><input type="number" id="discBgAlpha" value="0.45" step="0.05" min="0" max="1"></div>
   </div>
   <div class="grid3">
     <div class="field">
-      <label>Ring</label>
+      <label for="discRing">Ring</label>
       <select id="discRing"><option value="0" selected>Off</option><option value="1">On</option></select>
     </div>
-    <div class="field"><label>Ring color</label><input type="color" id="discRingColor" value="#ffffff"></div>
-    <div class="field"><label>Ring width</label><input type="number" id="discRingW" value="3" step="1" min="1"></div>
+    <div class="field"><label for="discRingColor">Ring color</label><input type="color" id="discRingColor" value="#ffffff"></div>
+    <div class="field"><label for="discRingW">Ring width</label><input type="number" id="discRingW" value="3" step="1" min="1"></div>
   </div>
   <div class="grid3">
     <div class="field">
-      <label>Progress</label>
+      <label for="discProgress">Progress</label>
       <select id="discProgress"><option value="1" selected>On</option><option value="0">Off</option></select>
     </div>
-    <div class="field"><label>Progress color</label><input type="color" id="discProgressColor" value="#ff6600"></div>
-    <div class="field"><label>Progress width</label><input type="number" id="discProgressW" value="5" step="1" min="1"></div>
+    <div class="field"><label for="discProgressColor">Progress color</label><input type="color" id="discProgressColor" value="#ff6600"></div>
+    <div class="field"><label for="discProgressW">Progress width</label><input type="number" id="discProgressW" value="5" step="1" min="1"></div>
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="discAnchor">Position</label>
       <select id="discAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -428,36 +428,36 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="discOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="discOffY" value="0" step="10"></div>
+    <div class="field"><label for="discOffX">Nudge X (px)</label><input type="number" id="discOffX" value="0" step="10"></div>
+    <div class="field"><label for="discOffY">Nudge Y (px)</label><input type="number" id="discOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="compassCard">
   <div class="card-title">Compass overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetCompass"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetCompass"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <p class="card-note">A ring of ticks that doubles as the speed scale, with „N“ for north inside it and a needle that turns to your direction of travel. The speed also appears as a number. The direction is computed from consecutive positions, smoothed, and held while you stand still.</p>
   <div class="grid3">
-    <div class="field"><label>Diameter (share of height)</label><input type="number" id="compassSize" value="0.30" step="0.02" min="0.10" max="1"></div>
-    <div class="field"><label>Scale color</label><input type="color" id="compassScaleColor" value="#ffffff"></div>
-    <div class="field"><label>Tick width</label><input type="number" id="compassTickW" value="3" step="1" min="1"></div>
+    <div class="field"><label for="compassSize">Diameter (share of height)</label><input type="number" id="compassSize" value="0.30" step="0.02" min="0.10" max="1"></div>
+    <div class="field"><label for="compassScaleColor">Scale color</label><input type="color" id="compassScaleColor" value="#ffffff"></div>
+    <div class="field"><label for="compassTickW">Tick width</label><input type="number" id="compassTickW" value="3" step="1" min="1"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Needle color</label><input type="color" id="compassArrowColor" value="#e5484d"></div>
-    <div class="field"><label>Level color</label><input type="color" id="compassLevelColor" value="#3b82f6"></div>
-    <div class="field"><label>Level width</label><input type="number" id="compassLevelW" value="6" step="1" min="1"></div>
+    <div class="field"><label for="compassArrowColor">Needle color</label><input type="color" id="compassArrowColor" value="#e5484d"></div>
+    <div class="field"><label for="compassLevelColor">Level color</label><input type="color" id="compassLevelColor" value="#3b82f6"></div>
+    <div class="field"><label for="compassLevelW">Level width</label><input type="number" id="compassLevelW" value="6" step="1" min="1"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="compassTextColor" value="#ffffff"></div>
+    <div class="field"><label for="compassTextColor">Number color</label><input type="color" id="compassTextColor" value="#ffffff"></div>
     <div class="field"></div>
     <div class="field"></div>
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="compassAnchor">Position</label>
       <select id="compassAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -470,34 +470,34 @@
         <option value="bottom-right" selected>Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="compassOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="compassOffY" value="0" step="10"></div>
+    <div class="field"><label for="compassOffX">Nudge X (px)</label><input type="number" id="compassOffX" value="0" step="10"></div>
+    <div class="field"><label for="compassOffY">Nudge Y (px)</label><input type="number" id="compassOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="elevation-card">
   <div class="card-title">Elevation style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetElev"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetElev"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div id="elevOptions">
     <div class="grid3">
-      <div class="field"><label>Width px</label><input type="number" id="elevW" value="1920" step="10" min="100"></div>
-      <div class="field"><label>Height px</label><input type="number" id="elevH" value="300" step="10" min="50"></div>
-      <div class="field"><label>Line width</label><input type="number" id="elevLineW" value="2" step="1" min="1"></div>
+      <div class="field"><label for="elevW">Width px</label><input type="number" id="elevW" value="1920" step="10" min="100"></div>
+      <div class="field"><label for="elevH">Height px</label><input type="number" id="elevH" value="300" step="10" min="50"></div>
+      <div class="field"><label for="elevLineW">Line width</label><input type="number" id="elevLineW" value="2" step="1" min="1"></div>
     </div>
     <div class="grid3">
-      <div class="field"><label>Line color</label><input type="color" id="elevColor" value="#38bdf8"></div>
-      <div class="field"><label>Fill</label>
+      <div class="field"><label for="elevColor">Line color</label><input type="color" id="elevColor" value="#38bdf8"></div>
+      <div class="field"><label for="elevFill">Fill</label>
         <select id="elevFill"><option value="1">Yes</option><option value="0">No</option></select>
       </div>
-      <div class="field"><label>Fill color</label><input type="color" id="elevFillColor" value="#ffffff"></div>
+      <div class="field"><label for="elevFillColor">Fill color</label><input type="color" id="elevFillColor" value="#ffffff"></div>
     </div>
     <div class="grid3">
-      <div class="field"><label>Dot color</label><input type="color" id="elevDotColor" value="#38bdf8"></div>
-      <div class="field"><label>Shadow color</label><input type="color" id="elevShadowColor" value="#000000"></div>
-      <div class="field"><label>Shadow offset</label><input type="number" id="elevShadowOffset" value="4" step="1" min="0"></div>
+      <div class="field"><label for="elevDotColor">Dot color</label><input type="color" id="elevDotColor" value="#38bdf8"></div>
+      <div class="field"><label for="elevShadowColor">Shadow color</label><input type="color" id="elevShadowColor" value="#000000"></div>
+      <div class="field"><label for="elevShadowOffset">Shadow offset</label><input type="number" id="elevShadowOffset" value="4" step="1" min="0"></div>
     </div>
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
 
@@ -509,7 +509,7 @@
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="elevAnchor">Position</label>
       <select id="elevAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -522,34 +522,34 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="elevOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="elevOffY" value="0" step="10"></div>
+    <div class="field"><label for="elevOffX">Nudge X (px)</label><input type="number" id="elevOffX" value="0" step="10"></div>
+    <div class="field"><label for="elevOffY">Nudge Y (px)</label><input type="number" id="elevOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="hrCard">
   <div class="card-title">Heart Rate overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetHR"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetHR"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="hrColor" value="#ef4444"></div>
-    <div class="field"><label>Heart color</label><input type="color" id="hrHeartColor" value="#ef4444"></div>
-    <div class="field"><label>Text size</label><input type="number" id="hrSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+    <div class="field"><label for="hrColor">Number color</label><input type="color" id="hrColor" value="#ef4444"></div>
+    <div class="field"><label for="hrHeartColor">Heart color</label><input type="color" id="hrHeartColor" value="#ef4444"></div>
+    <div class="field"><label for="hrSize">Text size</label><input type="number" id="hrSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Zone colours</label>
+    <div class="field"><label for="hrZones">Zone colours</label>
       <select id="hrZones"><option value="">Off</option><option value="1">On</option></select></div>
-    <div class="field"><label>bpm zone 2 from</label><input type="number" id="hrZone2" value="140" step="1" min="0"></div>
-    <div class="field"><label>bpm zone 3 from</label><input type="number" id="hrZone3" value="165" step="1" min="0"></div>
-    <div class="field"><label>Zone 2 colour</label><input type="color" id="hrColor2" value="#f59e0b"></div>
-    <div class="field"><label>Zone 3 colour</label><input type="color" id="hrColor3" value="#dc2626"></div>
+    <div class="field"><label for="hrZone2">bpm zone 2 from</label><input type="number" id="hrZone2" value="140" step="1" min="0"></div>
+    <div class="field"><label for="hrZone3">bpm zone 3 from</label><input type="number" id="hrZone3" value="165" step="1" min="0"></div>
+    <div class="field"><label for="hrColor2">Zone 2 colour</label><input type="color" id="hrColor2" value="#f59e0b"></div>
+    <div class="field"><label for="hrColor3">Zone 3 colour</label><input type="color" id="hrColor3" value="#dc2626"></div>
   </div>
 
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="hrAnchor">Position</label>
       <select id="hrAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -562,28 +562,28 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="hrOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="hrOffY" value="0" step="10"></div>
+    <div class="field"><label for="hrOffX">Nudge X (px)</label><input type="number" id="hrOffX" value="0" step="10"></div>
+    <div class="field"><label for="hrOffY">Nudge Y (px)</label><input type="number" id="hrOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="inclineCard">
   <div class="card-title">Incline overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetIncline"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetIncline"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="inclineNumberColor" value="#22c55e"></div>
-    <div class="field"><label>Wedge color</label><input type="color" id="inclineWedgeColor" value="#22c55e"></div>
-    <div class="field"><label>Units</label>
+    <div class="field"><label for="inclineNumberColor">Number color</label><input type="color" id="inclineNumberColor" value="#22c55e"></div>
+    <div class="field"><label for="inclineWedgeColor">Wedge color</label><input type="color" id="inclineWedgeColor" value="#22c55e"></div>
+    <div class="field"><label for="inclineUnit">Units</label>
       <select id="inclineUnit"><option value="pct" selected>Percent (%)</option><option value="deg">Degrees (°)</option></select>
     </div>
   </div>
 
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="inclineAnchor">Position</label>
       <select id="inclineAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -596,28 +596,28 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="inclineOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="inclineOffY" value="0" step="10"></div>
+    <div class="field"><label for="inclineOffX">Nudge X (px)</label><input type="number" id="inclineOffX" value="0" step="10"></div>
+    <div class="field"><label for="inclineOffY">Nudge Y (px)</label><input type="number" id="inclineOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="mileCard">
   <div class="card-title">Distance / Mile Marker overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetMile"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetMile"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Text color</label><input type="color" id="mileColor" value="#38bdf8"></div>
-    <div class="field"><label>Line distance color</label><input type="color" id="mileLineDistColor" value="#111111"></div>
-    <div class="field"><label>Decimals</label>
+    <div class="field"><label for="mileColor">Text color</label><input type="color" id="mileColor" value="#38bdf8"></div>
+    <div class="field"><label for="mileLineDistColor">Line distance color</label><input type="color" id="mileLineDistColor" value="#111111"></div>
+    <div class="field"><label for="mileDecimals">Decimals</label>
       <select id="mileDecimals"><option value="1" selected>1 (e.g. 3.2)</option><option value="2">2 (e.g. 3.24)</option></select>
     </div>
   </div>
 
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="mileAnchor">Position</label>
       <select id="mileAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -630,24 +630,24 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="mileOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="mileOffY" value="0" step="10"></div>
+    <div class="field"><label for="mileOffX">Nudge X (px)</label><input type="number" id="mileOffX" value="0" step="10"></div>
+    <div class="field"><label for="mileOffY">Nudge Y (px)</label><input type="number" id="mileOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="cadCard">
   <div class="card-title">Cadence overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetCad"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetCad"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="cadColor" value="#a855f7"></div>
-    <div class="field"><label>Text size</label><input type="number" id="cadSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+    <div class="field"><label for="cadColor">Number color</label><input type="color" id="cadColor" value="#a855f7"></div>
+    <div class="field"><label for="cadSize">Text size</label><input type="number" id="cadSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="cadAnchor">Position</label>
       <select id="cadAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -660,32 +660,32 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="cadOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="cadOffY" value="0" step="10"></div>
+    <div class="field"><label for="cadOffX">Nudge X (px)</label><input type="number" id="cadOffX" value="0" step="10"></div>
+    <div class="field"><label for="cadOffY">Nudge Y (px)</label><input type="number" id="cadOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="powerCard">
   <div class="card-title">Power overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetPower"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetPower"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="powerColor" value="#f59e0b"></div>
-    <div class="field"><label>Text size</label><input type="number" id="powerSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+    <div class="field"><label for="powerColor">Number color</label><input type="color" id="powerColor" value="#f59e0b"></div>
+    <div class="field"><label for="powerSize">Text size</label><input type="number" id="powerSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Zone colours</label>
+    <div class="field"><label for="powerZones">Zone colours</label>
       <select id="powerZones"><option value="">Off</option><option value="1">On</option></select></div>
-    <div class="field"><label>W zone 2 from</label><input type="number" id="powerZone2" value="200" step="1" min="0"></div>
-    <div class="field"><label>W zone 3 from</label><input type="number" id="powerZone3" value="280" step="1" min="0"></div>
-    <div class="field"><label>Zone 2 colour</label><input type="color" id="powerColor2" value="#f59e0b"></div>
-    <div class="field"><label>Zone 3 colour</label><input type="color" id="powerColor3" value="#dc2626"></div>
+    <div class="field"><label for="powerZone2">W zone 2 from</label><input type="number" id="powerZone2" value="200" step="1" min="0"></div>
+    <div class="field"><label for="powerZone3">W zone 3 from</label><input type="number" id="powerZone3" value="280" step="1" min="0"></div>
+    <div class="field"><label for="powerColor2">Zone 2 colour</label><input type="color" id="powerColor2" value="#f59e0b"></div>
+    <div class="field"><label for="powerColor3">Zone 3 colour</label><input type="color" id="powerColor3" value="#dc2626"></div>
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="powerAnchor">Position</label>
       <select id="powerAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -698,24 +698,24 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="powerOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="powerOffY" value="0" step="10"></div>
+    <div class="field"><label for="powerOffX">Nudge X (px)</label><input type="number" id="powerOffX" value="0" step="10"></div>
+    <div class="field"><label for="powerOffY">Nudge Y (px)</label><input type="number" id="powerOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="tempCard">
   <div class="card-title">Temperature overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetTemp"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetTemp"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="tempColor" value="#0ea5e9"></div>
-    <div class="field"><label>Text size</label><input type="number" id="tempSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+    <div class="field"><label for="tempColor">Number color</label><input type="color" id="tempColor" value="#0ea5e9"></div>
+    <div class="field"><label for="tempSize">Text size</label><input type="number" id="tempSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="tempAnchor">Position</label>
       <select id="tempAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -728,25 +728,25 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="tempOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="tempOffY" value="0" step="10"></div>
+    <div class="field"><label for="tempOffX">Nudge X (px)</label><input type="number" id="tempOffX" value="0" step="10"></div>
+    <div class="field"><label for="tempOffY">Nudge Y (px)</label><input type="number" id="tempOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="paceCard">
   <div class="card-title">Pace overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetPace"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetPace"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Number color</label><input type="color" id="paceColor" value="#14b8a6"></div>
-    <div class="field"><label>Text size</label><input type="number" id="paceSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+    <div class="field"><label for="paceColor">Number color</label><input type="color" id="paceColor" value="#14b8a6"></div>
+    <div class="field"><label for="paceSize">Text size</label><input type="number" id="paceSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <p class="card-note">Pace follows the speed unit: minutes per kilometre, or minutes per mile when MPH is selected.</p>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="paceAnchor">Position</label>
       <select id="paceAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -759,25 +759,25 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="paceOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="paceOffY" value="0" step="10"></div>
+    <div class="field"><label for="paceOffX">Nudge X (px)</label><input type="number" id="paceOffX" value="0" step="10"></div>
+    <div class="field"><label for="paceOffY">Nudge Y (px)</label><input type="number" id="paceOffY" value="0" step="10"></div>
   </div>
 </div>
 
 <div class="card" id="lapCard">
   <div class="card-title">Lap Marker overlay style
     <div class="card-title-actions">
-      <button class="reset-btn" id="resetLap"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
+      <button type="button" class="reset-btn" id="resetLap"><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z"/></svg>Reset</button>
     </div>
   </div>
   <div class="grid3">
-    <div class="field"><label>Text color</label><input type="color" id="lapColor" value="#38bdf8"></div>
-    <div class="field"><label>Text size</label><input type="number" id="lapSize" value="0.06" step="0.005" min="0.03" max="0.2"></div>
+    <div class="field"><label for="lapColor">Text color</label><input type="color" id="lapColor" value="#38bdf8"></div>
+    <div class="field"><label for="lapSize">Text size</label><input type="number" id="lapSize" value="0.06" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <p class="card-note">Lap markers are read from the lap records inside a .fit or .tcx file. GPX files carry no lap information, so this overlay stays unavailable for them.</p>
   <div class="grid3 position-row">
     <div class="field">
-      <label>Position</label>
+      <label for="lapAnchor">Position</label>
       <select id="lapAnchor">
         <option value="top-left">Top left</option>
         <option value="top-center">Top centre</option>
@@ -790,8 +790,8 @@
         <option value="bottom-right">Bottom right</option>
       </select>
     </div>
-    <div class="field"><label>Nudge X (px)</label><input type="number" id="lapOffX" value="0" step="10"></div>
-    <div class="field"><label>Nudge Y (px)</label><input type="number" id="lapOffY" value="0" step="10"></div>
+    <div class="field"><label for="lapOffX">Nudge X (px)</label><input type="number" id="lapOffX" value="0" step="10"></div>
+    <div class="field"><label for="lapOffY">Nudge Y (px)</label><input type="number" id="lapOffY" value="0" step="10"></div>
   </div>
 </div>
 
@@ -804,7 +804,7 @@
     <div class="stat">
       <div class="stat-label">Duration</div>
       <div class="stat-value" id="statDur">-</div>
-      <button class="copy-btn" id="copyDur" title="Copy duration">copy</button>
+      <button type="button" class="copy-btn" id="copyDur" title="Copy duration">copy</button>
     </div>
     <div class="stat">
       <div class="stat-label">Distance</div>
@@ -821,7 +821,11 @@
       <div id="mapCanvas"></div>
       <div class="map-overlay" id="mapOverlay"><p class="map-note" id="mapNote">Loading map…</p></div>
     </div>
-    <p class="map-hint">Visualisation only — this map is never part of an export. The eleven overlays above are unaffected.</p>
+    <p class="map-hint">Visualisation only — this map is never part of an export. The overlays above are unaffected.</p>
+  </div>
+  <div class="preview-wrap" id="gaugeWrap" style="display:none">
+    <div class="preview-label">Speedometer preview</div>
+    <canvas id="gaugeCanvas" height="200"></canvas>
   </div>
   <div class="preview-wrap">
     <div class="preview-label">Route preview</div>
@@ -846,41 +850,41 @@
   <div class="card-title">Download outputs</div>
   <div class="dl-section-label">DaVinci Resolve — Fusion .setting files</div>
   <div class="dl-grid">
-    <button class="dl-btn primary" id="btnSetting" disabled>Speedometer<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn primary" id="btnRouteSetting" disabled>Route Overlay<div class="dl-sub">.setting file (path + dot baked in)</div></button>
-    <button class="dl-btn primary" id="btnDiscSetting" disabled>Route Disc Overlay<div class="dl-sub">.setting file (track fitted into a disc)</div></button>
-    <button class="dl-btn primary" id="btnCompassSetting" disabled>Compass Overlay<div class="dl-sub">.setting file (needle, scale and speed level)</div></button>
-    <button class="dl-btn blue" id="btnElevSetting" disabled>Elevation Overlay<div class="dl-sub">.setting file (graph + dot baked in)</div></button>
-    <button class="dl-btn" id="btnHRSetting" disabled>HR Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnInclineSetting" disabled>Incline Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnMileSetting" disabled>Mile Marker Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnCadSetting" disabled>Cadence Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnPowerSetting" disabled>Power Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnTempSetting" disabled>Temperature Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnPaceSetting" disabled>Pace Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
-    <button class="dl-btn" id="btnLapSetting" disabled>Lap Marker Overlay<div class="dl-sub">.setting file (.fit and .tcx only)</div></button>
+    <button type="button" class="dl-btn primary" id="btnSetting" disabled>Speedometer<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn primary" id="btnRouteSetting" disabled>Route Overlay<div class="dl-sub">.setting file (path + dot baked in)</div></button>
+    <button type="button" class="dl-btn primary" id="btnDiscSetting" disabled>Route Disc Overlay<div class="dl-sub">.setting file (track fitted into a disc)</div></button>
+    <button type="button" class="dl-btn primary" id="btnCompassSetting" disabled>Compass Overlay<div class="dl-sub">.setting file (needle, scale and speed level)</div></button>
+    <button type="button" class="dl-btn blue" id="btnElevSetting" disabled>Elevation Overlay<div class="dl-sub">.setting file (graph + dot baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnHRSetting" disabled>HR Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnInclineSetting" disabled>Incline Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnMileSetting" disabled>Mile Marker Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnCadSetting" disabled>Cadence Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnPowerSetting" disabled>Power Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnTempSetting" disabled>Temperature Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnPaceSetting" disabled>Pace Overlay<div class="dl-sub">.setting file (spline baked in)</div></button>
+    <button type="button" class="dl-btn" id="btnLapSetting" disabled>Lap Marker Overlay<div class="dl-sub">.setting file (.fit and .tcx only)</div></button>
   </div>
   <div class="dl-section-label">After Effects — .jsx scripts (File &gt; Scripts &gt; Run Script File…)</div>
   <div class="dl-grid">
-    <button class="dl-btn" id="btnSpeedJsx" disabled>Speedometer<div class="dl-sub">.jsx script (comp + keyframes)</div></button>
-    <button class="dl-btn" id="btnRouteJsx" disabled>Route Overlay<div class="dl-sub">.jsx script (path + dot)</div></button>
-    <button class="dl-btn" id="btnDiscJsx" disabled>Route Disc Overlay<div class="dl-sub">.jsx script (track fitted into a disc)</div></button>
-    <button class="dl-btn" id="btnCompassJsx" disabled>Compass Overlay<div class="dl-sub">.jsx script (needle, scale and speed level)</div></button>
-    <button class="dl-btn" id="btnElevJsx" disabled>Elevation Overlay<div class="dl-sub">.jsx script (graph + dot)</div></button>
-    <button class="dl-btn" id="btnHRJsx" disabled>HR Overlay<div class="dl-sub">.jsx script (heart + value)</div></button>
-    <button class="dl-btn" id="btnInclineJsx" disabled>Incline Overlay<div class="dl-sub">.jsx script (wedge + value)</div></button>
-    <button class="dl-btn" id="btnMileJsx" disabled>Mile Marker Overlay<div class="dl-sub">.jsx script (distance value)</div></button>
-    <button class="dl-btn" id="btnCadJsx" disabled>Cadence Overlay<div class="dl-sub">.jsx script (cadence value)</div></button>
-    <button class="dl-btn" id="btnPowerJsx" disabled>Power Overlay<div class="dl-sub">.jsx script (power value)</div></button>
-    <button class="dl-btn" id="btnTempJsx" disabled>Temperature Overlay<div class="dl-sub">.jsx script (temperature value)</div></button>
-    <button class="dl-btn" id="btnPaceJsx" disabled>Pace Overlay<div class="dl-sub">.jsx script (pace value)</div></button>
-    <button class="dl-btn" id="btnLapJsx" disabled>Lap Marker Overlay<div class="dl-sub">.jsx script (.fit and .tcx only)</div></button>
+    <button type="button" class="dl-btn" id="btnSpeedJsx" disabled>Speedometer<div class="dl-sub">.jsx script (comp + keyframes)</div></button>
+    <button type="button" class="dl-btn" id="btnRouteJsx" disabled>Route Overlay<div class="dl-sub">.jsx script (path + dot)</div></button>
+    <button type="button" class="dl-btn" id="btnDiscJsx" disabled>Route Disc Overlay<div class="dl-sub">.jsx script (track fitted into a disc)</div></button>
+    <button type="button" class="dl-btn" id="btnCompassJsx" disabled>Compass Overlay<div class="dl-sub">.jsx script (needle, scale and speed level)</div></button>
+    <button type="button" class="dl-btn" id="btnElevJsx" disabled>Elevation Overlay<div class="dl-sub">.jsx script (graph + dot)</div></button>
+    <button type="button" class="dl-btn" id="btnHRJsx" disabled>HR Overlay<div class="dl-sub">.jsx script (heart + value)</div></button>
+    <button type="button" class="dl-btn" id="btnInclineJsx" disabled>Incline Overlay<div class="dl-sub">.jsx script (wedge + value)</div></button>
+    <button type="button" class="dl-btn" id="btnMileJsx" disabled>Mile Marker Overlay<div class="dl-sub">.jsx script (distance value)</div></button>
+    <button type="button" class="dl-btn" id="btnCadJsx" disabled>Cadence Overlay<div class="dl-sub">.jsx script (cadence value)</div></button>
+    <button type="button" class="dl-btn" id="btnPowerJsx" disabled>Power Overlay<div class="dl-sub">.jsx script (power value)</div></button>
+    <button type="button" class="dl-btn" id="btnTempJsx" disabled>Temperature Overlay<div class="dl-sub">.jsx script (temperature value)</div></button>
+    <button type="button" class="dl-btn" id="btnPaceJsx" disabled>Pace Overlay<div class="dl-sub">.jsx script (pace value)</div></button>
+    <button type="button" class="dl-btn" id="btnLapJsx" disabled>Lap Marker Overlay<div class="dl-sub">.jsx script (.fit and .tcx only)</div></button>
   </div>
   <div class="dl-split">
-    <button class="dl-all-btn dl-all-secondary" id="btnDownloadFusion" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download DaVinci Resolve files</button>
-    <button class="dl-all-btn dl-all-secondary" id="btnDownloadAe" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download After Effects files</button>
+    <button type="button" class="dl-all-btn dl-all-secondary" id="btnDownloadFusion" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download DaVinci Resolve files</button>
+    <button type="button" class="dl-all-btn dl-all-secondary" id="btnDownloadAe" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download After Effects files</button>
   </div>
-  <button class="dl-all-btn" id="btnDownloadAll" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download All Files</button>
+  <button type="button" class="dl-all-btn" id="btnDownloadAll" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download All Files</button>
   <div class="export-progress-wrap" id="exportProgressWrap" style="display:none">
     <div class="export-progress-track"><div class="export-progress-fill" id="exportProgressFill"></div></div>
     <div class="export-progress-label" id="exportProgressLabel">Preparing files…</div>

@@ -37,24 +37,43 @@ window.addEventListener('resize',function(){
 
 function drawRoute(){
   var c=document.getElementById('routeCanvas'),W=c.offsetWidth||620;
-  var ctx=setupHiDPICanvas(c,W,180);
-  // Beide Spuren gemeinsam projizieren, damit sie im selben Rahmen liegen.
-  var alle=project(rawPoints.concat(ghostPoints),W-20,160);
+  var H=180, pad=12;
+  var ctx=setupHiDPICanvas(c,W,H);
+  function wert(id,vorgabe){ var el=document.getElementById(id); return el?el.value:vorgabe; }
+  function zahl(id,vorgabe){ var n=parseFloat(wert(id,'')); return isFinite(n)?n:vorgabe; }
+  // Die Vorschau zeigt dieselben Farben und Staerken wie der Export. Der
+  // Massstab ist ein anderer, deshalb werden die Pixelwerte auf die Hoehe der
+  // Vorschau heruntergerechnet.
+  var massstab=H/1080;
+  var tW=Math.max(1, zahl('trackW',4)*massstab*4);
+  var dR=Math.max(2, zahl('dotR',8)*massstab*4);
+  var sOf=zahl('shadowOffset',5)*massstab*4;
+  var gW=Math.max(1, zahl('ghostW',4)*massstab*4);
+  var gA=Math.max(0.05, Math.min(1, zahl('ghostAlpha',0.55)));
+
+  var alle=project(rawPoints.concat(ghostPoints),W-pad*2,H-pad*2);
   var xs=alle.map(function(p){return p.x;}),ys=alle.map(function(p){return p.y;});
   var mnX=minOf(xs),mxX=maxOf(xs),mnY=minOf(ys),mxY=maxOf(ys);
-  function auf(p){ return {x:10+(p.x-mnX)/(mxX-mnX||1)*(W-20), y:10+(p.y-mnY)/(mxY-mnY||1)*160}; }
-  function zeichne(liste,farbe,breite,deckkraft){
+  function auf(p){ return {x:pad+(p.x-mnX)/(mxX-mnX||1)*(W-pad*2),
+                           y:pad+(p.y-mnY)/(mxY-mnY||1)*(H-pad*2)}; }
+  function linie(liste,farbe,breite,deckkraft,dx,dy){
     if(liste.length<2) return;
     ctx.save(); ctx.globalAlpha=deckkraft;
     ctx.beginPath();
     for(var i=0;i<liste.length;i++){ var q=auf(liste[i]);
-      if(i===0) ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); }
-    ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.stroke(); ctx.restore();
+      if(i===0) ctx.moveTo(q.x+(dx||0),q.y+(dy||0)); else ctx.lineTo(q.x+(dx||0),q.y+(dy||0)); }
+    ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.stroke(); ctx.restore();
   }
-  var geist=alle.slice(rawPoints.length);
-  var el=document.getElementById('ghostColor');
-  zeichne(geist,(el&&el.value)||'#8892a4',2,0.7);
-  zeichne(alle.slice(0,rawPoints.length),'#f97316',2,1);
+  var geist=alle.slice(rawPoints.length), spur=alle.slice(0,rawPoints.length);
+  linie(geist, wert('ghostColor','#8892a4'), gW, gA);
+  if(sOf>0) linie(spur, wert('shadowColor','#000000'), tW*SHADOW_WIDTH_RATIO, 0.55, sOf, sOf);
+  linie(spur, wert('trackColor','#ff6600'), tW, 1);
+  if(spur.length){
+    var d=auf(spur[0]);
+    ctx.beginPath(); ctx.arc(d.x,d.y,dR,0,Math.PI*2);
+    ctx.fillStyle=wert('dotColor','#fca300'); ctx.fill();
+  }
 }
 
 var mapInstance=null, mapRouteLayer=null, mapLoaded=false, lastMapTrackId=null;
@@ -95,14 +114,18 @@ function resetMapPreview(){
 // zeigte dann weiter die alte Route. Die Kennung fasst deshalb auch den
 // Streckenverlauf zusammen.
 function trackKennung(){
-  var h=0x811c9dc5;
-  for(var i=0;i<rawPoints.length;i++){
-    var p=rawPoints[i];
-    h^=Math.round(p.lat*1e5)|0; h=(h*0x01000193)>>>0;
-    h^=Math.round(p.lon*1e5)|0; h=(h*0x01000193)>>>0;
+  // Auch die Geisterspur geht mit ihrem Verlauf ein. Name und Punktzahl allein
+  // unterscheiden zwei verschiedene Aufzeichnungen nicht zuverlaessig.
+  function falte(h, liste){
+    for(var i=0;i<liste.length;i++){
+      h^=Math.round(liste[i].lat*1e5)|0; h=(h*0x01000193)>>>0;
+      h^=Math.round(liste[i].lon*1e5)|0; h=(h*0x01000193)>>>0;
+    }
+    return h;
   }
+  var h=falte(falte(0x811c9dc5, rawPoints), ghostPoints);
   return rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time
-       +'|'+h.toString(16)+'|'+currentFilename+'|'+ghostPoints.length+ghostFilename;
+       +'|'+h.toString(16)+'|'+currentFilename+'|'+ghostPoints.length+'|'+ghostFilename;
 }
 
 function showMapPreview(){
@@ -154,11 +177,12 @@ function showMapPreview(){
 }
 
 function drawGauge(){
+  var wrap=document.getElementById('gaugeWrap'), c=document.getElementById('gaugeCanvas');
+  if(!wrap||!c) return;
   var maxSpd=parseFloat(document.getElementById('maxSpeed').value)||9;
   var unit=document.getElementById('unit').value;
   var curSpd=speedData.length?Math.min(speedData[Math.floor(speedData.length*0.25)].spd,maxSpd):maxSpd*0.4;
-  document.getElementById('gaugeWrap').style.display='block';
-  var c=document.getElementById('gaugeCanvas');
+  wrap.style.display='block';
   var S=200,cx=100,cy=100;
   var ctx=setupHiDPICanvas(c,S,S);
   ctx.clearRect(0,0,S,S);

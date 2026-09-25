@@ -1097,8 +1097,7 @@ function buildElevSetting(){
   L.push(buildDotMaskNode('MainDotMask', polyPathPositionInput('Path1'), dotDiaPx, [300,50], CW, CH));
   L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [400,50], undefined, CW, CH));
   chain('BackgroundMainDot');
-  // Die Hoehenzahlen am linken Rand des Bandes. Das Haekchen steuerte sie
-  // bisher nur in der Vorschau auf der Seite.
+  // Die Hoehenzahlen am linken Rand des Bandes.
   if(c.elevLabels){
     var marken=hoehenMarken(xy.minEle, xy.maxEle, c.unit);
     var beschX=OFFSET_X+MARGIN_X+Math.max(28, GRAPH_H*0.18);
@@ -1141,7 +1140,7 @@ function buildHRSetting(){
 
   var heartRgb=hexToRgb(c.hrHeartColor);
   var hrZonen = c.hrZones ? zonenFarbkanaele(hrData,function(p){return p.hr;},
-    parseFloat(c.hrZone2)||140, parseFloat(c.hrZone3)||165,
+    zahlOderVorgabe(c.hrZone2,140), zahlOderVorgabe(c.hrZone3,165),
     hexToRgb(c.hrColor), hexToRgb(c.hrColor2), hexToRgb(c.hrColor3)) : null;
   var L=[];
   L.push('{');

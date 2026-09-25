@@ -450,8 +450,7 @@ function buildElevJsx(){
   L.push('  addEllipse(dg,[18,18],[0,0]);');
   L.push('  addFill(dg,'+aeCol(c.elevDotColor)+');');
   L.push('  keys(tf(dot,"ADBE Position"),'+aeKf(dotKf,2)+');');
-  // Die Hoehenzahlen am linken Rand. Das Haekchen wirkte bisher nur in der
-  // Vorschau auf der Seite.
+  // Die Hoehenzahlen am linken Rand.
   if(c.elevLabels){
     var marken=hoehenMarken(xy.minEle, xy.maxEle, c.unit);
     var beschX=ox+Math.max(28, iH*0.18);
@@ -489,7 +488,7 @@ function buildHRJsx(){
   L.push('  addPath(hg,'+aePts(heart)+',true);');
   L.push('  addFill(hg,'+aeCol(c.hrHeartColor)+');');
   var zonen = c.hrZones ? zonenDeckkraft(hrData,function(p){return p.hr;},
-    parseFloat(c.hrZone2)||140, parseFloat(c.hrZone3)||165) : null;
+    zahlOderVorgabe(c.hrZone2,140), zahlOderVorgabe(c.hrZone3,165)) : null;
   if(zonen){
     var farben=[c.hrColor,c.hrColor2,c.hrColor3];
     for(var z=0;z<3;z++){

@@ -1,6 +1,6 @@
 # Activity Layers
 
-Browser-Tool, das aus GPX-, FIT- und TCX-Aufzeichnungen elf animierte Overlays für
+Browser-Tool, das aus GPX-, FIT- und TCX-Aufzeichnungen dreizehn animierte Overlays für
 DaVinci Resolve (Fusion `.setting`) und After Effects (ExtendScript `.jsx`)
 erzeugt. Die Verarbeitung findet vollständig im Browser statt – es gibt keinen
 Upload.
@@ -11,6 +11,11 @@ Live: https://activitylayers.com
 
 Das Repository entspricht dem ausgelieferten Verzeichnis. Es gibt keinen
 Build-Schritt: Der Inhalt der Wurzel wird unverändert ins Webroot gespiegelt.
+
+Eine Ausnahme: `stats.js`, `llms.txt` und `.well-known/security.txt` liegen
+bewusst nur auf dem Server und nicht im Repository. Beim lokalen Ausprobieren
+fehlt `stats.js` deshalb und erzeugt einen 404; auf die Seite selbst hat das
+keine Auswirkung.
 
 | Datei | Inhalt |
 |---|---|
@@ -67,7 +72,7 @@ sich im Verhalten unterscheiden:
 
 | Datei | Ergibt |
 |---|---|
-| `demo-ride.fit` | alle elf Overlays, drei Runden |
+| `demo-ride.fit` | alle dreizehn Overlays, drei Runden |
 | `demo-ride.gpx` | zehn Overlays, GPX kennt keine Runden |
 | `demo-minimal.gpx` | sechs Overlays, weder Höhe noch Sensorwerte |
 | `demo-ride.tcx` | zehn Overlays, TCX führt keine Temperatur |
@@ -75,8 +80,9 @@ sich im Verhalten unterscheiden:
 Neu erzeugen mit `python3 tools/make-examples.py`. Die Dateien sind
 deterministisch, derselbe Lauf liefert dieselben Bytes.
 
-`tools/golden-test.mjs` schickt `demo-ride.fit` durch alle achtzehn Generatoren
-und vergleicht die Ausgaben mit den Prüfsummen in `tools/golden.json`:
+`tools/golden-test.mjs` schickt `demo-ride.fit` durch alle sechsundzwanzig
+Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
+den Prüfsummen in `tools/golden.json` — siebenundzwanzig Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen

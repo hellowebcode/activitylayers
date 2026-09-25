@@ -16,8 +16,12 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
   document.getElementById(id).addEventListener('change',function(){if(rawPoints.length)reprocess();});
 });
 
-['trackColor','dotColor','shadowColor'].forEach(function(id){
-  document.getElementById(id).addEventListener('input',function(){if(rawPoints.length) drawRoute();});
+['trackColor','dotColor','shadowColor','trackW','dotR','shadowOffset',
+ 'ghostColor','ghostW','ghostAlpha'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input',function(){if(rawPoints.length) drawRoute();});
+  el.addEventListener('change',function(){if(rawPoints.length) drawRoute();});
 });
 ['gaugeBgColor','gaugeRingColor','gaugeArcColor','gaugeNumberColor','gaugeUnitColor'].forEach(function(id){
   document.getElementById(id).addEventListener('input',function(){if(speedData.length) drawGauge();});
@@ -62,6 +66,23 @@ function resetTrackState(){
   var l=dropZone&&dropZone.querySelector('.drop-label'), u=dropZone&&dropZone.querySelector('.drop-sub');
   if(l&&DROP_LABEL_HTML!==null) l.innerHTML=DROP_LABEL_HTML;
   if(u&&DROP_SUB_HTML!==null) u.innerHTML=DROP_SUB_HTML;
+  // Ohne das blieben nach einem misslungenen Folgeimport die Kennzahlen und
+  // Kurven der vorigen Aufzeichnung stehen.
+  var st=document.getElementById('statsWrap');
+  if(st) st.style.display='none';
+  ['statPts','statDur','statDist'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.textContent='-';
+  });
+  ['routeCanvas','speedCanvas','hrCanvas','elevCanvas'].forEach(function(id){
+    var c=document.getElementById(id);
+    if(c){ var x=c.getContext('2d'); if(x) x.clearRect(0,0,c.width,c.height); }
+  });
+  var mw=document.getElementById('mapPreviewWrap');
+  if(mw) mw.style.display='none';
+  var gw=document.getElementById('gaugeWrap');
+  if(gw) gw.style.display='none';
+  var gc=document.getElementById('gaugeCanvas');
+  if(gc){ var gx=gc.getContext('2d'); if(gx) gx.clearRect(0,0,gc.width,gc.height); }
 }
 
 function handleFile(file){
@@ -73,15 +94,25 @@ function handleFile(file){
   }
   resetTrackState();
   setStatus('Reading '+file.name+'...');
+  // Wird schnell hintereinander zweimal gewaehlt, kann der langsamere
+  // Lesevorgang spaeter fertig werden und den neueren ueberschreiben. Nur die
+  // jeweils letzte Anforderung darf noch etwas uebernehmen.
+  var meine=++ladeLauf;
   var reader=new FileReader();
+  function fertig(verarbeite){
+    return function(e){
+      if(meine!==ladeLauf) return;
+      verarbeite(e.target.result, file.name);
+    };
+  }
   if(name.endsWith('.fit')){
-    reader.onload=function(e){parseFIT(e.target.result,file.name);};
+    reader.onload=fertig(parseFIT);
     reader.readAsArrayBuffer(file);
   } else if(name.endsWith('.tcx')){
-    reader.onload=function(e){parseTCX(e.target.result,file.name);};
+    reader.onload=fertig(parseTCX);
     reader.readAsText(file);
   } else {
-    reader.onload=function(e){parseGPX(e.target.result,file.name);};
+    reader.onload=fertig(parseGPX);
     reader.readAsText(file);
   }
 }
@@ -90,6 +121,8 @@ function handleFile(file){
 // deshalb beiseitegelegt und danach unveraendert zurueckgesetzt - auch wenn das
 // Einlesen mittendrin abbricht.
 var importZiel='haupt', geistKandidat=null;
+// Laufende Nummer der Ladeanforderung, fuer Haupt- und Geisterspur getrennt.
+var ladeLauf=0, geistLauf=0;
 
 function handleGhostFile(file){
   var name=file.name.toLowerCase();
@@ -125,7 +158,8 @@ function handleGhostFile(file){
     }
     geistKandidat=null;
   }
-  reader.onload=function(e){ lies(e.target.result); };
+  var meine=++geistLauf;
+  reader.onload=function(e){ if(meine!==geistLauf) return; lies(e.target.result); };
   if(name.endsWith('.fit')) reader.readAsArrayBuffer(file); else reader.readAsText(file);
 }
 

@@ -23,11 +23,20 @@ function buildLapKeyframes(){
     var a=timeToFrame(lapData[i].start,t0), b=timeToFrame(lapData[i].end,t0);
     if(b<=a) b=a+1;
     if(b<1) continue;
-    if(a<0) a=0;
+    // Die angezeigte Rundenzeit ist die wirkliche Dauer der Runde. Aus den
+    // Bildern gerechnet haette der Abweichungsfaktor sie mitverschoben.
+    var dauer=(lapData[i].end-lapData[i].start)/1000;
+    var beginn=0;
+    if(a<0){
+      // Die Runde lief schon, bevor das Video anfing: Die Anzeige beginnt
+      // nicht wieder bei null, sondern beim bereits verstrichenen Teil.
+      beginn=Math.max(0, Math.min(dauer, -a/fps));
+      a=0;
+    }
     if(a<=last) a=last+1;
     if(b-1<=a) continue;
     num.push([a,i+1]); num.push([b-1,i+1]);
-    sec.push([a,0]);   sec.push([b-1,(b-1-a)/fps]);
+    sec.push([a,beginn]); sec.push([b-1,dauer]);
     last=b-1;
   }
   return num.length?{num:num,sec:sec}:null;
@@ -217,7 +226,7 @@ function buildPowerSetting(){
     group:'Power',
     schluessel:'power',
     farbkanaele: c.powerZones ? zonenFarbkanaele(powerData,function(p){return p.power;},
-      parseFloat(c.powerZone2)||200, parseFloat(c.powerZone3)||280,
+      zahlOderVorgabe(c.powerZone2,200), zahlOderVorgabe(c.powerZone3,280),
       hexToRgb(c.powerColor), hexToRgb(c.powerColor2), hexToRgb(c.powerColor3)) : null,
     rgb:hexToRgb(c.powerColor),
     size:parseFloat(c.powerSize)||0.07,
@@ -292,7 +301,7 @@ function buildPowerJsx(){
   var kf=buildKeyframeList(powerData,function(p){return p.power;});
   var L=[aeHead('Power Overlay')];
   var zonen = c.powerZones ? zonenDeckkraft(powerData,function(p){return p.power;},
-    parseFloat(c.powerZone2)||200, parseFloat(c.powerZone3)||280) : null;
+    zahlOderVorgabe(c.powerZone2,200), zahlOderVorgabe(c.powerZone3,280)) : null;
   var ausdruck=aeStr('Math.round(v)+" '+overlayLabels().power+'";');
   if(zonen){
     var farben=[c.powerColor,c.powerColor2,c.powerColor3];
