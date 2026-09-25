@@ -1,6 +1,8 @@
 (function(){
   var root=document.documentElement;
-  var key=document.querySelector('[data-help]')?'help':(document.querySelector('[data-legal]')?'legal':null);
+  var key=document.querySelector('[data-help]')?'help'
+         :(document.querySelector('[data-blog]')?'blog'
+         :(document.querySelector('[data-legal]')?'legal':null));
   if(!key) return;
   var secSel='[data-'+key+']', btnSel='[data-'+key+'-lang]';
   var titles={de:root.getAttribute('data-title-de')||document.title,

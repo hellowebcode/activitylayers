@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="de" data-title-de="Die einzige Nische ohne Wettbewerb — Activity Layers" data-title-en="The one niche with no competition — Activity Layers">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Kein kommerzielles Werkzeug schreibt Fusion-.setting-Dateien. Was in so einer Datei steckt und warum ein Knotengraph mehr wert ist als ein gerendertes Video.">
+<title>Die einzige Nische ohne Wettbewerb — Activity Layers</title>
+<link rel="canonical" href="https://www.activitylayers.com/blog/fusion-setting-dateien.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Activity Layers">
+<meta property="og:url" content="https://www.activitylayers.com/blog/fusion-setting-dateien.html">
+<meta property="og:title" content="Die einzige Nische ohne Wettbewerb">
+<meta property="og:description" content="Kein kommerzielles Werkzeug schreibt Fusion-.setting-Dateien. Was in so einer Datei steckt und warum ein Knotengraph mehr wert ist als ein gerendertes Video.">
+<meta property="og:image" content="https://www.activitylayers.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Die einzige Nische ohne Wettbewerb">
+<meta name="twitter:description" content="Kein kommerzielles Werkzeug schreibt Fusion-.setting-Dateien. Was in so einer Datei steckt und warum ein Knotengraph mehr wert ist als ein gerendertes Video.">
+<meta name="twitter:image" content="https://www.activitylayers.com/og-image.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+<script src="../stats.js" defer></script>
+</head>
+<body class="light">
+<div class="legal-page">
+  <header class="legal-head">
+    <a class="studio-brand" href="../index.html" aria-label="Activity Layers">
+      <span class="studio-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+          <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+          <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+          <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+        </svg>
+      </span>
+      <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+    </a>
+    <div class="legal-head-tools">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="language-option" type="button" data-blog-lang="en" aria-pressed="false">English</button>
+        <button class="language-option active" type="button" data-blog-lang="de" aria-pressed="true">Deutsch</button>
+      </div>
+      <a class="legal-back" href="../index.html">&larr; <span data-back>Zur&uuml;ck zum Tool</span></a>
+    </div>
+  </header>
+  <main class="legal help blog-post">
+    <section data-blog="de">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25. September 2026</time></p>
+      <h1>Die einzige Nische ohne Wettbewerb</h1>
+<p class="lead">Rund vierzig Werkzeuge für GPS-Overlays haben wir uns angesehen. Fast alle machen
+dasselbe: Sie rendern ein Video. Genau eines davon schreibt in DaVinci Resolve hinein &ndash; und das
+ist ein Lua-Skript unklarer Herkunft, bei dem nicht einmal dokumentiert ist, ob dabei editierbare
+Knoten entstehen.</p>
+
+<p>Kein einziges kommerzielles Produkt erzeugt eine Fusion-<code>.setting</code>-Datei. Das ist der
+einzige Punkt, an dem wir wirklich allein stehen &ndash; und lange stand er nirgends auf dieser
+Seite.</p>
+
+<h2>Was &bdquo;kein Upload, kein Konto&ldquo; heute noch wert ist</h2>
+<p>Wenig. Diese Versprechen sind inzwischen Standard: Mehrere kostenlose Werkzeuge lesen GPX und FIT,
+verlangen kein Konto, setzen kein Wasserzeichen und verarbeiten alles im Browser. Wer damit wirbt,
+beschreibt kein Alleinstellungsmerkmal, sondern die Eintrittskarte.</p>
+<p>Unser Unterschied liegt woanders, und er ist schmaler, aber echter: <strong>im
+Ausgabeformat</strong>.</p>
+
+<h2>Was in einer <code>.setting</code>-Datei steckt</h2>
+<p>Eine Fusion-Komposition ist eine Textdatei. Darin steht eine Lua-Tabelle, die einen Knotengraph
+beschreibt: Hintergrundflächen, Masken, Merge-Knoten, Textknoten &ndash; und für jeden animierten Wert
+eine <code>BezierSpline</code> mit ihren Stützstellen.</p>
+<p>Genau das erzeugen wir. Aus deiner Aufzeichnung wird kein Bild, sondern ein Knotengraph: Die
+Geschwindigkeit deiner Fahrt liegt als Keyframe-Kurve auf einem Schieberegler, die Zahl im Bild ist
+ein Ausdruck, der diesen Regler liest. Du fügst die Datei auf der Fusion-Seite ein, und sie ist von
+der ersten Sekunde an ein normaler Teil deines Projekts.</p>
+
+<h2>Und in After Effects?</h2>
+<p>Dort löst der ganze Markt das Problem über zwei Schritte: Die Telemetrie wird nach
+<code>mgJSON</code> gewandelt, und das Aussehen kommt aus einer <strong>gekauften Vorlage für 69 bis
+119 Dollar</strong>. Man bekommt also ein fremdes Design und wandelt seine Daten selbst um.</p>
+<p>Wir liefern das Gegenteil: ein <code>.jsx</code>-Skript, das die Ebenen selbst anlegt &ndash;
+Formebenen, Textebenen, Schieberegler mit Keyframes. Das Design ist von Anfang an deins, und es
+kostet nichts.</p>
+
+<h2>Warum ein Knotengraph mehr wert ist als ein Video</h2>
+<p>Ein gerendertes Overlay ist eine Entscheidung, die feststeht: eine Farbe, eine Größe, eine
+Auflösung, eine Bildrate. Willst du die Zahl kleiner, den Tacho woanders oder die Linie in einem
+anderen Orange, gehst du zurück auf die Webseite und rendest neu.</p>
+<p>Ein Knotengraph ist eine Entscheidung, die offen bleibt. Die Farbe ist ein Eingang, den du
+anfasst. Die Kurve liegt im Spline-Editor und lässt sich dehnen. Die Ebene lässt sich verschieben,
+maskieren, mit einem Effekt versehen. Nichts davon erfordert, dass du dieses Werkzeug noch einmal
+öffnest.</p>
+
+<h2>Was das kostet</h2>
+<p>Ehrlichkeit gehört dazu: Diese Nische ist klein. Wer nur schnell ein fertiges Video mit Anzeigen
+möchte, ist bei den gerenderten Werkzeugen besser aufgehoben &ndash; und das ist völlig in Ordnung.
+Unser Weg lohnt sich für Leute, die ohnehin in Resolve oder After Effects schneiden und das Overlay
+als Teil ihrer Gestaltung verstehen, nicht als Aufkleber.</p>
+<p>Und ein Risiko gibt es: Adobe stellt von ExtendScript auf UXP um. Alle
+<code>.jsx</code>-Generatoren werden irgendwann gemeinsam fällig. Für die Fusion-Seite gilt diese
+Uhr nicht.</p>
+      <p class="blog-back"><a href="index.html">&larr; Alle Beitr&auml;ge</a></p>
+    </section>
+    <section data-blog="en">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25 September 2026</time></p>
+      <h1>The one niche with no competition</h1>
+<p class="lead">We looked at about forty tools for GPS overlays. Almost all of them do the same
+thing: they render a video. Exactly one writes into DaVinci Resolve &ndash; and that is a Lua script
+of unclear provenance where it is not even documented whether editable nodes come out of it.</p>
+
+<p>Not one commercial product produces a Fusion <code>.setting</code> file. That is the only place
+where we genuinely stand alone &ndash; and for a long time it was written nowhere on this site.</p>
+
+<h2>What &ldquo;no upload, no account&rdquo; is still worth</h2>
+<p>Not much. Those promises are table stakes now: several free tools read GPX and FIT, ask for no
+account, add no watermark and do everything in the browser. Advertising that describes the entry
+ticket, not a difference.</p>
+<p>Our difference is elsewhere, and it is narrower but real: <strong>the output format</strong>.</p>
+
+<h2>What is inside a <code>.setting</code> file</h2>
+<p>A Fusion composition is a text file. Inside it sits a Lua table describing a node graph:
+backgrounds, masks, merge nodes, text nodes &ndash; and, for every animated value, a
+<code>BezierSpline</code> with its control points.</p>
+<p>That is exactly what we produce. Your recording does not become a picture; it becomes a node
+graph. The speed of your ride sits as a keyframe curve on a slider, and the number on screen is an
+expression reading that slider. You paste the file into the Fusion page and from the first second it
+is an ordinary part of your project.</p>
+
+<h2>And in After Effects?</h2>
+<p>There the whole market solves the problem in two steps: the telemetry is converted to
+<code>mgJSON</code>, and the look comes from a <strong>template you buy for 69 to 119
+dollars</strong>. So you get someone else&rsquo;s design and convert your own data.</p>
+<p>We deliver the opposite: a <code>.jsx</code> script that builds the layers itself &ndash; shape
+layers, text layers, sliders with keyframes. The design is yours from the start, and it costs
+nothing.</p>
+
+<h2>Why a node graph is worth more than a video</h2>
+<p>A rendered overlay is a decision that is settled: one colour, one size, one resolution, one frame
+rate. Want the number smaller, the dial somewhere else, the line in a different orange? Back to the
+website and render again.</p>
+<p>A node graph is a decision that stays open. The colour is an input you touch. The curve sits in
+the spline editor and can be stretched. The layer can be moved, masked, given an effect. None of
+that requires you to open this tool a second time.</p>
+
+<h2>What it costs</h2>
+<p>Honesty belongs here: this niche is small. If you just want a finished video with gauges on it,
+the rendering tools serve you better &ndash; and that is perfectly fine. Our way pays off for people
+who edit in Resolve or After Effects anyway and treat the overlay as part of their design rather
+than as a sticker.</p>
+<p>And there is a risk: Adobe is moving from ExtendScript to UXP. All the <code>.jsx</code>
+generators will come due together one day. That clock does not run on the Fusion side.</p>
+      <p class="blog-back"><a href="index.html">&larr; All posts</a></p>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link legal-link" href="index.html">Blog</a> &middot; <a class="attrib-link legal-link" href="../impressum.html">Impressum</a> &middot; <a class="attrib-link legal-link" href="../datenschutz.html">Datenschutz</a></p>
+    <p class="trademark-line">DaVinci Resolve is a registered trademark of Blackmagic Design Pty Ltd. Adobe and After Effects are registered trademarks of Adobe Inc. FIT is a trademark of Garmin Ltd. or its subsidiaries. Activity Layers is not affiliated with Blackmagic Design, Adobe or Garmin.</p>
+  </footer>
+</div>
+<script src="../lang-toggle.js"></script>
+</body>
+</html>

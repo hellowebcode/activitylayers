@@ -266,3 +266,19 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .preset-files{margin-top:10px}
 .preset-actions label{visibility:hidden}
 #presetName{width:100%}
+.blog-index .blog-list{margin:26px 0 0;padding:0;list-style:none}
+.blog-index .blog-list li{padding:22px 0;border-top:1px solid var(--border)}
+.blog-index .blog-list li:first-child{border-top:0;padding-top:6px}
+.blog-index .blog-list h2{margin:2px 0 8px;font-size:1.35rem;letter-spacing:-.02em}
+.blog-index .blog-list h2 a{color:var(--text);text-decoration:none}
+.blog-index .blog-list h2 a:hover{color:var(--accent)}
+.blog-index .blog-list p{margin:0;color:var(--muted)}
+.blog-meta{margin:0;color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.blog-meta a{color:var(--accent);text-decoration:none}
+.blog-meta a:hover{text-decoration:underline}
+.blog-post h1{margin:8px 0 18px}
+.blog-post .lead{font-size:1.05rem}
+.blog-back{margin-top:34px;padding-top:18px;border-top:1px solid var(--border)}
+.blog-back a{color:var(--accent);text-decoration:none;font-weight:600}
+.blog-back a:hover{text-decoration:underline}
+.legal h2 code,.legal h3 code{padding:.04em .22em;font-size:.82em}

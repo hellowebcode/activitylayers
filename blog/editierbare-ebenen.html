@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de" data-title-de="Editierbare Ebenen statt gerenderter Pixel — Activity Layers" data-title-en="Editable layers, not rendered pixels — Activity Layers">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Benannte Ebenen, Keyframes auf Schiebereglern und Text aus Ausdrücken — was der Import in DaVinci Resolve und After Effects wirklich anlegt.">
+<title>Editierbare Ebenen statt gerenderter Pixel — Activity Layers</title>
+<link rel="canonical" href="https://www.activitylayers.com/blog/editierbare-ebenen.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Activity Layers">
+<meta property="og:url" content="https://www.activitylayers.com/blog/editierbare-ebenen.html">
+<meta property="og:title" content="Editierbare Ebenen statt gerenderter Pixel">
+<meta property="og:description" content="Benannte Ebenen, Keyframes auf Schiebereglern und Text aus Ausdrücken — was der Import in DaVinci Resolve und After Effects wirklich anlegt.">
+<meta property="og:image" content="https://www.activitylayers.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Editierbare Ebenen statt gerenderter Pixel">
+<meta name="twitter:description" content="Benannte Ebenen, Keyframes auf Schiebereglern und Text aus Ausdrücken — was der Import in DaVinci Resolve und After Effects wirklich anlegt.">
+<meta name="twitter:image" content="https://www.activitylayers.com/og-image.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+<script src="../stats.js" defer></script>
+</head>
+<body class="light">
+<div class="legal-page">
+  <header class="legal-head">
+    <a class="studio-brand" href="../index.html" aria-label="Activity Layers">
+      <span class="studio-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+          <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+          <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+          <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+        </svg>
+      </span>
+      <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+    </a>
+    <div class="legal-head-tools">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="language-option" type="button" data-blog-lang="en" aria-pressed="false">English</button>
+        <button class="language-option active" type="button" data-blog-lang="de" aria-pressed="true">Deutsch</button>
+      </div>
+      <a class="legal-back" href="../index.html">&larr; <span data-back>Zur&uuml;ck zum Tool</span></a>
+    </div>
+  </header>
+  <main class="legal help blog-post">
+    <section data-blog="de">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25. September 2026</time></p>
+      <h1>Editierbare Ebenen statt gerenderter Pixel</h1>
+<p class="lead">Der Unterschied zwischen einem Overlay-Video und einem Overlay-Projekt zeigt sich
+erst, wenn du etwas ändern willst. Hier steht, was nach dem Import wirklich in deinem Projekt liegt
+&ndash; und was du damit noch machen kannst.</p>
+
+<h2>In DaVinci Resolve</h2>
+<p>Du bekommst eine Gruppe auf der Fusion-Seite, und darin benannte Knoten. Beim Tacho sind das etwa
+eine Scheibe, ein Ring, ein Bogen und zwei Textknoten. Der Bogen hat einen Eingang für seine Länge,
+und auf diesem Eingang liegt eine <code>BezierSpline</code> mit einem Stützpunkt je Messwert.</p>
+<p>Was das praktisch heißt:</p>
+<ul>
+  <li>Die Farbe des Bogens ist ein normaler Farbeingang. Du klickst ihn an und änderst ihn.</li>
+  <li>Die Kurve liegt im Spline-Editor. Du kannst sie dehnen, stauchen, glätten oder einzelne
+  Stützstellen verschieben, wenn das GPS an einer Stelle gesponnen hat.</li>
+  <li>Die Gruppe lässt sich wie jede andere behandeln: verschieben, maskieren, mit einem
+  Unschärfe-Knoten hinterlegen, in einen Macro verwandeln.</li>
+</ul>
+<p>Die Zahl im Bild ist kein eingebrannter Text, sondern ein Ausdruck, der den Schieberegler liest.
+Änderst du das Format &ndash; etwa eine Nachkommastelle mehr &ndash;, änderst du den Ausdruck, nicht
+tausend Keyframes.</p>
+
+<h2>In After Effects</h2>
+<p>Das <code>.jsx</code>-Skript legt eine Komposition an und darin Form- und Textebenen. Jede
+animierte Größe hängt an einem <em>Slider Control</em> mit Keyframes; der Text wird über einen
+Ausdruck daraus gebildet.</p>
+<p>Auch hier gilt: Du kannst die Schrift austauschen, eine Kontur ergänzen, die Ebene skalieren oder
+einen Effekt darauflegen &ndash; die Animation bleibt, weil sie am Regler hängt und nicht am
+Aussehen.</p>
+
+<h2>Zonenfarben als Beispiel</h2>
+<p>Puls und Leistung können ihre Farbe mit dem Wert wechseln. Dafür gibt es zwei Grenzen und drei
+Farben. Interessant ist, wie unterschiedlich beide Programme das lösen &ndash; und dass es in beiden
+editierbar bleibt.</p>
+<p>In Fusion bekommen die drei Farbkanäle je eine eigene Keyframe-Kurve. Der Wechsel ist hart, nicht
+weich: Genau ein Bild vor dem Sprung steht noch die alte Farbe. Du kannst die Kurven danach
+weiterbearbeiten wie jede andere.</p>
+<p>In After Effects entstehen stattdessen drei Textebenen übereinander, von denen immer genau eine
+sichtbar ist. Das klingt umständlicher, hat aber einen Vorteil: Jede Zone bleibt einzeln
+gestaltbar.</p>
+
+<h2>Der Vergleich, der sich lohnt</h2>
+<p>Ein transparentes WebM mit Alphakanal ist der beste Weg, den ein renderndes Werkzeug in dein
+Schnittprogramm hat. Es ist trotzdem ein Bild: eine Auflösung, eine Bildrate, ein Aussehen. Willst
+du die Zahl kleiner, brauchst du eine neue Datei.</p>
+<p>Ebenen sind kein Bild. Das ist der ganze Punkt.</p>
+      <p class="blog-back"><a href="index.html">&larr; Alle Beitr&auml;ge</a></p>
+    </section>
+    <section data-blog="en">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25 September 2026</time></p>
+      <h1>Editable layers, not rendered pixels</h1>
+<p class="lead">The difference between an overlay video and an overlay project only shows once you
+want to change something. Here is what actually lands in your project after the import &ndash; and
+what you can still do with it.</p>
+
+<h2>In DaVinci Resolve</h2>
+<p>You get a group on the Fusion page, and named nodes inside it. For the speedometer that is a
+disc, a ring, an arc and two text nodes. The arc has an input for its length, and on that input sits
+a <code>BezierSpline</code> with one control point per sample.</p>
+<p>What that means in practice:</p>
+<ul>
+  <li>The colour of the arc is an ordinary colour input. You click it and change it.</li>
+  <li>The curve sits in the spline editor. You can stretch it, compress it, smooth it, or move
+  individual points where the GPS misbehaved.</li>
+  <li>The group behaves like any other: move it, mask it, put a blur behind it, turn it into a
+  macro.</li>
+</ul>
+<p>The number on screen is not burnt-in text but an expression reading the slider. Change the format
+&ndash; one more decimal, say &ndash; and you change the expression, not a thousand keyframes.</p>
+
+<h2>In After Effects</h2>
+<p>The <code>.jsx</code> script creates a composition and, inside it, shape and text layers. Every
+animated quantity hangs off a <em>Slider Control</em> with keyframes; the text is built from it by
+an expression.</p>
+<p>The same applies here: you can swap the typeface, add a stroke, scale the layer or drop an effect
+on it &ndash; the animation stays, because it is attached to the slider and not to the look.</p>
+
+<h2>Zone colours as an example</h2>
+<p>Heart rate and power can change colour with the value, using two thresholds and three colours.
+What makes it interesting is how differently the two programs solve it &ndash; and that it stays
+editable in both.</p>
+<p>In Fusion the three colour channels each get their own keyframe curve. The change is hard rather
+than a cross-fade: exactly one frame before the jump, the previous colour is still in place. You can
+keep editing those curves like any other.</p>
+<p>In After Effects you get three stacked text layers instead, with exactly one visible at a time.
+That sounds clumsier, but it has an advantage: every zone stays individually styleable.</p>
+
+<h2>The comparison worth making</h2>
+<p>A transparent WebM with an alpha channel is the best route a rendering tool has into your editor.
+It is still a picture: one resolution, one frame rate, one look. Want the number smaller? You need a
+new file.</p>
+<p>Layers are not a picture. That is the whole point.</p>
+      <p class="blog-back"><a href="index.html">&larr; All posts</a></p>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link legal-link" href="index.html">Blog</a> &middot; <a class="attrib-link legal-link" href="../impressum.html">Impressum</a> &middot; <a class="attrib-link legal-link" href="../datenschutz.html">Datenschutz</a></p>
+    <p class="trademark-line">DaVinci Resolve is a registered trademark of Blackmagic Design Pty Ltd. Adobe and After Effects are registered trademarks of Adobe Inc. FIT is a trademark of Garmin Ltd. or its subsidiaries. Activity Layers is not affiliated with Blackmagic Design, Adobe or Garmin.</p>
+  </footer>
+</div>
+<script src="../lang-toggle.js"></script>
+</body>
+</html>

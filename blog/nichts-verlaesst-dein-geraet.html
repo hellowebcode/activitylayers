@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de" data-title-de="Nichts verlässt dein Gerät — Activity Layers" data-title-en="Nothing leaves your device — Activity Layers">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Warum Aktivitätsdateien besonders schützenswert sind und was "läuft im Browser" bei Activity Layers konkret bedeutet.">
+<title>Nichts verlässt dein Gerät — Activity Layers</title>
+<link rel="canonical" href="https://www.activitylayers.com/blog/nichts-verlaesst-dein-geraet.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Activity Layers">
+<meta property="og:url" content="https://www.activitylayers.com/blog/nichts-verlaesst-dein-geraet.html">
+<meta property="og:title" content="Nichts verlässt dein Gerät">
+<meta property="og:description" content="Warum Aktivitätsdateien besonders schützenswert sind und was "läuft im Browser" bei Activity Layers konkret bedeutet.">
+<meta property="og:image" content="https://www.activitylayers.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nichts verlässt dein Gerät">
+<meta name="twitter:description" content="Warum Aktivitätsdateien besonders schützenswert sind und was "läuft im Browser" bei Activity Layers konkret bedeutet.">
+<meta name="twitter:image" content="https://www.activitylayers.com/og-image.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+<script src="../stats.js" defer></script>
+</head>
+<body class="light">
+<div class="legal-page">
+  <header class="legal-head">
+    <a class="studio-brand" href="../index.html" aria-label="Activity Layers">
+      <span class="studio-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+          <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+          <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+          <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+        </svg>
+      </span>
+      <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+    </a>
+    <div class="legal-head-tools">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="language-option" type="button" data-blog-lang="en" aria-pressed="false">English</button>
+        <button class="language-option active" type="button" data-blog-lang="de" aria-pressed="true">Deutsch</button>
+      </div>
+      <a class="legal-back" href="../index.html">&larr; <span data-back>Zur&uuml;ck zum Tool</span></a>
+    </div>
+  </header>
+  <main class="legal help blog-post">
+    <section data-blog="de">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25. September 2026</time></p>
+      <h1>Nichts verlässt dein Gerät</h1>
+<p class="lead">Eine Aktivitätsdatei ist kein Urlaubsfoto. In einer FIT-Datei stehen dein Puls über
+Stunden, deine Trittfrequenz, oft deine Leistung &ndash; und ein Streckenverlauf, der an deiner
+Haustür beginnt und dort wieder endet.</p>
+
+<p>Deshalb ist &bdquo;läuft im Browser&ldquo; bei diesem Werkzeug keine Werbezeile, sondern eine
+Bauentscheidung. Hier steht, was sie konkret bedeutet.</p>
+
+<h2>Was mit deiner Datei passiert</h2>
+<p>Du legst sie in das Feld auf der Startseite. Der Browser liest sie aus dem Dateisystem, wertet sie
+im Arbeitsspeicher aus und erzeugt daraus die Overlay-Dateien. Danach lädst du sie herunter. Es gibt
+keinen Server, der die Aufzeichnung zu sehen bekommt, keine Warteschlange und keinen
+Zwischenspeicher.</p>
+<p>Das ist nicht bloß eine Zusage, das ist nachprüfbar: Öffne die Entwicklerwerkzeuge deines
+Browsers, geh auf <em>Netzwerk</em> und lade eine Datei. Es gibt keine Anfrage, die deine
+Aufzeichnung enthält.</p>
+
+<h2>Die einzige Ausnahme, und warum sie eine ist</h2>
+<p>Nach dem Laden zeigt die Seite eine Kartenvorschau. Dafür werden Kartenkacheln von OpenStreetMap
+geholt. Das sind Bildausschnitte der Gegend &ndash; dabei erfährt der Kartendienst, welchen
+Ausschnitt dein Browser anfordert.</p>
+<p>Deine Datei geht dorthin nicht. Und die Karte ist ausdrücklich <strong>niemals Bestandteil eines
+Exports</strong>; sie ist eine Kontrollhilfe, damit du siehst, ob die richtige Aufzeichnung geladen
+ist. Wenn dir das zu viel ist, funktioniert alles Übrige auch ohne, dass du hinschaust.</p>
+
+<h2>Kein Konto, und zwar aus einem Grund</h2>
+<p>Ein Konto wäre bequem für uns: wiederkehrende Nutzer, gespeicherte Einstellungen auf allen
+Geräten, eine Mailadresse. Es wäre aber auch eine Datenbank mit Personenbezug, die geschützt,
+gesichert und irgendwann gelöscht werden müsste.</p>
+<p>Wir haben den anderen Weg genommen. Deine Einstellungen liegen im Speicher deines Browsers.
+Vorlagen, die du benennst, ebenfalls. Willst du sie auf einen anderen Rechner bringen, gibst du sie
+als Datei aus und liest sie dort wieder ein &ndash; unter deiner Kontrolle, ohne Umweg über uns.</p>
+
+<h2>Was das für dich heißt</h2>
+<ul>
+  <li>Kein Hochladen, keine Wartezeit, kein Limit für Dateigrößen außer dem deines Rechners.</li>
+  <li>Kein Wasserzeichen, keine Testphase, kein Anmelden.</li>
+  <li>Es funktioniert offline, sobald die Seite einmal geladen ist &ndash; nur die Kartenvorschau
+  bleibt dann leer.</li>
+  <li>Deine Trainingsdaten bleiben dort, wo sie hingehören: bei dir.</li>
+</ul>
+      <p class="blog-back"><a href="index.html">&larr; Alle Beitr&auml;ge</a></p>
+    </section>
+    <section data-blog="en">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25 September 2026</time></p>
+      <h1>Nothing leaves your device</h1>
+<p class="lead">An activity file is not a holiday photo. A FIT file holds your heart rate over
+hours, your cadence, often your power &ndash; and a track that starts at your front door and ends
+there again.</p>
+
+<p>That is why &ldquo;runs in your browser&rdquo; is not a marketing line in this tool but a design
+decision. Here is what it concretely means.</p>
+
+<h2>What happens to your file</h2>
+<p>You drop it into the field on the front page. The browser reads it from your file system, parses
+it in memory and builds the overlay files from it. Then you download them. There is no server that
+gets to see the recording, no queue and no cache.</p>
+<p>That is not merely a promise, it is checkable: open your browser&rsquo;s developer tools, go to
+<em>Network</em> and load a file. There is no request that carries your recording.</p>
+
+<h2>The one exception, and why it is one</h2>
+<p>After loading, the page shows a map preview. For that it fetches map tiles from OpenStreetMap.
+Those are pictures of the area &ndash; and in fetching them, the map service learns which area your
+browser asked for.</p>
+<p>Your file does not go there. And the map is explicitly <strong>never part of an export</strong>;
+it is a sanity check so you can see that the right recording is loaded. If that is more than you
+want, everything else works without you looking at it.</p>
+
+<h2>No account, for a reason</h2>
+<p>An account would be convenient for us: returning users, settings synced across devices, an email
+address. It would also be a database of personal data that has to be protected, secured and
+eventually deleted.</p>
+<p>We took the other road. Your settings live in your browser&rsquo;s storage. So do the presets you
+name. To move them to another machine you export them as a file and read them back in there &ndash;
+under your control, with no detour through us.</p>
+
+<h2>What that means for you</h2>
+<ul>
+  <li>No upload, no waiting, no file size limit beyond your own machine&rsquo;s.</li>
+  <li>No watermark, no trial, no sign-in.</li>
+  <li>It works offline once the page has loaded &ndash; only the map preview stays empty.</li>
+  <li>Your training data stays where it belongs: with you.</li>
+</ul>
+      <p class="blog-back"><a href="index.html">&larr; All posts</a></p>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link legal-link" href="index.html">Blog</a> &middot; <a class="attrib-link legal-link" href="../impressum.html">Impressum</a> &middot; <a class="attrib-link legal-link" href="../datenschutz.html">Datenschutz</a></p>
+    <p class="trademark-line">DaVinci Resolve is a registered trademark of Blackmagic Design Pty Ltd. Adobe and After Effects are registered trademarks of Adobe Inc. FIT is a trademark of Garmin Ltd. or its subsidiaries. Activity Layers is not affiliated with Blackmagic Design, Adobe or Garmin.</p>
+  </footer>
+</div>
+<script src="../lang-toggle.js"></script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de" data-title-de="Ein Overlay für HD, 4K und Hochformat — Activity Layers" data-title-en="One overlay for HD, 4K and vertical — Activity Layers">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Warum ein Keyframe-Format von Natur aus auflösungsunabhängig ist, und wie die Leinwandgröße in Activity Layers funktioniert.">
+<title>Ein Overlay für HD, 4K und Hochformat — Activity Layers</title>
+<link rel="canonical" href="https://www.activitylayers.com/blog/aufloesung-und-hochformat.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Activity Layers">
+<meta property="og:url" content="https://www.activitylayers.com/blog/aufloesung-und-hochformat.html">
+<meta property="og:title" content="Ein Overlay für HD, 4K und Hochformat">
+<meta property="og:description" content="Warum ein Keyframe-Format von Natur aus auflösungsunabhängig ist, und wie die Leinwandgröße in Activity Layers funktioniert.">
+<meta property="og:image" content="https://www.activitylayers.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ein Overlay für HD, 4K und Hochformat">
+<meta name="twitter:description" content="Warum ein Keyframe-Format von Natur aus auflösungsunabhängig ist, und wie die Leinwandgröße in Activity Layers funktioniert.">
+<meta name="twitter:image" content="https://www.activitylayers.com/og-image.png">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+<script src="../stats.js" defer></script>
+</head>
+<body class="light">
+<div class="legal-page">
+  <header class="legal-head">
+    <a class="studio-brand" href="../index.html" aria-label="Activity Layers">
+      <span class="studio-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 14c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <path d="M8 24c5.5 5 10.5-5 16 0s10.5 5 16 0"/>
+          <path d="M8 34c5.5-5 10.5 5 16 0s10.5-5 16 0"/>
+          <circle cx="8" cy="14" r="1.8"/><circle cx="40" cy="14" r="1.8"/>
+          <circle cx="8" cy="24" r="1.8"/><circle cx="40" cy="24" r="1.8"/>
+          <circle cx="8" cy="34" r="1.8"/><circle cx="40" cy="34" r="1.8"/>
+        </svg>
+      </span>
+      <span class="studio-brand-copy"><b>Activity</b><span>Layers</span></span>
+    </a>
+    <div class="legal-head-tools">
+      <div class="language-switcher" role="group" aria-label="Language">
+        <button class="language-option" type="button" data-blog-lang="en" aria-pressed="false">English</button>
+        <button class="language-option active" type="button" data-blog-lang="de" aria-pressed="true">Deutsch</button>
+      </div>
+      <a class="legal-back" href="../index.html">&larr; <span data-back>Zur&uuml;ck zum Tool</span></a>
+    </div>
+  </header>
+  <main class="legal help blog-post">
+    <section data-blog="de">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25. September 2026</time></p>
+      <h1>Ein Overlay für HD, 4K und Hochformat</h1>
+<p class="lead">Unser Format ist von Natur aus auflösungsunabhängig &ndash; es beschreibt Kurven und
+Werte, keine Pixel. Trotzdem stand <code>1920</code> lange achtundvierzigmal fest im Code. Wir haben
+damit genau die Eigenschaft verschenkt, die uns von gerenderten Werkzeugen unterscheidet.</p>
+
+<h2>Warum ein gerendertes Overlay an seiner Auflösung klebt</h2>
+<p>Ein Video hat eine feste Anzahl Bildpunkte. Skalierst du es hoch, wird es weich; skalierst du es
+herunter, verschenkst du Schärfe. Für 4K brauchst du eine 4K-Fassung, für ein Hochformat-Video eine
+neue Anordnung &ndash; also einen zweiten Durchlauf durch das Werkzeug und einen zweiten Export.</p>
+<p>Keyframes auf Schiebereglern haben dieses Problem nicht. Ein Wert von 38,4 km/h ist bei jeder
+Auflösung 38,4 km/h. Was sich ändern muss, ist nur die Größe der Schrift und der Ort, an dem sie
+steht.</p>
+
+<h2>Was die Leinwandgröße jetzt macht</h2>
+<p>In den Video- und GPS-Einstellungen stellst du das Maß deiner Schnittsequenz ein. Neben den
+üblichen Vorgaben von HD bis 4K stehen Hochformat 9:16 und 4:5 sowie Quadrat bereit, und du kannst
+jede Größe von Hand eintragen.</p>
+<p>Beide Ausgabeformate richten sich danach, aber auf unterschiedlichem Weg:</p>
+<ul>
+  <li><strong>DaVinci Resolve</strong> nimmt ohnehin das Format deines Projekts &ndash; die Knoten
+  sind auf <em>UseFrameFormatSettings</em> gestellt. Wichtig war dort die Geometrie: Streckenverlauf
+  und Höhenprofil wurden in einen 16:9-Rahmen gerechnet und hätten auf einer hochformatigen Leinwand
+  verzogen ausgesehen.</li>
+  <li><strong>After Effects</strong> legt die Komposition selbst an, deshalb war dort mehr zu tun.
+  Das Skript erzeugt sie jetzt in genau der gewählten Größe.</li>
+</ul>
+
+<h2>Wie die Anzeigen mitwachsen</h2>
+<p>Das Layout ist weiterhin für 1920 × 1080 entworfen. Auf einer anderen Leinwand behält jedes
+Element seinen Abstand zur Ecke, an der es verankert ist, und seine Größe im selben Verhältnis. Der
+Faktor gilt für beide Achsen gleichermaßen &ndash; sonst würde ein Kreis im Hochformat zum Ei.</p>
+<p>Bei 3840 × 2160 ist alles doppelt so groß wie in HD. Auf einer 1080 × 1920 hohen Leinwand ist
+alles auf etwa 56 Prozent verkleinert, weil dort die Breite knapp ist und nicht die Höhe.</p>
+
+<h2>Und die Lage?</h2>
+<p>Seit kurzem wählst du sie selbst: neun Ankerpunkte je Overlay, dazu eine Feinverschiebung in X
+und Y. Das hat nebenbei einen alten Fehler behoben &ndash; dasselbe Overlay saß in Resolve mittig
+und in After Effects unten links. Jetzt landet es in beiden Programmen an derselben Stelle.</p>
+      <p class="blog-back"><a href="index.html">&larr; Alle Beitr&auml;ge</a></p>
+    </section>
+    <section data-blog="en">
+      <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25 September 2026</time></p>
+      <h1>One overlay for HD, 4K and vertical</h1>
+<p class="lead">Our format is resolution independent by nature &ndash; it describes curves and
+values, not pixels. And yet <code>1920</code> sat hard-wired in the code forty-eight times. We were
+giving away precisely the property that sets us apart from rendering tools.</p>
+
+<h2>Why a rendered overlay is stuck with its resolution</h2>
+<p>A video has a fixed number of pixels. Scale it up and it goes soft; scale it down and you throw
+away sharpness. For 4K you need a 4K version, for a vertical video a new arrangement &ndash; so a
+second pass through the tool and a second export.</p>
+<p>Keyframes on sliders do not have that problem. A value of 38.4 km/h is 38.4 km/h at any
+resolution. The only things that have to change are the size of the type and where it sits.</p>
+
+<h2>What the canvas size does now</h2>
+<p>In the video and GPS settings you set the dimensions of your edit. Alongside the usual presets
+from HD to 4K there is vertical 9:16 and 4:5 as well as square, and you can type any size by
+hand.</p>
+<p>Both export formats follow it, by different routes:</p>
+<ul>
+  <li><strong>DaVinci Resolve</strong> takes your project&rsquo;s format anyway &ndash; the nodes
+  are set to <em>UseFrameFormatSettings</em>. What mattered there was the geometry: the route and the
+  elevation profile were computed into a 16:9 frame and would have looked stretched on a vertical
+  canvas.</li>
+  <li><strong>After Effects</strong> creates the composition itself, so there was more to do. The
+  script now builds it at exactly the size you picked.</li>
+</ul>
+
+<h2>How the gauges grow with it</h2>
+<p>The layout is still designed for 1920 × 1080. On a different canvas every element keeps its
+distance from the corner it is anchored to, and its size in the same proportion. The factor applies
+to both axes equally &ndash; otherwise a circle would turn into an egg on a vertical canvas.</p>
+<p>At 3840 × 2160 everything is twice the size it is in HD. On a 1080 × 1920 canvas everything is
+scaled to about 56 per cent, because there it is the width that is tight, not the height.</p>
+
+<h2>And the position?</h2>
+<p>You now choose it yourself: nine anchor points per overlay, plus a fine nudge in X and Y. That
+fixed an old fault along the way &ndash; the same overlay used to sit in the middle of the frame in
+Resolve and at the bottom left in After Effects. Now it lands in the same place in both.</p>
+      <p class="blog-back"><a href="index.html">&larr; All posts</a></p>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p class="attrib-line">Icon made by <a class="attrib-link" href="https://www.flaticon.com/authors/creatype" target="_blank" rel="noopener nofollow">Creatype</a> from <a class="attrib-link" href="https://www.flaticon.com" target="_blank" rel="noopener nofollow">www.flaticon.com</a> &middot; <a class="attrib-link legal-link" href="index.html">Blog</a> &middot; <a class="attrib-link legal-link" href="../impressum.html">Impressum</a> &middot; <a class="attrib-link legal-link" href="../datenschutz.html">Datenschutz</a></p>
+    <p class="trademark-line">DaVinci Resolve is a registered trademark of Blackmagic Design Pty Ltd. Adobe and After Effects are registered trademarks of Adobe Inc. FIT is a trademark of Garmin Ltd. or its subsidiaries. Activity Layers is not affiliated with Blackmagic Design, Adobe or Garmin.</p>
+  </footer>
+</div>
+<script src="../lang-toggle.js"></script>
+</body>
+</html>
