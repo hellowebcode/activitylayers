@@ -1,16 +1,10 @@
 /* Die Vorschau auf der Seite: Karte, Streckenriss, Tacho, Puls und Hoehenprofil. */
 
 function project(pts,W,H){
-  var lats=pts.map(function(p){return p.lat;}),lons=pts.map(function(p){return p.lon;});
-  var mnLa=minOf(lats),mxLa=maxOf(lats);
-  var mnLo=minOf(lons),mxLo=maxOf(lons);
-  return pts.map(function(p){
-    var x=(p.lon-mnLo)/(mxLo-mnLo||1)*W;
-    var mr=Math.log(Math.tan(Math.PI/4+p.lat*Math.PI/360));
-    var mn2=Math.log(Math.tan(Math.PI/4+mnLa*Math.PI/360));
-    var mx2=Math.log(Math.tan(Math.PI/4+mxLa*Math.PI/360));
-    var y=H-(mr-mn2)/(mx2-mn2||1)*H;
-    return{x:x,y:y};
+  var pr=projiziere(pts);
+  return pts.map(function(p,i){
+    return { x:(pr.xs[i]-pr.mnx)/pr.breite*W,
+             y:H-(pr.ys[i]-pr.mny)/pr.hoehe*H };
   });
 }
 

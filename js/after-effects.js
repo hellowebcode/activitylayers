@@ -168,22 +168,18 @@ function aeTail(){
 // sich einen Rahmen, sonst laegen sie nicht uebereinander.
 function aeRoutePoints(c,pad){
   pad=pad*aeFaktor(c);
-  var merc=function(lat){ return Math.log(Math.tan(Math.PI/4+lat*Math.PI/360)); };
   var rahmen=rawPoints.concat(ghostPoints);
-  var xs=[],ys=[];
-  for(var i=0;i<rahmen.length;i++){ xs.push(rahmen[i].lon*Math.PI/180); ys.push(merc(rahmen[i].lat)); }
-  var mnx=minOf(xs), mxx=maxOf(xs);
-  var mny=minOf(ys), mxy=maxOf(ys);
+  var pr=projiziere(rahmen);
   var sw=c.W-2*pad, sh=c.H-2*pad;
-  var s=Math.min(sw/((mxx-mnx)||1), sh/((mxy-mny)||1));
-  var ox=pad+(sw-(mxx-mnx)*s)/2, oy=pad+(sh-(mxy-mny)*s)/2;
-  function aufLeinwand(liste){
+  var s=Math.min(sw/pr.breite, sh/pr.hoehe);
+  var ox=pad+(sw-pr.breite*s)/2, oy=pad+(sh-pr.hoehe*s)/2;
+  function aufLeinwand(von, bis){
     var out=[];
-    for(var j=0;j<liste.length;j++)
-      out.push([ox+(liste[j].lon*Math.PI/180-mnx)*s, oy+(mxy-merc(liste[j].lat))*s]);
+    for(var j=von;j<bis;j++) out.push([ox+(pr.xs[j]-pr.mnx)*s, oy+(pr.mxy-pr.ys[j])*s]);
     return out;
   }
-  return { track: aufLeinwand(rawPoints), ghost: aufLeinwand(ghostPoints) };
+  return { track: aufLeinwand(0, rawPoints.length),
+           ghost: aufLeinwand(rawPoints.length, rahmen.length) };
 }
 
 function aePathKeys(dataArr, pts){
@@ -284,10 +280,11 @@ function buildRouteDiscJsx(){
   var vs=ankerVersatz(c,'disc',{b:dEntwurf,h:dEntwurf},altX,altY);
   var mitte=aePunkt(c, altX+vs.dx, altY+vs.dy);
 
-  function auf(p){ var v=einpassen(p); return [mitte[0]+v.x, mitte[1]+v.y]; }
+  function auf(i){ var v=einpassen(i); return [mitte[0]+v.x, mitte[1]+v.y]; }
   var pts=[], i;
-  for(i=0;i<rawPoints.length;i++) pts.push(auf(rawPoints[i]));
-  var geist=ghostPoints.map(auf);
+  for(i=0;i<rawPoints.length;i++) pts.push(auf(i));
+  var geist=[];
+  for(var g=0; g<ghostPoints.length; g++) geist.push(auf(rawPoints.length+g));
   var dotKf=aePathKeys(rawPoints, pts);
 
   var L=[aeHead('Route Disc Overlay')];

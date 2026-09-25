@@ -268,7 +268,7 @@ function parseFIT(buffer,name){
           temp:(tmp!==undefined&&tmp!==0x7F&&tmp>=-100&&tmp<=100)?tmp:null,
           // Geschaetzter Fehler der Ortung in Metern. Dient dazu, schlechte
           // Messpunkte bei der Richtungsberechnung zu uebergehen.
-          genau:(gen!==undefined&&gen!==0xFF&&gen>=0&&gen<=200)?gen:null});
+          genau:(gen!==undefined&&gen!==0xFF&&gen>=0&&gen<=200)?gen:null, seg:0});
       }
     }
     while(pos<dataEnd){
@@ -378,9 +378,11 @@ function parseTCX(text,name){
   try{
     var parser=new DOMParser(),doc=parser.parseFromString(text,'application/xml');
     if(doc.querySelector('parsererror')){setStatus('XML error in TCX file','err');return;}
-    var alle=doc.getElementsByTagName('*'), punkte=[], runden=[];
+    // Jedes <Track> ist ein eigener Abschnitt, wie <trkseg> in GPX.
+    var alle=doc.getElementsByTagName('*'), punkte=[], segVon=[], runden=[], segNr=-1;
     for(var i=0;i<alle.length;i++){
-      if(alle[i].localName==='Trackpoint') punkte.push(alle[i]);
+      if(alle[i].localName==='Track') segNr++;
+      else if(alle[i].localName==='Trackpoint'){ punkte.push(alle[i]); segVon.push(Math.max(0,segNr)); }
       else if(alle[i].localName==='Lap') runden.push(alle[i]);
     }
     if(!punkte.length){setStatus('No track points found','err');return;}
@@ -403,9 +405,9 @@ function parseTCX(text,name){
         cad:tcxZahl(pt,'Cadence',0,254),
         power:tcxZahl(pt,'Watts',0,3000),
         dist:tcxZahl(pt,'DistanceMeters',0,1e7),
-        temp:null, genau:null});
+        temp:null, genau:null, seg:segVon[i]});
     }
-    rawPoints.sort(function(a,b){return a.time-b.time;});
+    rawPoints.sort(function(a,b){return (a.seg-b.seg)||(a.time-b.time);});
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
     lapData=[];
     for(var i=0;i<runden.length;i++){
@@ -424,7 +426,20 @@ function parseGPX(text,name){
   try{
     var parser=new DOMParser(),doc=parser.parseFromString(text,'application/xml');
     if(doc.querySelector('parsererror')){setStatus('XML error in GPX file','err');return;}
-    var trkpts=doc.querySelectorAll('trkpt');
+    // Jedes <trkseg> ist ein eigener Abschnitt. Ohne diese Grenze wuerde das
+    // Ende eines Abschnitts mit dem Anfang des naechsten verbunden - bei einer
+    // Pause ergibt das absurde Geschwindigkeiten und Distanzen.
+    var segmente=doc.querySelectorAll('trkseg');
+    var trkpts=[], segVon=[];
+    if(segmente.length){
+      for(var sg=0; sg<segmente.length; sg++){
+        var inSeg=segmente[sg].querySelectorAll('trkpt');
+        for(var q=0;q<inSeg.length;q++){ trkpts.push(inSeg[q]); segVon.push(sg); }
+      }
+    } else {
+      var alleTrk=doc.querySelectorAll('trkpt');
+      for(var q2=0;q2<alleTrk.length;q2++){ trkpts.push(alleTrk[q2]); segVon.push(0); }
+    }
     if(!trkpts.length){setStatus('No track points found','err');return;}
     rawPoints=[];
     var skipped=0;
@@ -439,10 +454,10 @@ function parseGPX(text,name){
           cad:getExtNumber(pt,['cad','cadence'],0,254),
           power:getExtNumber(pt,['power','pwr'],0,3000),
           temp:getExtNumber(pt,['atemp','temperature'],-100,100),
-          dist:null, genau:null});
+          dist:null, genau:null, seg:segVon[i]});
       } else skipped++;
     }
-    rawPoints.sort(function(a,b){return a.time-b.time;});
+    rawPoints.sort(function(a,b){return (a.seg-b.seg)||(a.time-b.time);});
     lapData=[];
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
     if(skipped)console.warn('Activity Layers: '+skipped+' track point(s) skipped, coordinates out of range or not finite');

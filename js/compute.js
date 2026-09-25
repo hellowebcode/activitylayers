@@ -6,11 +6,29 @@ function haversine(la1,lo1,la2,lo2){
   var a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dO/2)*Math.sin(dO/2);
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
+// Zwei Punkte gehoeren nicht zusammen, wenn sie aus verschiedenen Abschnitten
+// der Datei stammen, oder wenn die Strecke dazwischen in der verstrichenen Zeit
+// nicht zurueckzulegen waere. Das Zweite faengt auch FIT-Dateien ab, die keine
+// Abschnitte kennen, sowie zusammenkopierte Aufzeichnungen.
+var MAX_TEMPO_MS=150;                       // 540 km/h, fuer kein Fahrzeug erreichbar
+function istGrenze(a,b){
+  if(!a||!b) return true;
+  if(a.seg!==undefined&&b.seg!==undefined&&a.seg!==b.seg) return true;
+  var dt=(b.time-a.time)/1000;
+  if(!(dt>0)) return true;
+  return haversine(a.lat,a.lon,b.lat,b.lon)/dt > MAX_TEMPO_MS;
+}
+
 function computeSpeeds(pts,unit){
   var result=[];
   for(var i=0;i<pts.length;i++){
     var p=pts[i],spd=(p.speed!==null&&!isNaN(p.speed))?p.speed:null;
-    if(spd===null){if(i<pts.length-1){var dt=(pts[i+1].time-p.time)/1000;spd=dt>0?haversine(p.lat,p.lon,pts[i+1].lat,pts[i+1].lon)/dt:0;}else spd=result.length?result[result.length-1].rawSpd:0;}
+    if(spd===null){
+      if(i<pts.length-1&&!istGrenze(p,pts[i+1])){
+        var dt=(pts[i+1].time-p.time)/1000;
+        spd=dt>0?haversine(p.lat,p.lon,pts[i+1].lat,pts[i+1].lon)/dt:0;
+      } else spd=result.length?result[result.length-1].rawSpd:0;
+    }
     result.push({time:p.time,rawSpd:spd,spd:Math.max(0,unit==='mph'?spd*2.23694:spd*3.6)});
   }
   return result;
@@ -122,7 +140,7 @@ function buildDistData(pts){
     var d=pts[i].dist;
     if(hatGeraetewerte){
       if(d!==null&&d!==undefined&&isFinite(d)&&d>=0) cum=d;
-    } else if(i>0){
+    } else if(i>0&&!istGrenze(pts[i-1],pts[i])){
       cum+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
     }
     out.push({time:pts[i].time, distM:cum});
@@ -135,14 +153,21 @@ function buildGradeData(pts){
   var n=elevPts.length;
   if(n<2) return [];
   var half=15/2;
-  var cum=new Float64Array(n);
-  for(var c=1;c<n;c++)
-    cum[c]=cum[c-1]+haversine(elevPts[c-1].lat,elevPts[c-1].lon,elevPts[c].lat,elevPts[c].lon);
-  var out=new Array(n), lo=0, hi=0;
+  var cum=new Float64Array(n), grenze=new Uint8Array(n);
+  for(var c=1;c<n;c++){
+    grenze[c]=istGrenze(elevPts[c-1],elevPts[c])?1:0;
+    cum[c]=cum[c-1]+(grenze[c]?0:haversine(elevPts[c-1].lat,elevPts[c-1].lon,elevPts[c].lat,elevPts[c].lon));
+  }
+  var out=new Array(n), lo=0, hi=0, letzteGrenze=0;
   for(var i=0;i<n;i++){
+    // Die Streckensumme ist ueber eine Grenze hinweg flach; die Schleife allein
+    // wuerde deshalb stehenbleiben und das Fenster in den vorigen Abschnitt
+    // hineinreichen lassen. Die Grenze wird daher ausdruecklich nachgezogen.
+    if(grenze[i]) letzteGrenze=i;
+    if(lo<letzteGrenze) lo=letzteGrenze;
     while(lo+1<=i && cum[i]-cum[lo+1]>=half) lo++;
     if(hi<i) hi=i;
-    while(hi<n-1 && cum[hi]-cum[i]<half) hi++;
+    while(hi<n-1 && cum[hi]-cum[i]<half && !grenze[hi+1]) hi++;
     var distM=cum[hi]-cum[lo];
     var elevDiff=elevPts[hi].ele-elevPts[lo].ele;
     out[i]={time:elevPts[i].time, pct:distM>1?(elevDiff/distM)*100:0};
@@ -265,18 +290,15 @@ function entwurfsFaktor(c){ return Math.min(c.W/ENTWURF_W, c.H/ENTWURF_H); }
 function kreisEinpassung(durchmesser, rand){
   var alle=rawPoints.concat(ghostPoints);
   if(!alle.length) return null;
-  var mnLa=Infinity,mxLa=-Infinity,mnLo=Infinity,mxLo=-Infinity;
-  for(var i=0;i<alle.length;i++){
-    if(alle[i].lat<mnLa)mnLa=alle[i].lat; if(alle[i].lat>mxLa)mxLa=alle[i].lat;
-    if(alle[i].lon<mnLo)mnLo=alle[i].lon; if(alle[i].lon>mxLo)mxLo=alle[i].lon;
-  }
-  var laR=(mxLa-mnLa)||0.0001, loR=(mxLo-mnLo)||0.0001;
-  var v=loR/laR;
+  var pr=projiziere(alle);
+  var v=pr.breite/pr.hoehe;
   var platz=Math.max(2, durchmesser-2*rand);
   var hoehe=platz/Math.sqrt(1+v*v), breite=v*hoehe;
-  return function(p){
-    return { x:((p.lon-mnLo)/loR-0.5)*breite,
-             y:(0.5-(p.lat-mnLa)/laR)*hoehe };
+  // Nimmt den Index in rawPoints.concat(ghostPoints), damit beide Spuren
+  // dieselbe Projektion benutzen.
+  return function(i){
+    return { x:((pr.xs[i]-pr.mnx)/pr.breite-0.5)*breite,
+             y:(0.5-(pr.ys[i]-pr.mny)/pr.hoehe)*hoehe };
   };
 }
 
@@ -311,7 +333,7 @@ function buildHeadingData(pts, fenster, mindestMeter, maxFehler){
     if(b){
       var schlecht=(a.genau!==null&&a.genau!==undefined&&a.genau>maxF)
                  ||(b.genau!==null&&b.genau!==undefined&&b.genau>maxF);
-      if(!schlecht && haversine(a.lat,a.lon,b.lat,b.lon)>=mind){
+      if(!schlecht && !istGrenze(a,b) && haversine(a.lat,a.lon,b.lat,b.lon)>=mind){
         var g=peilung(a.lat,a.lon,b.lat,b.lon)*Math.PI/180;
         v={x:Math.sin(g), y:Math.cos(g)};
       }
@@ -361,4 +383,34 @@ function stetigerWinkel(daten){
     out.push({time:daten[i].time, deg:g+versatz});
   }
   return out;
+}
+
+// ---- Projektion ---------------------------------------------------------
+// Eine gemeinsame Rechnung fuer die Vorschau und beide Ausgabeformate.
+// Mit rohen Gradzahlen waere eine Strecke bei 50 Grad Nord um gut die Haelfte
+// zu breit, weil ein Laengengrad dort nur 64 Prozent eines Breitengrads misst.
+function mercatorY(lat){ return Math.log(Math.tan(Math.PI/4+lat*Math.PI/360)); }
+
+// Laengengrade fortlaufend machen. Ein Track ueber die Datumsgrenze springt
+// sonst von 179,9 auf -179,9 und spannt scheinbar die halbe Erde.
+function entrollteLaenge(pts){
+  var out=[];
+  if(!pts.length) return out;
+  out.push(pts[0].lon);
+  for(var i=1;i<pts.length;i++){
+    var l=pts[i].lon, d=l-out[i-1];
+    if(d>180) l-=360; else if(d<-180) l+=360;
+    out.push(l);
+  }
+  return out;
+}
+
+// Liefert die Punkte in einem ebenen, seitenrichtigen Koordinatensystem samt
+// Umhuellender. Reihenfolge und Anzahl entsprechen der Eingabe.
+function projiziere(pts){
+  var lons=entrollteLaenge(pts), xs=[], ys=[];
+  for(var i=0;i<pts.length;i++){ xs.push(lons[i]*Math.PI/180); ys.push(mercatorY(pts[i].lat)); }
+  var mnx=minOf(xs), mxx=maxOf(xs), mny=minOf(ys), mxy=maxOf(ys);
+  return { xs:xs, ys:ys, mnx:mnx, mxx:mxx, mny:mny, mxy:mxy,
+           breite:(mxx-mnx)||1e-9, hoehe:(mxy-mny)||1e-9 };
 }

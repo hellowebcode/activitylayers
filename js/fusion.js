@@ -625,25 +625,23 @@ function buildRouteSetting(){
   var dc=hexToRgb(c.dotColor);
 
   // Beide Spuren teilen sich einen Rahmen, sonst laegen sie nicht uebereinander.
+  // Gerechnet wird mit derselben Projektion wie in der Vorschau und in After
+  // Effects; mit rohen Gradzahlen waere die Strecke in unseren Breiten um gut
+  // die Haelfte zu breit.
   var rahmen=rawPoints.concat(ghostPoints);
-  var mnLa=Infinity,mxLa=-Infinity,mnLo=Infinity,mxLo=-Infinity;
-  for(var i=0;i<rahmen.length;i++){
-    if(rahmen[i].lat<mnLa)mnLa=rahmen[i].lat; if(rahmen[i].lat>mxLa)mxLa=rahmen[i].lat;
-    if(rahmen[i].lon<mnLo)mnLo=rahmen[i].lon; if(rahmen[i].lon>mxLo)mxLo=rahmen[i].lon;
-  }
-  var laR=(mxLa-mnLa)||0.0001, loR=(mxLo-mnLo)||0.0001;
+  var pr=projiziere(rahmen);
 
   var shadowDotDiaPxPre=dR*2*1.15;
   var MARGIN=Math.ceil(shadowDotDiaPxPre/2)+Math.ceil(sOf)+6;
   var boxW=W-MARGIN*2, boxH=H-MARGIN*2;
-  var sw=boxW,sh=sw*(laR/loR); if(sh>boxH){sh=boxH;sw=sh*(loR/laR);}
+  var sw=boxW,sh=sw*(pr.hoehe/pr.breite); if(sh>boxH){sh=boxH;sw=sh*(pr.breite/pr.hoehe);}
   var padX=(W-sw)/2, padY=(H-sh)/2;
-  var pxPts=[];
-  for(var i=0;i<rawPoints.length;i++){
-    var px=padX+(rawPoints[i].lon-mnLo)*(sw/loR);
-    var py=padY+(sh-(rawPoints[i].lat-mnLa)*(sh/laR));
-    pxPts.push({px:px, py:py});
+  function aufLeinwand(i){
+    return { px:padX+(pr.xs[i]-pr.mnx)/pr.breite*sw,
+             py:padY+sh-(pr.ys[i]-pr.mny)/pr.hoehe*sh };
   }
+  var pxPts=[];
+  for(var i=0;i<rawPoints.length;i++) pxPts.push(aufLeinwand(i));
   var maskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px,p.py,W,H);});
   var sOxPx=sOf, sOyPx=-sOf;
   var shadowMaskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px+sOxPx,p.py-sOyPx,W,H);});
@@ -652,11 +650,11 @@ function buildRouteSetting(){
   var dispKF=buildDisplacementKeyframes(rawPoints);
   var dotDiaPx=dR*2, shadowDotDiaPx=dR*2*1.15;
 
-  function aufLeinwand(p){
-    return toFusionMaskCoord(padX+(p.lon-mnLo)*(sw/loR),
-                             padY+(sh-(p.lat-mnLa)*(sh/laR)), W, H);
+  var geistPts=[];
+  for(var g=rawPoints.length; g<rahmen.length; g++){
+    var q=aufLeinwand(g);
+    geistPts.push(toFusionMaskCoord(q.px, q.py, W, H));
   }
-  var geistPts=ghostPoints.map(aufLeinwand);
   var gW=parseFloat(c.ghostW)||4;
   var gc=hexToRgb(c.ghostColor||'#8892a4');
   var gAlpha=Math.max(0.05,Math.min(1,zahlOderVorgabe(c.ghostAlpha,0.55)));
@@ -744,14 +742,18 @@ function buildRouteDiscSetting(){
   var einpassen=kreisEinpassung(D, rand);
   if(!einpassen) return null;
   var mx=W/2, my=H/2;
-  function aufLeinwand(p){ var v=einpassen(p); return {px:mx+v.x, py:my+v.y}; }
+  function aufLeinwand(i){ var v=einpassen(i); return {px:mx+v.x, py:my+v.y}; }
 
   var pxPts=[], i;
-  for(i=0;i<rawPoints.length;i++) pxPts.push(aufLeinwand(rawPoints[i]));
+  for(i=0;i<rawPoints.length;i++) pxPts.push(aufLeinwand(i));
   var maskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px,p.py,W,H);});
   var shadowMaskPts=pxPts.map(function(p){return toFusionMaskCoord(p.px+sOf,p.py+sOf,W,H);});
   var dotCenter01=pxPts.map(function(p){return {x:p.px/W, y:1-(p.py/H)};});
-  var geistPts=ghostPoints.map(function(p){ var q=aufLeinwand(p); return toFusionMaskCoord(q.px,q.py,W,H); });
+  var geistPts=[];
+  for(var g=0; g<ghostPoints.length; g++){
+    var q=aufLeinwand(rawPoints.length+g);
+    geistPts.push(toFusionMaskCoord(q.px, q.py, W, H));
+  }
   var gW=parseFloat(c.ghostW)||4;
   var gc=hexToRgb(c.ghostColor||'#8892a4');
   var gAlpha=Math.max(0.05, Math.min(1, zahlOderVorgabe(c.ghostAlpha,0.55)));
