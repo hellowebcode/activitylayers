@@ -115,106 +115,100 @@
     <section data-blog="de">
       <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25. September 2026</time></p>
       <h1>Warum wir nach Fusion schreiben statt zu rendern</h1>
-<p class="lead">Rund vierzig Werkzeuge für GPS-Overlays haben wir uns angesehen. Fast alle machen
-dasselbe: Sie rendern ein Video. Genau eines davon schreibt in DaVinci Resolve hinein &ndash; und das
-ist ein Lua-Skript unklarer Herkunft, bei dem nicht einmal dokumentiert ist, ob dabei editierbare
-Knoten entstehen.</p>
-
-<p>Kein einziges kommerzielles Produkt erzeugt eine Fusion-<code>.setting</code>-Datei. Das ist der
-einzige Punkt, an dem wir wirklich allein stehen &ndash; und lange stand er nirgends auf dieser
-Seite.</p>
-
-<h2>Was &bdquo;kein Upload, kein Konto&ldquo; heute noch wert ist</h2>
-<p>Wenig. Diese Versprechen sind inzwischen Standard: Mehrere kostenlose Werkzeuge lesen GPX und FIT,
-verlangen kein Konto, setzen kein Wasserzeichen und verarbeiten alles im Browser. Wer damit wirbt,
-beschreibt kein Alleinstellungsmerkmal, sondern die Eintrittskarte.</p>
-<p>Unser Unterschied liegt woanders, und er ist schmaler, aber echter: <strong>im
-Ausgabeformat</strong>.</p>
+<p class="lead">Eine Fusion-Komposition ist eine Textdatei. Darin steht eine Lua-Tabelle, die
+einen Knotengraph beschreibt. Genau das erzeugen wir aus deiner Aufzeichnung &ndash; kein Bild,
+sondern einen Graphen, den du in DaVinci Resolve weiterbearbeiten kannst.</p>
 
 <h2>Was in einer <code>.setting</code>-Datei steckt</h2>
-<p>Eine Fusion-Komposition ist eine Textdatei. Darin steht eine Lua-Tabelle, die einen Knotengraph
-beschreibt: Hintergrundflächen, Masken, Merge-Knoten, Textknoten &ndash; und für jeden animierten Wert
-eine <code>BezierSpline</code> mit ihren Stützstellen.</p>
-<p>Genau das erzeugen wir. Aus deiner Aufzeichnung wird kein Bild, sondern ein Knotengraph: Die
-Geschwindigkeit deiner Fahrt liegt als Keyframe-Kurve auf einem Schieberegler, die Zahl im Bild ist
-ein Ausdruck, der diesen Regler liest. Du fügst die Datei auf der Fusion-Seite ein, und sie ist von
-der ersten Sekunde an ein normaler Teil deines Projekts.</p>
+<p>Hintergrundfl&auml;chen, Masken, Merge-Knoten, Textknoten &ndash; und f&uuml;r jeden animierten
+Wert eine <code>BezierSpline</code> mit ihren St&uuml;tzstellen. Eine St&uuml;tzstelle je Messpunkt
+deiner Aufzeichnung.</p>
+<p>Die Geschwindigkeit deiner Fahrt liegt also als Keyframe-Kurve auf einem Schieberegler, und die
+Zahl im Bild ist ein Ausdruck, der diesen Regler liest. Du f&uuml;gst die Datei auf der Fusion-Seite
+ein, und sie ist von der ersten Sekunde an ein normaler Teil deines Projekts.</p>
+
+<h2>Was du danach damit machen kannst</h2>
+<ul>
+  <li>Die Farbe ist ein Eingang, den du anfasst. Kein Umweg, kein neuer Export.</li>
+  <li>Die Kurve liegt im Spline-Editor. Du kannst sie dehnen, gl&auml;tten oder einzelne
+  St&uuml;tzstellen verschieben, wenn das GPS an einer Stelle gesponnen hat.</li>
+  <li>Die Gruppe l&auml;sst sich wie jede andere behandeln: verschieben, maskieren, mit einem
+  Unschärfe-Knoten hinterlegen, in ein Macro verwandeln.</li>
+  <li>&Auml;nderst du das Zahlenformat &ndash; etwa eine Nachkommastelle mehr &ndash;, &auml;nderst du
+  den Ausdruck, nicht tausend Keyframes.</li>
+</ul>
 
 <h2>Und in After Effects?</h2>
-<p>Dort löst der ganze Markt das Problem über zwei Schritte: Die Telemetrie wird nach
-<code>mgJSON</code> gewandelt, und das Aussehen kommt aus einer <strong>gekauften Vorlage für 69 bis
-119 Dollar</strong>. Man bekommt also ein fremdes Design und wandelt seine Daten selbst um.</p>
-<p>Wir liefern das Gegenteil: ein <code>.jsx</code>-Skript, das die Ebenen selbst anlegt &ndash;
-Formebenen, Textebenen, Schieberegler mit Keyframes. Das Design ist von Anfang an deins, und es
-kostet nichts.</p>
+<p>Dort legen wir ein <code>.jsx</code>-Skript ab, das die Ebenen selbst anlegt: Formebenen,
+Textebenen, Schieberegler mit Keyframes. Jede animierte Gr&ouml;&szlig;e h&auml;ngt an einem
+<em>Slider Control</em>; der Text entsteht daraus &uuml;ber einen Ausdruck.</p>
+<p>Das Design ist damit von Anfang an deins. Du kannst die Schrift austauschen, eine Kontur
+erg&auml;nzen oder die Ebene skalieren &ndash; die Animation bleibt, weil sie am Regler h&auml;ngt und
+nicht am Aussehen.</p>
 
-<h2>Warum ein Knotengraph mehr wert ist als ein Video</h2>
-<p>Ein gerendertes Overlay ist eine Entscheidung, die feststeht: eine Farbe, eine Größe, eine
-Auflösung, eine Bildrate. Willst du die Zahl kleiner, den Tacho woanders oder die Linie in einem
-anderen Orange, gehst du zurück auf die Webseite und rendest neu.</p>
-<p>Ein Knotengraph ist eine Entscheidung, die offen bleibt. Die Farbe ist ein Eingang, den du
-anfasst. Die Kurve liegt im Spline-Editor und lässt sich dehnen. Die Ebene lässt sich verschieben,
-maskieren, mit einem Effekt versehen. Nichts davon erfordert, dass du dieses Werkzeug noch einmal
-öffnest.</p>
+<h2>Warum ein Knotengraph mehr wert ist als ein Bild</h2>
+<p>Ein gerendertes Overlay ist eine Entscheidung, die feststeht: eine Farbe, eine Gr&ouml;&szlig;e, eine
+Aufl&ouml;sung, eine Bildrate. Willst du die Zahl kleiner, den Tacho woanders oder die Linie in einem
+anderen Orange, brauchst du eine neue Datei.</p>
+<p>Ein Knotengraph ist eine Entscheidung, die offen bleibt. Alles, was du siehst, ist ein Eingang,
+eine Kurve oder eine Ebene &ndash; und alles davon geh&ouml;rt nach dem Import dir.</p>
 
-<h2>Was das kostet</h2>
-<p>Ehrlichkeit gehört dazu: Diese Nische ist klein. Wer nur schnell ein fertiges Video mit Anzeigen
-möchte, ist bei den gerenderten Werkzeugen besser aufgehoben &ndash; und das ist völlig in Ordnung.
-Unser Weg lohnt sich für Leute, die ohnehin in Resolve oder After Effects schneiden und das Overlay
-als Teil ihrer Gestaltung verstehen, nicht als Aufkleber.</p>
-<p>Und ein Risiko gibt es: Adobe stellt von ExtendScript auf UXP um. Alle
-<code>.jsx</code>-Generatoren werden irgendwann gemeinsam fällig. Für die Fusion-Seite gilt diese
-Uhr nicht.</p>
+<h2>Wofür das nichts ist</h2>
+<p>Ehrlichkeit geh&ouml;rt dazu: Wer nur schnell ein fertiges Video mit Anzeigen darauf m&ouml;chte, f&uuml;r
+den ist unser Weg ein Umweg. Er lohnt sich f&uuml;r dich, wenn du ohnehin in Resolve oder After
+Effects schneidest und das Overlay als Teil deiner Gestaltung verstehst, nicht als Aufkleber.</p>
+<p>Und ein Risiko nennen wir offen: Adobe stellt von ExtendScript auf UXP um. Alle
+<code>.jsx</code>-Generatoren werden irgendwann gemeinsam f&auml;llig. F&uuml;r die Fusion-Seite gilt
+diese Uhr nicht.</p>
       <p class="blog-back"><a href="index.html">&larr; Alle Beitr&auml;ge</a></p>
     </section>
     <section data-blog="en">
       <p class="blog-meta"><a href="index.html">Blog</a> &middot; <time datetime="2026-09-25">25 September 2026</time></p>
       <h1>Why we write into Fusion instead of rendering</h1>
-<p class="lead">We looked at about forty tools for GPS overlays. Almost all of them do the same
-thing: they render a video. Exactly one writes into DaVinci Resolve &ndash; and that is a Lua script
-of unclear provenance where it is not even documented whether editable nodes come out of it.</p>
-
-<p>Not one commercial product produces a Fusion <code>.setting</code> file. That is the only place
-where we genuinely stand alone &ndash; and for a long time it was written nowhere on this site.</p>
-
-<h2>What &ldquo;no upload, no account&rdquo; is still worth</h2>
-<p>Not much. Those promises are table stakes now: several free tools read GPX and FIT, ask for no
-account, add no watermark and do everything in the browser. Advertising that describes the entry
-ticket, not a difference.</p>
-<p>Our difference is elsewhere, and it is narrower but real: <strong>the output format</strong>.</p>
+<p class="lead">A Fusion composition is a text file. Inside it sits a Lua table describing a node
+graph. That is exactly what we build from your recording &ndash; not a picture, but a graph you can
+keep editing in DaVinci Resolve.</p>
 
 <h2>What is inside a <code>.setting</code> file</h2>
-<p>A Fusion composition is a text file. Inside it sits a Lua table describing a node graph:
-backgrounds, masks, merge nodes, text nodes &ndash; and, for every animated value, a
-<code>BezierSpline</code> with its control points.</p>
-<p>That is exactly what we produce. Your recording does not become a picture; it becomes a node
-graph. The speed of your ride sits as a keyframe curve on a slider, and the number on screen is an
+<p>Backgrounds, masks, merge nodes, text nodes &ndash; and, for every animated value, a
+<code>BezierSpline</code> with its control points. One control point per sample in your
+recording.</p>
+<p>So the speed of your ride sits as a keyframe curve on a slider, and the number on screen is an
 expression reading that slider. You paste the file into the Fusion page and from the first second it
 is an ordinary part of your project.</p>
 
+<h2>What you can do with it afterwards</h2>
+<ul>
+  <li>The colour is an input you touch. No detour, no new export.</li>
+  <li>The curve sits in the spline editor. You can stretch it, smooth it, or move individual points
+  where the GPS misbehaved.</li>
+  <li>The group behaves like any other: move it, mask it, put a blur behind it, turn it into a
+  macro.</li>
+  <li>Change the number format &ndash; one more decimal, say &ndash; and you change the expression,
+  not a thousand keyframes.</li>
+</ul>
+
 <h2>And in After Effects?</h2>
-<p>There the whole market solves the problem in two steps: the telemetry is converted to
-<code>mgJSON</code>, and the look comes from a <strong>template you buy for 69 to 119
-dollars</strong>. So you get someone else&rsquo;s design and convert your own data.</p>
-<p>We deliver the opposite: a <code>.jsx</code> script that builds the layers itself &ndash; shape
-layers, text layers, sliders with keyframes. The design is yours from the start, and it costs
-nothing.</p>
+<p>There we hand you a <code>.jsx</code> script that builds the layers itself: shape layers, text
+layers, sliders with keyframes. Every animated quantity hangs off a <em>Slider Control</em>; the text
+is built from it by an expression.</p>
+<p>The design is yours from the start. You can swap the typeface, add a stroke or scale the layer
+&ndash; the animation stays, because it is attached to the slider and not to the look.</p>
 
-<h2>Why a node graph is worth more than a video</h2>
+<h2>Why a node graph is worth more than a picture</h2>
 <p>A rendered overlay is a decision that is settled: one colour, one size, one resolution, one frame
-rate. Want the number smaller, the dial somewhere else, the line in a different orange? Back to the
-website and render again.</p>
-<p>A node graph is a decision that stays open. The colour is an input you touch. The curve sits in
-the spline editor and can be stretched. The layer can be moved, masked, given an effect. None of
-that requires you to open this tool a second time.</p>
+rate. Want the number smaller, the dial somewhere else, the line in a different orange? You need a
+new file.</p>
+<p>A node graph is a decision that stays open. Everything you see is an input, a curve or a layer
+&ndash; and all of it belongs to you once it is imported.</p>
 
-<h2>What it costs</h2>
-<p>Honesty belongs here: this niche is small. If you just want a finished video with gauges on it,
-the rendering tools serve you better &ndash; and that is perfectly fine. Our way pays off for people
-who edit in Resolve or After Effects anyway and treat the overlay as part of their design rather
-than as a sticker.</p>
-<p>And there is a risk: Adobe is moving from ExtendScript to UXP. All the <code>.jsx</code>
-generators will come due together one day. That clock does not run on the Fusion side.</p>
+<h2>What this is not for</h2>
+<p>Honesty belongs here: if you just want a finished video with gauges on it, our way is a detour.
+It pays off when you edit in Resolve or After Effects anyway and treat the overlay as part of your
+design rather than as a sticker.</p>
+<p>And we will name one risk openly: Adobe is moving from ExtendScript to UXP. All the
+<code>.jsx</code> generators will come due together one day. That clock does not run on the Fusion
+side.</p>
       <p class="blog-back"><a href="index.html">&larr; All posts</a></p>
     </section>
   </main>
