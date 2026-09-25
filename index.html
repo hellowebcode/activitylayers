@@ -273,6 +273,33 @@
   </div>
 </div>
 
+<div class="card" id="presets-card">
+  <div class="card-title">Presets</div>
+  <p class="card-note">Save the complete look — every colour, size, position and the canvas — under a name and bring it back with one click. Presets live in this browser only; export one as a file to move it to another machine or share it.</p>
+  <div class="grid3">
+    <div class="field">
+      <label>Saved presets</label>
+      <select id="presetList"><option value="">None saved yet</option></select>
+    </div>
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="presetName" placeholder="e.g. Road bike, dark" maxlength="60">
+    </div>
+    <div class="field preset-actions">
+      <label>&nbsp;</label>
+      <div class="preset-buttons">
+        <button class="reset-btn" type="button" id="presetSave">Save</button>
+        <button class="reset-btn" type="button" id="presetDelete">Delete</button>
+      </div>
+    </div>
+  </div>
+  <div class="preset-buttons preset-files">
+    <button class="reset-btn" type="button" id="presetExport">Export as file</button>
+    <button class="reset-btn" type="button" id="presetImport">Import from file</button>
+    <input type="file" id="presetFile" accept=".json,application/json" hidden>
+  </div>
+</div>
+
 <div class="card indexed-section" id="gauge-card">
   <span class="section-step" aria-hidden="true">03</span>
   <div class="card-title">Speedometer style

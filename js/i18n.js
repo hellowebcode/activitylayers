@@ -83,6 +83,16 @@ var UI_DE={
   'Bottom left':'Unten links',
   'Bottom centre':'Unten mittig',
   'Bottom right':'Unten rechts',
+  'Presets':'Vorlagen',
+  'Saved presets':'Gespeicherte Vorlagen',
+  'Name':'Name',
+  'None saved yet':'Noch keine gespeichert',
+  'Choose a preset':'Vorlage w\u00e4hlen',
+  'Save':'Speichern',
+  'Delete':'L\u00f6schen',
+  'Export as file':'Als Datei ausgeben',
+  'Import from file':'Aus Datei laden',
+  'Save the complete look \u2014 every colour, size, position and the canvas \u2014 under a name and bring it back with one click. Presets live in this browser only; export one as a file to move it to another machine or share it.':'Sichere das ganze Aussehen \u2014 alle Farben, Gr\u00f6\u00dfen, Positionen und die Leinwand \u2014 unter einem Namen und hole es mit einem Klick zur\u00fcck. Vorlagen liegen nur in diesem Browser; gib eine als Datei aus, um sie auf einen anderen Rechner zu bringen oder weiterzugeben.',
   'Canvas size':'Leinwandgröße',
   'Canvas width (px)':'Leinwandbreite (px)',
   'Canvas height (px)':'Leinwandhöhe (px)',
@@ -258,6 +268,11 @@ function applyUILanguage(language){
   });
   syncUnitOptions();
   refreshUnitLabels();
+  // Die Vorlagenliste entsteht zur Laufzeit, der Durchlauf oben erreicht sie
+  // nicht. Nur der Platzhalter wird uebersetzt, die Namen bleiben wie getippt.
+  if(typeof vorlagenListeFuellen==='function'){
+    try{ vorlagenListeFuellen(document.getElementById('presetList').value); }catch(e){}
+  }
   try{localStorage.setItem('overlayUILanguage',uiLanguage);}catch(e){}
 }
 
@@ -315,6 +330,15 @@ function localizeRuntimeText(message){
     return 'Einzelne Felder dieser FIT-Datei sind mit einer unerwarteten Größe angegeben und wurden übergangen';
   if(/^Ghost track loaded: /.test(message)) return message.replace('Ghost track loaded: ','Geisterspur geladen: ').replace(' points',' Punkte');
   if(message==='No usable track in that file') return 'Kein brauchbarer Streckenverlauf in dieser Datei';
+  if(message.indexOf('Preset saved: ')===0) return 'Vorlage gespeichert: '+message.slice(14);
+  if(message.indexOf('Preset loaded: ')===0) return 'Vorlage geladen: '+message.slice(15);
+  if(message.indexOf('Preset deleted: ')===0) return 'Vorlage gel\u00f6scht: '+message.slice(16);
+  if(message==='Give the preset a name first') return 'Gib der Vorlage zuerst einen Namen';
+  if(message==='Choose a preset to delete') return 'W\u00e4hle eine Vorlage zum L\u00f6schen';
+  if(message==='That preset is gone') return 'Diese Vorlage gibt es nicht mehr';
+  if(message==='That is not an Activity Layers preset') return 'Das ist keine Vorlage von Activity Layers';
+  if(message==='Nothing to export') return 'Nichts auszugeben';
+  if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');

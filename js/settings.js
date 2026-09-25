@@ -146,21 +146,17 @@ function positionZuruecksetzen(schluessel){
 
 function applyDefaults(defs){ Object.keys(defs).forEach(function(id){var el=document.getElementById(id);if(el)el.value=defs[id];}); }
 
-function speichereEinstellungen(){
-  try{
-    var werte={};
-    for(var i=0;i<CONTROL_IDS.length;i++){
-      var el=document.getElementById(CONTROL_IDS[i]);
-      if(el) werte[CONTROL_IDS[i]]=(el.type==='checkbox')?el.checked:el.value;
-    }
-    localStorage.setItem(EINSTELLUNGEN_SCHLUESSEL, JSON.stringify(werte));
-  }catch(e){}
+function sammleEinstellungen(){
+  var werte={};
+  for(var i=0;i<CONTROL_IDS.length;i++){
+    var el=document.getElementById(CONTROL_IDS[i]);
+    if(el) werte[CONTROL_IDS[i]]=(el.type==='checkbox')?el.checked:el.value;
+  }
+  return werte;
 }
 
-function stelleEinstellungenWiederHer(){
-  var werte=null;
-  try{ werte=JSON.parse(localStorage.getItem(EINSTELLUNGEN_SCHLUESSEL)||'null'); }catch(e){}
-  if(!werte||typeof werte!=='object') return false;
+function wendeEinstellungenAn(werte){
+  if(!werte||typeof werte!=='object') return 0;
   var uebernommen=0;
   for(var i=0;i<CONTROL_IDS.length;i++){
     var id=CONTROL_IDS[i], el=document.getElementById(id);
@@ -174,7 +170,135 @@ function stelleEinstellungenWiederHer(){
     } else el.value=String(werte[id]);
     uebernommen++;
   }
-  return uebernommen>0;
+  return uebernommen;
+}
+
+// ---- Benannte Vorlagen --------------------------------------------------
+// Der zuletzt genutzte Zustand wird ohnehin gemerkt. Vorlagen sind darueber
+// hinaus mehrere benannte Zustaende, die bleiben, bis man sie loescht.
+var VORLAGEN_SCHLUESSEL='activitylayersPresets';
+
+function vorlagenLesen(){
+  try{
+    var o=JSON.parse(localStorage.getItem(VORLAGEN_SCHLUESSEL)||'{}');
+    return (o&&typeof o==='object'&&!Array.isArray(o))?o:{};
+  }catch(e){ return {}; }
+}
+function vorlagenSchreiben(o){
+  try{ localStorage.setItem(VORLAGEN_SCHLUESSEL, JSON.stringify(o)); return true; }
+  catch(e){ setStatus('Presets could not be saved — this browser is out of storage','err'); return false; }
+}
+function vorlagenListeFuellen(auswahl){
+  var sel=document.getElementById('presetList');
+  if(!sel) return;
+  var o=vorlagenLesen(), namen=Object.keys(o).sort();
+  sel.innerHTML='';
+  var leer=document.createElement('option');
+  leer.value='';
+  leer.textContent=translateStaticValue(namen.length?'Choose a preset':'None saved yet', uiLanguage);
+  sel.appendChild(leer);
+  for(var i=0;i<namen.length;i++){
+    var opt=document.createElement('option');
+    opt.value=namen[i]; opt.textContent=namen[i];
+    sel.appendChild(opt);
+  }
+  sel.value=(auswahl&&namen.indexOf(auswahl)>=0)?auswahl:'';
+}
+
+// Nach dem Laden muessen Vorschau und abgeleitete Werte nachziehen - die
+// Felder direkt zu setzen loest von sich aus kein Ereignis aus.
+function vorlageNachziehen(){
+  try{ leinwandAuswahlAngleichen(); }catch(e){}
+  if(rawPoints.length){
+    try{ reprocess(); }catch(e){ console.error(e); }
+  }
+  speichereEinstellungen();
+}
+
+function vorlageSpeichern(){
+  var feld=document.getElementById('presetName');
+  var name=(feld.value||'').replace(/\s+/g,' ').trim();
+  if(!name){ setStatus('Give the preset a name first','err'); feld.focus(); return; }
+  var o=vorlagenLesen();
+  o[name]=sammleEinstellungen();
+  if(!vorlagenSchreiben(o)) return;
+  vorlagenListeFuellen(name);
+  setStatus('Preset saved: '+name,'ok');
+}
+
+function vorlageLaden(name){
+  if(!name) return;
+  var o=vorlagenLesen();
+  if(!o[name]){ setStatus('That preset is gone','err'); vorlagenListeFuellen(); return; }
+  var n=wendeEinstellungenAn(o[name]);
+  document.getElementById('presetName').value=name;
+  vorlageNachziehen();
+  setStatus('Preset loaded: '+name,'ok');
+}
+
+function vorlageLoeschen(){
+  var sel=document.getElementById('presetList'), name=sel.value;
+  if(!name){ setStatus('Choose a preset to delete','err'); return; }
+  var o=vorlagenLesen();
+  delete o[name];
+  if(!vorlagenSchreiben(o)) return;
+  vorlagenListeFuellen();
+  document.getElementById('presetName').value='';
+  setStatus('Preset deleted: '+name,'ok');
+}
+
+function vorlageAusgeben(){
+  var sel=document.getElementById('presetList'), name=sel.value;
+  var werte, titel;
+  if(name){ werte=vorlagenLesen()[name]; titel=name; }
+  else { werte=sammleEinstellungen(); titel=(document.getElementById('presetName').value||'preset').trim(); }
+  if(!werte){ setStatus('Nothing to export','err'); return; }
+  var inhalt=JSON.stringify({activitylayersPreset:1, name:titel, values:werte}, null, 2);
+  dl(inhalt, sanitizeFilename('Activity Layers preset - '+titel)+'.json');
+}
+
+function vorlageEinlesen(datei){
+  var leser=new FileReader();
+  leser.onload=function(e){
+    var d=null;
+    try{ d=JSON.parse(e.target.result); }catch(err){}
+    if(!d||!d.values||typeof d.values!=='object'){
+      setStatus('That is not an Activity Layers preset','err'); return;
+    }
+    var name=(String(d.name||datei.name.replace(/\.[^.]+$/,''))).replace(/\s+/g,' ').trim() || 'Imported preset';
+    var o=vorlagenLesen();
+    o[name]=d.values;
+    if(!vorlagenSchreiben(o)) return;
+    vorlagenListeFuellen(name);
+    vorlageLaden(name);
+  };
+  leser.readAsText(datei);
+}
+
+(function(){
+  var sel=document.getElementById('presetList');
+  if(!sel) return;
+  vorlagenListeFuellen();
+  sel.addEventListener('change',function(){ vorlageLaden(this.value); });
+  document.getElementById('presetSave').addEventListener('click',vorlageSpeichern);
+  document.getElementById('presetDelete').addEventListener('click',vorlageLoeschen);
+  document.getElementById('presetExport').addEventListener('click',vorlageAusgeben);
+  var datei=document.getElementById('presetFile');
+  document.getElementById('presetImport').addEventListener('click',function(){ datei.click(); });
+  datei.addEventListener('change',function(){
+    if(datei.files[0]) vorlageEinlesen(datei.files[0]);
+    datei.value='';
+  });
+})();
+
+function speichereEinstellungen(){
+  try{ localStorage.setItem(EINSTELLUNGEN_SCHLUESSEL, JSON.stringify(sammleEinstellungen())); }catch(e){}
+}
+
+function stelleEinstellungenWiederHer(){
+  var werte=null;
+  try{ werte=JSON.parse(localStorage.getItem(EINSTELLUNGEN_SCHLUESSEL)||'null'); }catch(e){}
+  return wendeEinstellungenAn(werte)>0;
 }
 
 (function(){

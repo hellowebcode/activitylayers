@@ -261,3 +261,8 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
 .ghost-name{font-family:var(--mono);font-size:.8rem;color:var(--text-soft);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .position-row{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
+.preset-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.preset-buttons .reset-btn{flex:1 1 auto;justify-content:center;text-align:center}
+.preset-files{margin-top:10px}
+.preset-actions label{visibility:hidden}
+#presetName{width:100%}
