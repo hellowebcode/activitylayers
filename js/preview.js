@@ -349,8 +349,9 @@ function drawElev(){
 
   ctx.fillStyle='rgba(148,163,184,0.8)'; ctx.font='10px sans-serif'; ctx.textBaseline='alphabetic';
   if(document.getElementById('elevLabels').checked){
-    ctx.fillText(Math.round(toDisp(d.maxEle))+' '+unitLabel,pad+2,pad+10);
-    ctx.fillText(Math.round(toDisp((d.maxEle+d.minEle)/2))+' '+unitLabel,pad+2,pad+iH/2+4);
-    ctx.fillText(Math.round(toDisp(d.minEle))+' '+unitLabel,pad+2,pad+iH-2);
+    var marken=hoehenMarken(d.minEle,d.maxEle,unit);
+    ctx.fillText(marken[0],pad+2,pad+10);
+    ctx.fillText(marken[1],pad+2,pad+iH/2+4);
+    ctx.fillText(marken[2],pad+2,pad+iH-2);
   }
 }

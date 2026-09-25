@@ -188,3 +188,14 @@ function reprocess(){
   drawRoute(); drawSpeed(maxSpd); drawElev(); drawHR(); resetMapPreview(); setEnabled(true);
   setStatus('Ready — '+rawPoints.length+' points · '+tc+' · '+distDisplay,'ok');
 }
+
+// Die drei Zahlen am Rand des Hoehenprofils: Hoechstwert, Mitte, Tiefstwert.
+// Beide Ausgabeformate und die Vorschau sollen dieselben Werte zeigen.
+function hoehenMarken(minEle, maxEle, unit){
+  var nachFuss = (unit==='mph');
+  var um = function(m){ return nachFuss ? m*3.28084 : m; };
+  var kuerzel = nachFuss ? 'ft' : 'm';
+  return [Math.round(um(maxEle))+' '+kuerzel,
+          Math.round(um((maxEle+minEle)/2))+' '+kuerzel,
+          Math.round(um(minEle))+' '+kuerzel];
+}

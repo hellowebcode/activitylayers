@@ -292,6 +292,19 @@ function buildElevJsx(){
   L.push('  addEllipse(dg,[18,18],[0,0]);');
   L.push('  addFill(dg,'+aeCol(c.elevDotColor)+');');
   L.push('  keys(tf(dot,"ADBE Position"),'+aeKf(dotKf,2)+');');
+  // Die Hoehenzahlen am linken Rand. Das Haekchen wirkte bisher nur in der
+  // Vorschau auf der Seite.
+  if(c.elevLabels){
+    var marken=hoehenMarken(xy.minEle, xy.maxEle, c.unit);
+    var beschX=ox+Math.max(28, iH*0.18);
+    var einzug=Math.max(8, iH*0.06);
+    var hoehenY=[oy+einzug, oy+iH/2, oy+iH-einzug];
+    var beschGroesse=iH*0.09;
+    for(var m=0;m<marken.length;m++){
+      L.push('  textLayer("Elevation label '+(m+1)+'",'+aeStr(marken[m])+',['
+        +aeNum(beschX)+','+aeNum(hoehenY[m])+'],'+aeNum(beschGroesse)+','+aeCol(c.elevColor)+',true);');
+    }
+  }
   L.push(aeTail());
   return L.join('\n');
 }

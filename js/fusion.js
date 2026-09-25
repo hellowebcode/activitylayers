@@ -450,6 +450,36 @@ function buildBackgroundNode(name, maskSourceOp, rgb, pos, alpha, w, h){
   L.push('\t\t\t\t},');
   return L.join('\n');
 }
+// Feste Beschriftung ohne Keyframes - fuer die Hoehenzahlen am Rand des
+// Profils. Lage als Mittelpunkt in normierten Koordinaten.
+function buildStaticTextNode(name, text, rgb, size, center01, pos, w, h){
+  var L=[];
+  L.push('\t\t\t\t'+name+' = TextPlus {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+w+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+h+', },');
+  L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\t["Gamut.SLogVersion"] = Input { Value = FuID { "SLog2" }, },');
+  L.push('\t\t\t\t\t\tCenter = Input { Value = { '+center01.x.toFixed(6)+', '+center01.y.toFixed(6)+' }, },');
+  L.push('\t\t\t\t\t\tLayoutRotation = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tTransformRotation = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tRed1 = Input { Value = '+(rgb[0]/255).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(rgb[1]/255).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(rgb[2]/255).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tSoftness1 = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tStyledText = Input { Value = "'+String(text).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'", },');
+  L.push('\t\t\t\t\t\tFont = Input { Value = "Open Sans", },');
+  L.push('\t\t\t\t\t\tStyle = Input { Value = "Bold", },');
+  L.push('\t\t\t\t\t\tSize = Input { Value = '+size.toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tVerticalJustificationNew = Input { Value = 3, },');
+  L.push('\t\t\t\t\t\tHorizontalJustificationNew = Input { Value = 3, },');
+  L.push('\t\t\t\t\t\tAdvancedFontControls = Input { Value = 1, },');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
+  L.push('\t\t\t\t},');
+  return L.join('\n');
+}
+
 function buildMergeNode(name, bgOp, fgOp, pos){
   return '\t\t\t\t'+name+' = Merge {\n\t\t\t\t\tInputs = {\n\t\t\t\t\t\tBackground = Input { SourceOp = "'+bgOp+'", Source = "Output", },\n\t\t\t\t\t\tForeground = Input { SourceOp = "'+fgOp+'", Source = "Output", },\n\t\t\t\t\t\tPerformDepthMerge = Input { Value = 0, },\n\t\t\t\t\t},\n\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },\n\t\t\t\t},';
 }
@@ -738,6 +768,21 @@ function buildElevSetting(){
   L.push(buildDotMaskNode('MainDotMask', polyPathPositionInput('Path1'), dotDiaPx, [300,50], CW, CH));
   L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [400,50], undefined, CW, CH));
   chain('BackgroundMainDot');
+  // Die Hoehenzahlen am linken Rand des Bandes. Das Haekchen steuerte sie
+  // bisher nur in der Vorschau auf der Seite.
+  if(c.elevLabels){
+    var marken=hoehenMarken(xy.minEle, xy.maxEle, c.unit);
+    var beschX=OFFSET_X+MARGIN_X+Math.max(28, GRAPH_H*0.18);
+    var einzug=Math.max(8, GRAPH_H*0.06);
+    var hoehenY=[BAND_TOP+einzug, BAND_TOP+GRAPH_H/2, BAND_TOP+GRAPH_H-einzug];
+    var beschGroesse=(GRAPH_H*0.09)/CH;
+    for(var m=0;m<marken.length;m++){
+      var nm='ElevLabel'+m;
+      L.push(buildStaticTextNode(nm, marken[m], lc, beschGroesse,
+        {x:beschX/CW, y:1-(hoehenY[m]/CH)}, [500,200+m*60], CW, CH));
+      chain(nm);
+    }
+  }
   L.push(buildBrightnessNode('BrightAdjust', lastBg, [xPos+100,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
