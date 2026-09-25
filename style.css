@@ -61,8 +61,12 @@ a[href^="http"]:not([class]):hover::after{opacity:1}
 .studio-nav a:hover,.studio-nav a:focus-visible,.studio-extra:hover,.studio-extra:focus-visible{color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
 .studio-nav a:hover::before,.studio-extra:hover::before{opacity:1}
 .studio-nav a span,.studio-extra span{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em}
-/* Nutzt die Regeln der Navigation, ist aber keiner der vier Schritte. */
+/* Nutzt die Regeln der Navigation, ist aber keiner der vier Schritte.
+   Das Symbol steht in der Spalte der Schrittnummern, damit die
+   Beschriftungen untereinander fluchten. */
 .studio-extra{margin-top:auto}
+.studio-extra-icon{display:flex;align-items:center;justify-content:flex-start}
+.studio-extra-icon svg{width:14px;height:14px;display:block}
 .privacy-note{margin-top:14px;padding:15px 14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 78%,transparent);box-shadow:var(--shadow)}
 .privacy-note strong{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:-.01em}.privacy-note p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
 .privacy-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px color-mix(in srgb,var(--success) 14%,transparent)}
