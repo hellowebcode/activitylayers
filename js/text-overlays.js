@@ -45,7 +45,7 @@ function buildTextOverlaySetting(cfg){
   L.push('\t\t\tNameSet = true,');
   L.push('\t\t\tOutputs = {');
   L.push('\t\t\t\tOutput1 = InstanceOutput {');
-  L.push('\t\t\t\t\tSourceOp = "Merge3",');
+  L.push('\t\t\t\t\tSourceOp = "OverlayPosition",');
   L.push('\t\t\t\t\tSource = "Output",');
   L.push('\t\t\t\t}');
   L.push('\t\t\t},');
@@ -155,6 +155,8 @@ function buildTextOverlaySetting(cfg){
     L.push(buildBezierSplineTool('Text2ZoneG', cfg.farbkanaele.g, false));
     L.push(buildBezierSplineTool('Text2ZoneB', cfg.farbkanaele.b, false));
   }
+  var vp=fusionVersatz(lageFelder(cfg.schluessel), cfg.schluessel, OVERLAY_MASSE.text, 250, 880);
+  L.push(buildTransformNode('OverlayPosition', 'Merge3', vp.dx, vp.dy, [1400,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push('\t}');
@@ -167,6 +169,7 @@ function buildCadenceSetting(){
   if(!cadData.length) return null;
   return buildTextOverlaySetting({
     group:'Cadence',
+    schluessel:'cad',
     rgb:hexToRgb(c.cadColor),
     size:parseFloat(c.cadSize)||0.07,
     expr:'string.format("%d '+overlayLabels().cad+'", floor(Cadence))',
@@ -182,6 +185,7 @@ function buildPaceSetting(){
   if(!paceData.length) return null;
   return buildTextOverlaySetting({
     group:'Pace',
+    schluessel:'pace',
     boxWidth:0.44,
     rgb:hexToRgb(c.paceColor),
     size:parseFloat(c.paceSize)||0.07,
@@ -196,6 +200,7 @@ function buildTempSetting(){
   if(!tempData.length) return null;
   return buildTextOverlaySetting({
     group:'Temperature',
+    schluessel:'temp',
     rgb:hexToRgb(c.tempColor),
     size:parseFloat(c.tempSize)||0.07,
     expr:'string.format("%d '+overlayLabels().temp+'", floor(Temperature))',
@@ -209,6 +214,7 @@ function buildPowerSetting(){
   if(!powerData.length) return null;
   return buildTextOverlaySetting({
     group:'Power',
+    schluessel:'power',
     farbkanaele: c.powerZones ? zonenFarbkanaele(powerData,function(p){return p.power;},
       parseFloat(c.powerZone2)||200, parseFloat(c.powerZone3)||280,
       hexToRgb(c.powerColor), hexToRgb(c.powerColor2), hexToRgb(c.powerColor3)) : null,
@@ -226,6 +232,7 @@ function buildLapSetting(){
   if(!k) return null;
   return buildTextOverlaySetting({
     group:'LapMarker',
+    schluessel:'lap',
     boxWidth:0.5,
     rgb:hexToRgb(c.lapColor),
     size:parseFloat(c.lapSize)||0.06,
@@ -237,11 +244,12 @@ function buildLapSetting(){
 
 function buildCadenceJsx(){
   var c=cfg();
+  var vs=ankerVersatz(c,'cad',OVERLAY_MASSE.text,250,880);
   if(!cadData.length) return null;
   var size=(parseFloat(c.cadSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(cadData,function(p){return p.cad;});
   var L=[aeHead('Cadence Overlay')];
-  L.push('  var num=textLayer("Cadence","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.cadColor)+',false);');
+  L.push('  var num=textLayer("Cadence","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
   L.push(aeTail());
   return L.join('\n');
@@ -249,13 +257,14 @@ function buildCadenceJsx(){
 
 function buildPaceJsx(){
   var c=cfg();
+  var vs=ankerVersatz(c,'pace',OVERLAY_MASSE.text,250,880);
   if(!paceData.length) return null;
   var size=(parseFloat(c.paceSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(paceData,function(p){return Math.round(p.sec);});
   var ausdruck='var t=v; var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
                'm+":"+(s<10?"0":"")+s+" '+paceLabel(c)+'";';
   var L=[aeHead('Pace Overlay')];
-  L.push('  var num=textLayer("Pace","0:00",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.paceColor)+',false);');
+  L.push('  var num=textLayer("Pace","0:00",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.paceColor)+',false);');
   L.push('  driveText(num,"Pace",'+aeKf(kf,0)+','+aeStr(ausdruck)+');');
   L.push(aeTail());
   return L.join('\n');
@@ -263,11 +272,12 @@ function buildPaceJsx(){
 
 function buildTempJsx(){
   var c=cfg();
+  var vs=ankerVersatz(c,'temp',OVERLAY_MASSE.text,250,880);
   if(!tempData.length) return null;
   var size=(parseFloat(c.tempSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(tempData,function(p){return p.temp;});
   var L=[aeHead('Temperature Overlay')];
-  L.push('  var num=textLayer("Temperature","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.tempColor)+',false);');
+  L.push('  var num=textLayer("Temperature","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.tempColor)+',false);');
   L.push('  driveText(num,"Temperature",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().temp+'";')+');');
   L.push(aeTail());
   return L.join('\n');
@@ -275,6 +285,7 @@ function buildTempJsx(){
 
 function buildPowerJsx(){
   var c=cfg();
+  var vs=ankerVersatz(c,'power',OVERLAY_MASSE.text,250,880);
   if(!powerData.length) return null;
   var size=(parseFloat(c.powerSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(powerData,function(p){return p.power;});
@@ -285,12 +296,12 @@ function buildPowerJsx(){
   if(zonen){
     var farben=[c.powerColor,c.powerColor2,c.powerColor3];
     for(var z=0;z<3;z++){
-      L.push('  var z'+z+'=textLayer("Power zone '+(z+1)+'","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(farben[z])+',false);');
+      L.push('  var z'+z+'=textLayer("Power zone '+(z+1)+'","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(farben[z])+',false);');
       L.push('  driveText(z'+z+',"Power zone '+(z+1)+'",'+aeKf(kf,0)+','+ausdruck+');');
       L.push('  keys(tf(z'+z+',"ADBE Opacity"),'+aeKf(zonen[z],0)+');');
     }
   } else {
-    L.push('  var num=textLayer("Power","0",'+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.powerColor)+',false);');
+    L.push('  var num=textLayer("Power","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.powerColor)+',false);');
     L.push('  driveText(num,"Power",'+aeKf(kf,0)+','+ausdruck+');');
   }
   L.push(aeTail());
@@ -299,6 +310,7 @@ function buildPowerJsx(){
 
 function buildLapJsx(){
   var c=cfg();
+  var vs=ankerVersatz(c,'lap',OVERLAY_MASSE.text,250,880);
   var k=buildLapKeyframes();
   if(!k) return null;
   var size=(parseFloat(c.lapSize)||0.06)*AE_H*aeFaktor(c);
@@ -307,7 +319,7 @@ function buildLapJsx(){
            'var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
            '"'+overlayLabels().lap+' "+n+"   "+m+":"+(s<10?"0":"")+s;';
   var L=[aeHead('Lap Marker Overlay')];
-  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+','+aeOrt(c,250,880)+','+aeNum(size)+','+aeCol(c.lapColor)+',false);');
+  L.push('  var lap=textLayer("Lap Marker",'+aeStr(overlayLabels().lap+' 1   0:00')+','+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.lapColor)+',false);');
   L.push('  slider(lap,"Lap Number",'+aeKf(k.num,0)+');');
   L.push('  slider(lap,"Lap Time",'+aeKf(k.sec,2)+');');
   L.push('  lap.property("ADBE Text Properties").property("ADBE Text Document").expression = '+aeStr(expr)+';');

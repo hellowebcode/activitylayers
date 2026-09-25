@@ -181,7 +181,7 @@ function buildSetting(){
   L.push('\t\tSpeedOverlay = GroupOperator {');
   L.push('\t\t\tCtrlWZoom = false,');
   L.push('\t\t\tNameSet = true,');
-  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "Merge4", Source = "Output", }, },');
+  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "OverlayPosition", Source = "Output", }, },');
   L.push('\t\t\tViewInfo = GroupInfo {');
   L.push('\t\t\t\tPos = { 0, 0 },');
   L.push('\t\t\t\tFlags = { AllowPan = false, AutoSnap = true, RemoveRouters = true },');
@@ -358,6 +358,8 @@ function buildSetting(){
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+nextX()+', '+ROW_Y+' } },');
   L.push('\t\t\t\t},');
   L.push(buildBezierSplineTool('CurrentSpeedActiveSpeed', speedKF, false));
+  var vp=fusionVersatz(c,'speed',OVERLAY_MASSE.speed,320,760);
+  L.push(buildTransformNode('OverlayPosition', 'Merge4', vp.dx, vp.dy, [1400,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push('\t},');
@@ -474,6 +476,20 @@ function buildStaticTextNode(name, text, rgb, size, center01, pos, w, h){
   L.push('\t\t\t\t\t\tVerticalJustificationNew = Input { Value = 3, },');
   L.push('\t\t\t\t\t\tHorizontalJustificationNew = Input { Value = 3, },');
   L.push('\t\t\t\t\t\tAdvancedFontControls = Input { Value = 1, },');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
+  L.push('\t\t\t\t},');
+  return L.join('\n');
+}
+
+// Verschiebt die ganze Gruppe. Fusion misst den Mittelpunkt normiert vom
+// linken unteren Bildrand; 0.5/0.5 laesst alles, wo es ist.
+function buildTransformNode(name, sourceOp, dx, dy, pos){
+  var L=[];
+  L.push('\t\t\t\t'+name+' = Transform {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tCenter = Input { Value = { '+(0.5+dx).toFixed(6)+', '+(0.5+dy).toFixed(6)+' }, },');
+  L.push('\t\t\t\t\t\tInput = Input { SourceOp = "'+sourceOp+'", Source = "Output", },');
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
   L.push('\t\t\t\t},');
@@ -699,7 +715,8 @@ function buildElevSetting(){
   // Breiter als die Leinwand ergibt kein Bild; der Vorgabewert folgt ihr.
   var GRAPH_W=Math.min(W, parseInt(c.elevW)||W);
   var GRAPH_H=Math.min(H, parseInt(c.elevH)||300);
-  var MARGIN_BOTTOM=40;
+  // Derselbe Bodenabstand wie in After Effects, im Entwurfsmass gerechnet.
+  var MARGIN_BOTTOM=120*FULL_CH/ENTWURF_H;
   var OFFSET_X=Math.max(0,(FULL_CW-GRAPH_W)/2);
   var BAND_TOP=FULL_CH-MARGIN_BOTTOM-GRAPH_H, BAND_BOTTOM=FULL_CH-MARGIN_BOTTOM;
   var CW=FULL_CW, CH=FULL_CH;
@@ -726,7 +743,7 @@ function buildElevSetting(){
   L.push('\t\tElevationOverlay = GroupOperator {');
   L.push('\t\t\tCtrlWZoom = false,');
   L.push('\t\t\tNameSet = true,');
-  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "BrightAdjust", Source = "Output", }, },');
+  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "OverlayPosition", Source = "Output", }, },');
   L.push('\t\t\tViewInfo = GroupInfo {');
   L.push('\t\t\t\tPos = { 0, 0 },');
   L.push('\t\t\t\tFlags = { AllowPan = false, AutoSnap = true, RemoveRouters = true },');
@@ -784,6 +801,14 @@ function buildElevSetting(){
     }
   }
   L.push(buildBrightnessNode('BrightAdjust', lastBg, [xPos+100,100]));
+  // Das Profil liegt in der Vorgabe unten und ueber die ganze Breite. Sein
+  // Mittelpunkt ist nicht die Bildmitte, deshalb bekommt die Rechnung die
+  // tatsaechliche Lage mit.
+  var massElev={b:GRAPH_W/CW*ENTWURF_W, h:GRAPH_H/CH*ENTWURF_H};
+  var vp=fusionVersatz(c,'elev',massElev,
+                       ANKER_RAND+massElev.b/2, ENTWURF_H-120-massElev.h/2,
+                       {x:(OFFSET_X+GRAPH_W/2)/CW, y:1-((BAND_TOP+GRAPH_H/2)/CH)});
+  L.push(buildTransformNode('OverlayPosition', 'BrightAdjust', vp.dx, vp.dy, [xPos+200,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push(buildPublishPolyLineTool('Publish1', maskPts, false));
@@ -814,7 +839,7 @@ function buildHRSetting(){
   L.push('\t\t\tNameSet = true,');
   L.push('\t\t\tOutputs = {');
   L.push('\t\t\t\tOutput1 = InstanceOutput {');
-  L.push('\t\t\t\t\tSourceOp = "Merge3",');
+  L.push('\t\t\t\t\tSourceOp = "OverlayPosition",');
   L.push('\t\t\t\t\tSource = "Output",');
   L.push('\t\t\t\t}');
   L.push('\t\t\t},');
@@ -948,6 +973,8 @@ function buildHRSetting(){
     L.push(buildBezierSplineTool('Text2ZoneG', hrZonen.g, false));
     L.push(buildBezierSplineTool('Text2ZoneB', hrZonen.b, false));
   }
+  var vp=fusionVersatz(c,'hr',OVERLAY_MASSE.hr,250,880);
+  L.push(buildTransformNode('OverlayPosition', 'Merge3', vp.dx, vp.dy, [1400,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push('\t}');
@@ -975,7 +1002,7 @@ function buildInclineSetting(){
   L.push('\t\tInclineOverlay = GroupOperator {');
   L.push('\t\t\tCtrlWZoom = false,');
   L.push('\t\t\tNameSet = true,');
-  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "Merge1", Source = "Output", }, },');
+  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "OverlayPosition", Source = "Output", }, },');
   L.push('\t\t\tViewInfo = GroupInfo {');
   L.push('\t\t\t\tPos = { 1275.33, 161.303 },');
   L.push('\t\t\t\tFlags = { AllowPan = false, AutoSnap = true, RemoveRouters = true },');
@@ -1094,6 +1121,8 @@ function buildInclineSetting(){
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 1035.79, 16.1895 } },');
   L.push('\t\t\t\t}');
+  var vp=fusionVersatz(c,'incline',OVERLAY_MASSE.incline,260,880);
+  L.push(buildTransformNode('OverlayPosition', 'Merge1', vp.dx, vp.dy, [1400,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push(buildBezierSplineTool('Text2Incline', inclineKF, false, 2));
@@ -1146,7 +1175,7 @@ function buildMileSetting(){
   L.push('\t\t\tNameSet = true,');
   L.push('\t\t\tOutputs = {');
   L.push('\t\t\t\tMainOutput1 = InstanceOutput {');
-  L.push('\t\t\t\t\tSourceOp = "Merge3",');
+  L.push('\t\t\t\t\tSourceOp = "OverlayPosition",');
   L.push('\t\t\t\t\tSource = "Output",');
   L.push('\t\t\t\t}');
   L.push('\t\t\t},');
@@ -1362,6 +1391,8 @@ function buildMileSetting(){
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 157.173, 22.1018 } },');
   L.push('\t\t\t\t}');
+  var vp=fusionVersatz(c,'mile',OVERLAY_MASSE.mile,260,880);
+  L.push(buildTransformNode('OverlayPosition', 'Merge3', vp.dx, vp.dy, [1400,100]));
   L.push('\t\t\t},');
   L.push('\t\t},');
   L.push(buildBezierSplineTool('Rectangle3SPLData', mileKF, false));

@@ -199,3 +199,53 @@ function hoehenMarken(minEle, maxEle, unit){
           Math.round(um((maxEle+minEle)/2))+' '+kuerzel,
           Math.round(um(minEle))+' '+kuerzel];
 }
+
+// ---- Lage der Overlays -------------------------------------------------
+// Der Entwurf geht von 1920x1080 aus. Beide Ausgabeformate rechnen daraus
+// ihre eigene Darstellung, damit dasselbe Overlay in Resolve und in After
+// Effects an derselben Stelle sitzt.
+var ENTWURF_W=1920, ENTWURF_H=1080, ANKER_RAND=110;
+
+var ANKER_ANTEILE={
+  'top-left':[0,0],    'top-center':[0.5,0],    'top-right':[1,0],
+  'middle-left':[0,0.5],'center':[0.5,0.5],     'middle-right':[1,0.5],
+  'bottom-left':[0,1], 'bottom-center':[0.5,1], 'bottom-right':[1,1]
+};
+
+// Ungefaehre Ausdehnung der Overlays im Entwurfsmass. Sie muss nicht genau
+// sein - sie sorgt nur dafuer, dass ein Overlay am Rand nicht anstoesst.
+var OVERLAY_MASSE={
+  speed:{b:430,h:430}, hr:{b:360,h:160}, incline:{b:280,h:220},
+  mile:{b:320,h:200}, text:{b:340,h:130}
+};
+
+// Zielmittelpunkt in Entwurfskoordinaten, Ursprung oben links. Die bisherige
+// Lage eines Overlays gilt als "unten links" - damit bleibt die Vorgabe genau
+// das, was sie war, und die uebrigen acht Anker richten sich danach.
+function ankerVersatz(c, schluessel, mass, altX, altY){
+  var a=ANKER_ANTEILE[c[schluessel+'Anchor']]||ANKER_ANTEILE['bottom-left'];
+  var xWerte=[altX, ENTWURF_W/2, ENTWURF_W-ANKER_RAND-mass.b/2];
+  var yWerte=[ANKER_RAND+mass.h/2, ENTWURF_H/2, altY];
+  // Was so breit ist wie die Leinwand, kann nicht nach links oder rechts -
+  // sonst haengt es hinten heraus. Dasselbe in der Hoehe.
+  var zx=klemme(xWerte[a[0]*2], mass.b, ENTWURF_W);
+  var zy=klemme(yWerte[a[1]*2], mass.h, ENTWURF_H);
+  return { dx: zx-altX + zahlOderVorgabe(c[schluessel+'OffX'],0),
+           dy: zy-altY + zahlOderVorgabe(c[schluessel+'OffY'],0) };
+}
+
+function klemme(wert, ausdehnung, gesamt){
+  var klein=Math.min(ausdehnung/2, gesamt/2), gross=Math.max(gesamt-ausdehnung/2, gesamt/2);
+  return Math.max(klein, Math.min(gross, wert));
+}
+
+// Fusion beschreibt Lagen normiert mit Ursprung unten links, der Entwurf
+// rechnet in Pixeln mit Ursprung oben links. Die Bauteile eines Overlays
+// liegen dort um die Bildmitte herum; die ganze Gruppe wandert um denselben
+// Betrag, damit sie ihre Anordnung behaelt.
+function fusionVersatz(c, schluessel, mass, altX, altY, istMitteN){
+  var v=ankerVersatz(c, schluessel, mass, altX, altY);
+  var m=istMitteN||{x:0.5,y:0.5};
+  return { dx: (altX+v.dx)/ENTWURF_W - m.x,
+           dy: (1-(altY+v.dy)/ENTWURF_H) - m.y };
+}

@@ -260,3 +260,4 @@ canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gauge
   padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)}
 .ghost-name{font-family:var(--mono);font-size:.8rem;color:var(--text-soft);overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
+.position-row{margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}

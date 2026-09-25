@@ -289,6 +289,24 @@
     <div class="field"><label>Number color</label><input type="color" id="gaugeNumberColor" value="#ffffff"></div>
     <div class="field"><label>Unit label color</label><input type="color" id="gaugeUnitColor" value="#6d6d7e"></div>
   </div>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="speedAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="speedOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="speedOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="route-card">
@@ -360,6 +378,24 @@
       </div>
     </div>
   </div>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="elevAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left">Bottom left</option>
+        <option value="bottom-center" selected>Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="elevOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="elevOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="hrCard">
@@ -382,6 +418,24 @@
     <div class="field"><label>Zone 3 colour</label><input type="color" id="hrColor3" value="#dc2626"></div>
   </div>
 
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="hrAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="hrOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="hrOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="inclineCard">
@@ -398,6 +452,24 @@
     </div>
   </div>
 
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="inclineAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="inclineOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="inclineOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="mileCard">
@@ -414,6 +486,24 @@
     </div>
   </div>
 
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="mileAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="mileOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="mileOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="cadCard">
@@ -425,6 +515,24 @@
   <div class="grid3">
     <div class="field"><label>Number color</label><input type="color" id="cadColor" value="#a855f7"></div>
     <div class="field"><label>Text size</label><input type="number" id="cadSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+  </div>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="cadAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="cadOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="cadOffY" value="0" step="10"></div>
   </div>
 </div>
 
@@ -446,6 +554,24 @@
     <div class="field"><label>Zone 2 colour</label><input type="color" id="powerColor2" value="#f59e0b"></div>
     <div class="field"><label>Zone 3 colour</label><input type="color" id="powerColor3" value="#dc2626"></div>
   </div>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="powerAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="powerOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="powerOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="tempCard">
@@ -457,6 +583,24 @@
   <div class="grid3">
     <div class="field"><label>Number color</label><input type="color" id="tempColor" value="#0ea5e9"></div>
     <div class="field"><label>Text size</label><input type="number" id="tempSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
+  </div>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="tempAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="tempOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="tempOffY" value="0" step="10"></div>
   </div>
 </div>
 
@@ -471,6 +615,24 @@
     <div class="field"><label>Text size</label><input type="number" id="paceSize" value="0.07" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <p class="card-note">Pace follows the speed unit: minutes per kilometre, or minutes per mile when MPH is selected.</p>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="paceAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="paceOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="paceOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div class="card" id="lapCard">
@@ -484,6 +646,24 @@
     <div class="field"><label>Text size</label><input type="number" id="lapSize" value="0.06" step="0.005" min="0.03" max="0.2"></div>
   </div>
   <p class="card-note">Lap markers are read from the lap records inside a .fit or .tcx file. GPX files carry no lap information, so this overlay stays unavailable for them.</p>
+  <div class="grid3 position-row">
+    <div class="field">
+      <label>Position</label>
+      <select id="lapAnchor">
+        <option value="top-left">Top left</option>
+        <option value="top-center">Top centre</option>
+        <option value="top-right">Top right</option>
+        <option value="middle-left">Middle left</option>
+        <option value="center">Centre</option>
+        <option value="middle-right">Middle right</option>
+        <option value="bottom-left" selected>Bottom left</option>
+        <option value="bottom-center">Bottom centre</option>
+        <option value="bottom-right">Bottom right</option>
+      </select>
+    </div>
+    <div class="field"><label>Nudge X (px)</label><input type="number" id="lapOffX" value="0" step="10"></div>
+    <div class="field"><label>Nudge Y (px)</label><input type="number" id="lapOffY" value="0" step="10"></div>
+  </div>
 </div>
 
 <div id="statsWrap" style="display:none">

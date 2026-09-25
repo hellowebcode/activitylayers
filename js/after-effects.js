@@ -200,6 +200,7 @@ function buildSpeedJsx(){
   var unit=unitDisplay(c.unit);
   var kf=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);});
   var CX=320, CY=760, DISC=200, R=148, SPAN=86.111, OFF=205;
+  var vs=ankerVersatz(c,'speed',OVERLAY_MASSE.speed,CX,CY); CX+=vs.dx; CY+=vs.dy;
   var L=[aeHead('Speed Overlay')];
   L.push('  // Gap of 50° at the bottom: the ring covers '+SPAN+'% of the circle, rotated by '+OFF+'°.');
   L.push('  var MAXS='+aeNum(maxSpd)+', SPAN='+SPAN+';');
@@ -266,7 +267,16 @@ function buildElevJsx(){
   var lw=parseFloat(c.elevLineW)||2;
   var so=zahlOderVorgabe(c.elevShadowOffset,4);
   var fillOn=c.elevFill==='1';
-  var ox=(c.W-iW)/2, oy=c.H-iH-120*aeFaktor(c);
+  // Das Profil rechnet in Leinwandkoordinaten; der Anker verschiebt es im
+  // Entwurfsmass und wird dafuer mitskaliert.
+  // Das Profil wird waagerecht mittig gezeichnet. Der Anker nennt dagegen die
+  // Lage am linken Rand, deshalb zaehlt hier die Strecke vom gezeichneten Ort
+  // zum Ziel, nicht der Ankerversatz selbst.
+  var massElev={b:iW/aeFaktor(c), h:iH/aeFaktor(c)};
+  var linksX=ANKER_RAND+massElev.b/2, untenY=ENTWURF_H-120-massElev.h/2;
+  var vs=ankerVersatz(c,'elev',massElev,linksX,untenY);
+  var vdx=(linksX+vs.dx)-ENTWURF_W/2, vdy=(untenY+vs.dy)-untenY;
+  var ox=(c.W-iW)/2+vdx*aeFaktor(c), oy=c.H-iH-120*aeFaktor(c)+vdy*aeFaktor(c);
   var xy=buildElevXY(elevPts,iW,iH,0);
   var pts=[],i;
   for(i=0;i<xy.xs.length;i++) pts.push([ox+xy.xs[i], oy+xy.ys[i]]);
@@ -316,6 +326,7 @@ function buildHRJsx(){
   var size=sizeEntwurf*aeFaktor(c);
   var kf=buildKeyframeList(hrData,function(p){return p.hr;});
   var HX=250, HY=880;
+  var vs=ankerVersatz(c,'hr',OVERLAY_MASSE.hr,HX,HY); HX+=vs.dx; HY+=vs.dy;
   var ort=aeOrt(c,HX+sizeEntwurf*1.2,HY+sizeEntwurf*0.4);
   // Das Herz entsteht im Entwurfsmass und wandert dann als Ganzes auf die
   // Leinwand, damit Form und Ort zusammenbleiben.
@@ -354,6 +365,7 @@ function buildInclineJsx(){
   var rot=[],i;
   for(i=0;i<kf.length;i++) rot.push([kf[i][0], -Math.atan(kf[i][1]/100)*180/Math.PI]);
   var BX=260, BY=880;
+  var vs=ankerVersatz(c,'incline',OVERLAY_MASSE.incline,BX,BY); BX+=vs.dx; BY+=vs.dy;
   var L=[aeHead('Incline Overlay')];
   L.push('  // The wedge rotates to the real slope angle; the number stays upright.');
   L.push('  var w=shapeLayer("Incline Wedge"), wg=grpOf(w,"Wedge");');
@@ -378,6 +390,7 @@ function buildMileJsx(){
   var label=unit==='mph'?'mi':'km';
   var kf=buildKeyframeList(distData,function(p){return p.distM/div;});
   var MX=260, MY=880;
+  var vs=ankerVersatz(c,'mile',OVERLAY_MASSE.mile,MX,MY); MX+=vs.dx; MY+=vs.dy;
   var L=[aeHead('Mile Marker Overlay')];
   L.push('  var num=textLayer("Distance Value","0",'+aeOrt(c,MX,MY)+','+aeMass(c,88)+','+aeCol(c.mileColor)+',true);');
   L.push('  driveText(num,"Distance",'+aeKf(kf,3)+',"v.toFixed('+dec+');");');

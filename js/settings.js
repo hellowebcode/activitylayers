@@ -66,6 +66,36 @@ var CONTROL_IDS=[
   'ghostAlpha',
   'smooth',
   'compPreset',
+  'speedAnchor',
+  'speedOffX',
+  'speedOffY',
+  'elevAnchor',
+  'elevOffX',
+  'elevOffY',
+  'hrAnchor',
+  'hrOffX',
+  'hrOffY',
+  'inclineAnchor',
+  'inclineOffX',
+  'inclineOffY',
+  'mileAnchor',
+  'mileOffX',
+  'mileOffY',
+  'cadAnchor',
+  'cadOffX',
+  'cadOffY',
+  'powerAnchor',
+  'powerOffX',
+  'powerOffY',
+  'tempAnchor',
+  'tempOffX',
+  'tempOffY',
+  'paceAnchor',
+  'paceOffX',
+  'paceOffY',
+  'lapAnchor',
+  'lapOffX',
+  'lapOffY',
   'compW',
   'compH',
   'sv1',
@@ -88,6 +118,31 @@ var DEF_ROUTE={trackW:'4',dotR:'8',shadowOffset:'5',trackColor:'#ff6600',dotColo
                ghostW:'4',ghostColor:'#8892a4',ghostAlpha:'0.55'};
 var DEF_GAUGE={gaugeBgColor:'#000000',gaugeRingColor:'#ffffff',gaugeArcColor:'#aa0000',gaugeNumberColor:'#ffffff',gaugeUnitColor:'#6d6d7e'};
 var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFill:'1',elevFillColor:'#ffffff',elevDotColor:'#38bdf8',elevShadowColor:'#000000',elevShadowOffset:'4'};
+
+// Lage aller Overlays. Sie ist bewusst fuer beide Ausgabeformate dieselbe -
+// vorher sass dasselbe Overlay in Resolve mittig und in After Effects unten
+// links.
+var POSITION_SCHLUESSEL=['speed','elev','hr','incline','mile','cad','power','temp','pace','lap'];
+var DEF_POSITION={elev:'bottom-center'};
+// Die drei Lagefelder eines Overlays einzeln lesen. buildTextOverlaySetting
+// hat einen Parameter namens cfg und kommt deshalb nicht an die Funktion cfg().
+function lageFelder(schluessel){
+  function w(id){ var el=document.getElementById(id); return el?el.value:''; }
+  var o={};
+  o[schluessel+'Anchor']=w(schluessel+'Anchor');
+  o[schluessel+'OffX']=w(schluessel+'OffX');
+  o[schluessel+'OffY']=w(schluessel+'OffY');
+  return o;
+}
+
+function positionZuruecksetzen(schluessel){
+  var el=document.getElementById(schluessel+'Anchor');
+  if(el) el.value=DEF_POSITION[schluessel]||'bottom-left';
+  ['OffX','OffY'].forEach(function(feld){
+    var f=document.getElementById(schluessel+feld);
+    if(f) f.value='0';
+  });
+}
 
 function applyDefaults(defs){ Object.keys(defs).forEach(function(id){var el=document.getElementById(id);if(el)el.value=defs[id];}); }
 
@@ -278,30 +333,36 @@ function leinwandAuswahlAngleichen(){
 
 document.getElementById('resetVideo').addEventListener('click',function(){applyDefaults(DEF_VIDEO);syncUnitOptions();if(rawPoints.length)reprocess();});
 document.getElementById('resetRoute').addEventListener('click',function(){applyDefaults(DEF_ROUTE);});
-document.getElementById('resetGauge').addEventListener('click',function(){applyDefaults(DEF_GAUGE);if(speedData.length)drawGauge();});
+document.getElementById('resetGauge').addEventListener('click',function(){applyDefaults(DEF_GAUGE);positionZuruecksetzen('speed');if(speedData.length)drawGauge();});
 document.getElementById('resetHR').addEventListener('click',function(){
+  positionZuruecksetzen('hr');
   document.getElementById('hrColor').value='#ef4444';
   document.getElementById('hrHeartColor').value='#ef4444';
   document.getElementById('hrSize').value='0.07';
   if(hrData.length) drawHR();
 });
 document.getElementById('resetCad').addEventListener('click',function(){
+  positionZuruecksetzen('cad');
   document.getElementById('cadColor').value='#a855f7';
   document.getElementById('cadSize').value='0.07';
 });
 document.getElementById('resetPower').addEventListener('click',function(){
+  positionZuruecksetzen('power');
   document.getElementById('powerColor').value='#f59e0b';
   document.getElementById('powerSize').value='0.07';
 });
 document.getElementById('resetTemp').addEventListener('click',function(){
+  positionZuruecksetzen('temp');
   document.getElementById('tempColor').value='#0ea5e9';
   document.getElementById('tempSize').value='0.07';
 });
 document.getElementById('resetPace').addEventListener('click',function(){
+  positionZuruecksetzen('pace');
   document.getElementById('paceColor').value='#14b8a6';
   document.getElementById('paceSize').value='0.07';
 });
 document.getElementById('resetLap').addEventListener('click',function(){
+  positionZuruecksetzen('lap');
   document.getElementById('lapColor').value='#38bdf8';
   document.getElementById('lapSize').value='0.06';
 });
@@ -311,18 +372,21 @@ document.getElementById('resetLap').addEventListener('click',function(){
 });
 
 document.getElementById('resetIncline').addEventListener('click',function(){
+  positionZuruecksetzen('incline');
   document.getElementById('inclineNumberColor').value='#22c55e';
   document.getElementById('inclineWedgeColor').value='#22c55e';
   document.getElementById('inclineUnit').value='pct';
 });
 
 document.getElementById('resetMile').addEventListener('click',function(){
+  positionZuruecksetzen('mile');
   document.getElementById('mileColor').value='#38bdf8';
   document.getElementById('mileLineDistColor').value='#111111';
   document.getElementById('mileDecimals').value='1';
 });
 
 document.getElementById('resetElev').addEventListener('click',function(){
+  positionZuruecksetzen('elev');
   applyDefaults(DEF_ELEV);
 });
 
