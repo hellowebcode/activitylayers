@@ -336,6 +336,79 @@ function buildRouteDiscJsx(){
   return L.join('\n');
 }
 
+// Kompass fuer After Effects: feste Skala, drehender Pfeil, Geschwindigkeit
+// als Zahl und als Pegel am linken Rand.
+function buildCompassJsx(){
+  var c=cfg();
+  if(rawPoints.length<2||!headingData.length) return null;
+  var k=aeFaktor(c);
+  var dEntwurf=Math.max(0.10, Math.min(1, zahlOderVorgabe(c.compassSize,0.30)))*AE_H;
+  var D=dEntwurf*k, R=D/2;
+
+  var altX=ANKER_RAND+dEntwurf/2, altY=AE_H-ANKER_RAND-dEntwurf/2;
+  var vs=ankerVersatz(c,'compass',{b:dEntwurf,h:dEntwurf},altX,altY);
+  var mitte=aePunkt(c, altX+vs.dx, altY+vs.dy);
+  var mx=mitte[0], my=mitte[1];
+
+  var strich=(parseFloat(c.compassTickW)||3)*k;
+  var pegelBreite=(parseFloat(c.compassLevelW)||6)*k;
+  var maxSpd=parseFloat(c.maxSpeed)||9;
+  var einheit=unitDisplay(c.unit);
+
+  var richtung=stetigerWinkel(headingData);
+  var winkelKF=buildKeyframeList(richtung,function(p){ return p.deg; });
+  var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); });
+  var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); });
+  if(!winkelKF.length||!tempoKF.length) return null;
+
+  function aufKreis(grad, radius){
+    var a=(grad-90)*Math.PI/180;
+    return [mx+Math.cos(a)*radius, my+Math.sin(a)*radius];
+  }
+
+  var L=[aeHead('Compass Overlay')];
+  // Skala
+  L.push('  var sc=shapeLayer("Compass Scale");');
+  for(var t=0;t<12;t++){
+    var grad=t*30, haupt=(grad%90===0);
+    var a=aufKreis(grad,R), b=aufKreis(grad,R-(haupt?R*0.20:R*0.11));
+    L.push('  var g'+t+'=grpOf(sc,"Tick '+t+'");');
+    L.push('  addPath(g'+t+',['+aeXY(a)+','+aeXY(b)+'],false);');
+    L.push('  addStroke(g'+t+','+aeCol(c.compassScaleColor||'#ffffff')+','+aeNum(strich)+');');
+  }
+  // Buchstaben
+  var buchstaben=[[0,'N'],[90,'E'],[180,'S'],[270,'W']];
+  for(var i=0;i<buchstaben.length;i++){
+    var bp=aufKreis(buchstaben[i][0], R-R*0.34);
+    L.push('  textLayer("Compass '+buchstaben[i][1]+'",'+aeStr(buchstaben[i][1])+','+aeXY(bp)+','
+      +aeNum(R*0.26)+','+aeCol(c.compassScaleColor||'#ffffff')+',true);');
+  }
+  // Pegel am linken Rand: Trim ueber die halbe Ellipse, gedreht auf sechs Uhr
+  L.push('  var lv=shapeLayer("Compass Level"), lg=grpOf(lv,"Level");');
+  L.push('  addEllipse(lg,['+aeNum(D-pegelBreite)+','+aeNum(D-pegelBreite)+'],'+aeXY([mx,my])+');');
+  L.push('  addStroke(lg,'+aeCol(c.compassLevelColor||'#3b82f6')+','+aeNum(pegelBreite)+');');
+  L.push('  var lt=addTrim(lg,50,50,0);');
+  L.push('  keys(lt.property("ADBE Vector Trim Start"),(function(k){');
+  L.push('    var o=[]; for(var i=0;i<k.length;i++) o.push([k[i][0], 50-k[i][1]/2]); return o;');
+  L.push('  })('+aeKf(tempoKF,2)+'));');
+  // Pfeil
+  var pf=[[0,-R*0.62],[-R*0.17,R*0.12],[0,R*0.02],[R*0.17,R*0.12]];
+  L.push('  var ar=shapeLayer("Compass Arrow"), ag=grpOf(ar,"Arrow");');
+  L.push('  addPath(ag,'+aePts(pf.map(function(p){return [p[0],p[1]];}))+',true);');
+  L.push('  addFill(ag,'+aeCol(c.compassArrowColor||'#e5484d')+');');
+  L.push('  tf(ar,"ADBE Anchor Point").setValue([0,0]);');
+  L.push('  tf(ar,"ADBE Position").setValue('+aeXY([mx,my])+');');
+  L.push('  keys(tf(ar,"ADBE Rotate Z"),'+aeKf(winkelKF,2)+');');
+  // Geschwindigkeit
+  L.push('  var sv=textLayer("Compass Speed","0",'+aeXY([mx+R*0.46,my+R*0.52])+','+aeNum(R*0.52)+','
+    +aeCol(c.compassTextColor||'#ffffff')+',true);');
+  L.push('  driveText(sv,"Speed",'+aeKf(zahlKF,2)+',"v.toFixed(0);");');
+  L.push('  textLayer("Compass Unit",'+aeStr(einheit)+','+aeXY([mx+R*0.46,my+R*0.86])+','+aeNum(R*0.20)+','
+    +aeCol(c.compassTextColor||'#ffffff')+',true);');
+  L.push(aeTail());
+  return L.join('\n');
+}
+
 function buildElevJsx(){
   var c=cfg();
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});

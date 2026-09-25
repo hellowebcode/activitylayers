@@ -19,6 +19,7 @@ function promptSupport(){
 [['btnSpeedJsx',buildSpeedJsx,'Speed_Overlay'],
  ['btnRouteJsx',buildRouteJsx,'Route_Overlay'],
  ['btnDiscJsx',buildRouteDiscJsx,'Route_Disc_Overlay'],
+ ['btnCompassJsx',buildCompassJsx,'Compass_Overlay'],
  ['btnElevJsx',buildElevJsx,'Elevation_Overlay'],
  ['btnHRJsx',buildHRJsx,'HR_Overlay'],
  ['btnInclineJsx',buildInclineJsx,'Incline_Overlay'],
@@ -43,6 +44,12 @@ document.getElementById('btnDiscSetting').addEventListener('click',function(){
   if(!t){ setStatus('No data for this overlay in this file','err'); return; }
   dl(t,makeFilename('Route_Disc_Overlay','setting'));
   setStatus('Downloaded Route_Disc_Overlay.setting','ok');
+});
+document.getElementById('btnCompassSetting').addEventListener('click',function(){
+  var t=buildCompassSetting();
+  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
+  dl(t,makeFilename('Compass_Overlay','setting'));
+  setStatus('Downloaded Compass_Overlay.setting','ok');
 });
 document.getElementById('btnElevSetting').addEventListener('click',function(){var s=buildElevSetting();if(!s){setStatus('No elevation data in this file','err');return;}dl(s,makeFilename('Elevation_Overlay','setting'));setStatus('Downloaded Elevation_Overlay.setting','ok');});
 
@@ -116,6 +123,7 @@ function exportSteps(){
     {kind:'fusion',label:'Building Speed overlay…',run:function(){return buildSetting();},name:function(){return makeFilename('Speed_Overlay','setting');}},
     {kind:'fusion',label:'Building Route overlay…',run:function(){return buildRouteSetting();},name:function(){return makeFilename('Route_Overlay','setting');}},
     {kind:'fusion',label:'Building Route disc overlay…',run:function(){return buildRouteDiscSetting();},name:function(){return makeFilename('Route_Disc_Overlay','setting');}},
+    {kind:'fusion',label:'Building Compass overlay…',run:function(){return buildCompassSetting();},name:function(){return makeFilename('Compass_Overlay','setting');}},
     {kind:'fusion',label:'Building Elevation overlay…',run:function(){return buildElevSetting();},name:function(){return makeFilename('Elevation_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building HR overlay…',run:function(){return hrData.length?buildHRSetting():null;},name:function(){return makeFilename('HR_Overlay','setting');},optional:true},
     {kind:'fusion',label:'Building Incline overlay…',run:function(){return gradeData.length?buildInclineSetting():null;},name:function(){return makeFilename('Incline_Overlay','setting');},optional:true},
@@ -128,6 +136,7 @@ function exportSteps(){
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildSpeedJsx();},name:function(){return makeFilename('Speed_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildRouteJsx();},name:function(){return makeFilename('Route_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildRouteDiscJsx();},name:function(){return makeFilename('Route_Disc_Overlay_AE','jsx');}},
+    {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildCompassJsx();},name:function(){return makeFilename('Compass_Overlay_AE','jsx');}},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildElevJsx();},name:function(){return makeFilename('Elevation_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildHRJsx();},name:function(){return makeFilename('HR_Overlay_AE','jsx');},optional:true},
     {kind:'ae',label:'Building After Effects scripts…',run:function(){return buildInclineJsx();},name:function(){return makeFilename('Incline_Overlay_AE','jsx');},optional:true},

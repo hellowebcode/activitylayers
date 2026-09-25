@@ -5,4 +5,5 @@
 // Streckenverlauf uebrigbleibt.
 var ghostPoints=[], ghostFilename='';
 
+var headingData=[];
 var rawPoints=[], speedData=[], hrData=[], cadData=[], powerData=[], tempData=[], paceData=[], gradeData=[], distData=[], lapData=[], totalDistM=0, currentFilename='';

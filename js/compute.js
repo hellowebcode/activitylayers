@@ -169,6 +169,7 @@ function reprocess(){
     return{time:p.time, sec:Math.max(60,Math.min(3600,sek))};
   });
   gradeData=buildGradeData(rawPoints);
+  headingData=buildHeadingData(rawPoints, glaetten+2);
   distData=buildDistData(rawPoints);
   totalDistM=distData.length?distData[distData.length-1].distM:0;
   var durSec=(speedData[speedData.length-1].time-speedData[0].time)/1000;
@@ -277,4 +278,87 @@ function kreisEinpassung(durchmesser, rand){
     return { x:((p.lon-mnLo)/loR-0.5)*breite,
              y:(0.5-(p.lat-mnLa)/laR)*hoehe };
   };
+}
+
+// ---- Fahrtrichtung ------------------------------------------------------
+// Die Peilung von einem Punkt zum naechsten. Im Stand liegen zwei Messpunkte
+// nur Meter auseinander, und das Rauschen des Empfaengers ergibt dann jede
+// beliebige Richtung. Deshalb drei Vorkehrungen:
+//   1. Unter einer Mindeststrecke zaehlt das Paar nicht.
+//   2. Punkte mit schlechter Ortung werden uebersprungen, wo die Datei sie
+//      ausweist (FIT-Feld 31, Meter).
+//   3. Gemittelt wird ueber einen Vektor, nicht ueber Gradzahlen - sonst
+//      ergaebe der Sprung von 359 auf 1 Grad einen Mittelwert von 180.
+// Fehlt eine brauchbare Richtung, wird die letzte gehalten.
+function peilung(la1, lo1, la2, lo2){
+  var f1=la1*Math.PI/180, f2=la2*Math.PI/180, dl=(lo2-lo1)*Math.PI/180;
+  var y=Math.sin(dl)*Math.cos(f2);
+  var x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl);
+  var g=Math.atan2(y,x)*180/Math.PI;
+  return (g+360)%360;
+}
+
+function buildHeadingData(pts, fenster, mindestMeter, maxFehler){
+  if(!pts||pts.length<2) return [];
+  var f=Math.max(1, fenster||5);
+  var mind=(mindestMeter===undefined)?3:mindestMeter;
+  var maxF=(maxFehler===undefined)?25:maxFehler;
+  // Rohe Richtungsvektoren je Punkt, ungueltige bleiben null
+  var vekt=[];
+  for(var i=0;i<pts.length;i++){
+    var a=pts[i], b=pts[i+1]||null;
+    var v=null;
+    if(b){
+      var schlecht=(a.genau!==null&&a.genau!==undefined&&a.genau>maxF)
+                 ||(b.genau!==null&&b.genau!==undefined&&b.genau>maxF);
+      if(!schlecht && haversine(a.lat,a.lon,b.lat,b.lon)>=mind){
+        var g=peilung(a.lat,a.lon,b.lat,b.lon)*Math.PI/180;
+        v={x:Math.sin(g), y:Math.cos(g)};
+      }
+    }
+    vekt.push(v);
+  }
+  var out=[], letzte=null;
+  for(var j=0;j<pts.length;j++){
+    var sx=0, sy=0, n=0;
+    for(var k=Math.max(0,j-f); k<=Math.min(vekt.length-1, j+f); k++){
+      if(vekt[k]){ sx+=vekt[k].x; sy+=vekt[k].y; n++; }
+    }
+    var grad;
+    if(n>0 && (sx*sx+sy*sy)>1e-6){
+      grad=(Math.atan2(sx,sy)*180/Math.PI+360)%360;
+      letzte=grad;
+    } else {
+      grad=(letzte===null)?0:letzte;
+    }
+    out.push({time:pts[j].time, deg:grad});
+  }
+  // Das erste Stueck bekommt die erste brauchbare Richtung, damit der Pfeil
+  // nicht bei Norden losgeht und dann wegschnellt. Rueckwaerts gefuellt, sonst
+  // kopiert man den Vorgabewert weiter, statt ihn zu ersetzen.
+  var ersteGute=-1;
+  for(var m=0;m<out.length;m++){
+    var sx2=0, sy2=0, n2=0;
+    for(var k2=Math.max(0,m-f); k2<=Math.min(vekt.length-1,m+f); k2++)
+      if(vekt[k2]){ sx2+=vekt[k2].x; sy2+=vekt[k2].y; n2++; }
+    if(n2>0 && (sx2*sx2+sy2*sy2)>1e-6){ ersteGute=m; break; }
+  }
+  for(var q=ersteGute-1;q>=0;q--) out[q].deg=out[q+1].deg;
+  return out;
+}
+
+// Fuer die Ausgabe: fortlaufender Winkel ohne Spruenge ueber die 360-Grad-Marke.
+// Sonst dreht der Pfeil bei jedem Nulldurchgang eine ganze Runde zurueck.
+function stetigerWinkel(daten){
+  var out=[], versatz=0, vorher=null;
+  for(var i=0;i<daten.length;i++){
+    var g=daten[i].deg;
+    if(vorher!==null){
+      if(g-vorher>180) versatz-=360;
+      else if(vorher-g>180) versatz+=360;
+    }
+    vorher=g;
+    out.push({time:daten[i].time, deg:g+versatz});
+  }
+  return out;
 }

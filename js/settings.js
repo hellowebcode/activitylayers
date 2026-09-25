@@ -81,6 +81,16 @@ var CONTROL_IDS=[
   'discProgress',
   'discProgressColor',
   'discProgressW',
+  'compassSize',
+  'compassScaleColor',
+  'compassTickW',
+  'compassArrowColor',
+  'compassLevelColor',
+  'compassLevelW',
+  'compassTextColor',
+  'compassAnchor',
+  'compassOffX',
+  'compassOffY',
   'discAnchor',
   'discOffX',
   'discOffY',
@@ -124,7 +134,7 @@ var CONTROL_IDS=[
 ];
 
 stelleEinstellungenWiederHer();
-var btnIds=['btnSetting','btnRouteSetting','btnDiscSetting','btnDiscJsx','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
+var btnIds=['btnSetting','btnRouteSetting','btnDiscSetting','btnDiscJsx','btnCompassSetting','btnCompassJsx','btnElevSetting','btnHRSetting','btnInclineSetting','btnMileSetting',
   'btnCadSetting','btnPowerSetting','btnTempSetting','btnPaceSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
   'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
@@ -132,6 +142,9 @@ var syncCalcResult={offset:null,drift:null};
 
 var DEF_VIDEO={fps:'29.97',unit:'mph',smooth:'3',offset:'0',driftFactor:'1.0',
                compPreset:'1920x1080',compW:'1920',compH:'1080'};
+var DEF_COMPASS={compassSize:'0.30',compassScaleColor:'#ffffff',compassTickW:'3',
+                 compassArrowColor:'#e5484d',compassLevelColor:'#3b82f6',
+                 compassLevelW:'6',compassTextColor:'#ffffff'};
 var DEF_DISC={discSize:'0.34',discTrackW:'3',discDotR:'6',discTrackColor:'#ff6600',
               discDotColor:'#fca300',discShadowOffset:'3',discShadowColor:'#000000',
               discBgColor:'#000000',discBgAlpha:'0.45',discRing:'0',
@@ -145,8 +158,8 @@ var DEF_ELEV={elevW:'1920',elevH:'300',elevLineW:'2',elevColor:'#38bdf8',elevFil
 // Lage aller Overlays. Sie ist bewusst fuer beide Ausgabeformate dieselbe -
 // vorher sass dasselbe Overlay in Resolve mittig und in After Effects unten
 // links.
-var POSITION_SCHLUESSEL=['speed','elev','hr','incline','mile','cad','power','temp','pace','lap','disc'];
-var DEF_POSITION={elev:'bottom-center'};
+var POSITION_SCHLUESSEL=['speed','elev','hr','incline','mile','cad','power','temp','pace','lap','disc','compass'];
+var DEF_POSITION={elev:'bottom-center',compass:'bottom-right'};
 // Die drei Lagefelder eines Overlays einzeln lesen. buildTextOverlaySetting
 // hat einen Parameter namens cfg und kommt deshalb nicht an die Funktion cfg().
 function lageFelder(schluessel){
@@ -530,6 +543,11 @@ document.getElementById('resetMile').addEventListener('click',function(){
   document.getElementById('mileColor').value='#38bdf8';
   document.getElementById('mileLineDistColor').value='#111111';
   document.getElementById('mileDecimals').value='1';
+});
+
+document.getElementById('resetCompass').addEventListener('click',function(){
+  applyDefaults(DEF_COMPASS);
+  positionZuruecksetzen('compass');
 });
 
 document.getElementById('resetDisc').addEventListener('click',function(){

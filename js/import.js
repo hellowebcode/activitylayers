@@ -56,7 +56,7 @@ var DROP_LABEL_HTML=null, DROP_SUB_HTML=null;
 // exportierbar.
 function resetTrackState(){
   rawPoints=[]; speedData=[]; hrData=[]; cadData=[]; powerData=[]; tempData=[];
-  paceData=[]; gradeData=[]; distData=[]; lapData=[];
+  paceData=[]; gradeData=[]; distData=[]; lapData=[]; headingData=[];
   totalDistM=0; currentFilename=''; lastMapTrackId=null;
   try{ setEnabled(false); }catch(e){}
   var l=dropZone&&dropZone.querySelector('.drop-label'), u=dropZone&&dropZone.querySelector('.drop-sub');
@@ -252,7 +252,7 @@ function parseFIT(buffer,name){
       var spdStd=(rec[6]!==undefined&&rec[6]!==0xFFFF)?rec[6]:undefined;
       var spdEnh=(rec[73]!==undefined&&rec[73]!==0xFFFFFFFF)?rec[73]:undefined;
       var spd=(spdStd!==undefined)?spdStd:spdEnh;
-      var hr=rec[3], cad=rec[4], pwr=rec[7], dst=rec[5], tmp=rec[13];
+      var hr=rec[3], cad=rec[4], pwr=rec[7], dst=rec[5], tmp=rec[13], gen=rec[31];
       if(ts!==undefined&&ts!==0xFFFFFFFF&&lat!==undefined&&lat!==0x7FFFFFFF&&lon!==undefined&&lon!==0x7FFFFFFF){
         var latDeg=(lat|0)*(180/Math.pow(2,31)), lonDeg=(lon|0)*(180/Math.pow(2,31));
         if(!validLatLon(latDeg,lonDeg)) return;
@@ -265,7 +265,10 @@ function parseFIT(buffer,name){
           cad:(cad!==undefined&&cad!==0xFF)?cad:null,
           power:(pwr!==undefined&&pwr!==0xFFFF&&pwr!==0xFFFFFFFF)?pwr:null,
           dist:(dst!==undefined&&dst!==0xFFFFFFFF)?dst/100:null,
-          temp:(tmp!==undefined&&tmp!==0x7F&&tmp>=-100&&tmp<=100)?tmp:null});
+          temp:(tmp!==undefined&&tmp!==0x7F&&tmp>=-100&&tmp<=100)?tmp:null,
+          // Geschaetzter Fehler der Ortung in Metern. Dient dazu, schlechte
+          // Messpunkte bei der Richtungsberechnung zu uebergehen.
+          genau:(gen!==undefined&&gen!==0xFF&&gen>=0&&gen<=200)?gen:null});
       }
     }
     while(pos<dataEnd){
@@ -400,7 +403,7 @@ function parseTCX(text,name){
         cad:tcxZahl(pt,'Cadence',0,254),
         power:tcxZahl(pt,'Watts',0,3000),
         dist:tcxZahl(pt,'DistanceMeters',0,1e7),
-        temp:null});
+        temp:null, genau:null});
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
@@ -436,7 +439,7 @@ function parseGPX(text,name){
           cad:getExtNumber(pt,['cad','cadence'],0,254),
           power:getExtNumber(pt,['power','pwr'],0,3000),
           temp:getExtNumber(pt,['atemp','temperature'],-100,100),
-          dist:null});
+          dist:null, genau:null});
       } else skipped++;
     }
     rawPoints.sort(function(a,b){return a.time-b.time;});

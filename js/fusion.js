@@ -454,7 +454,7 @@ function buildBackgroundNode(name, maskSourceOp, rgb, pos, alpha, w, h){
 }
 // Feste Beschriftung ohne Keyframes - fuer die Hoehenzahlen am Rand des
 // Profils. Lage als Mittelpunkt in normierten Koordinaten.
-function buildStaticTextNode(name, text, rgb, size, center01, pos, w, h){
+function buildStaticTextNode(name, text, rgb, size, center01, pos, w, h, treiber, ausdruck){
   var L=[];
   L.push('\t\t\t\t'+name+' = TextPlus {');
   L.push('\t\t\t\t\tInputs = {');
@@ -469,7 +469,15 @@ function buildStaticTextNode(name, text, rgb, size, center01, pos, w, h){
   L.push('\t\t\t\t\t\tGreen1 = Input { Value = '+(rgb[1]/255).toFixed(6)+', },');
   L.push('\t\t\t\t\t\tBlue1 = Input { Value = '+(rgb[2]/255).toFixed(6)+', },');
   L.push('\t\t\t\t\t\tSoftness1 = Input { Value = 1, },');
-  L.push('\t\t\t\t\t\tStyledText = Input { Value = "'+String(text).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'", },');
+  if(treiber){
+    L.push('\t\t\t\t\t\tStyledText = Input {');
+    L.push('\t\t\t\t\t\t\tValue = "'+String(text).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'",');
+    L.push('\t\t\t\t\t\t\tExpression = "'+ausdruck.replace(/"/g,'\\"')+'",');
+    L.push('\t\t\t\t\t\t},');
+    L.push('\t\t\t\t\t\tWert = '+bezierSourceRefInput(treiber)+',');
+  } else {
+    L.push('\t\t\t\t\t\tStyledText = Input { Value = "'+String(text).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'", },');
+  }
   L.push('\t\t\t\t\t\tFont = Input { Value = "Open Sans", },');
   L.push('\t\t\t\t\t\tStyle = Input { Value = "Bold", },');
   L.push('\t\t\t\t\t\tSize = Input { Value = '+size.toFixed(6)+', },');
@@ -478,17 +486,22 @@ function buildStaticTextNode(name, text, rgb, size, center01, pos, w, h){
   L.push('\t\t\t\t\t\tAdvancedFontControls = Input { Value = 1, },');
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
+  if(treiber)
+    L.push('\t\t\t\t\tUserControls = ordered() { Wert = { LINKS_Name = "Value", LINKID_DataType = "Number", INPID_InputControl = "SliderControl", INP_Integer = false, INP_MinScale = 0, INP_MaxScale = 1000, INP_MinAllowed = -1000000, INP_MaxAllowed = 1000000, ICS_ControlPage = "Text" } }');
   L.push('\t\t\t\t},');
   return L.join('\n');
 }
 
 // Verschiebt die ganze Gruppe. Fusion misst den Mittelpunkt normiert vom
 // linken unteren Bildrand; 0.5/0.5 laesst alles, wo es ist.
-function buildTransformNode(name, sourceOp, dx, dy, pos){
+function buildTransformNode(name, sourceOp, dx, dy, pos, winkelTreiber){
   var L=[];
   L.push('\t\t\t\t'+name+' = Transform {');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tCenter = Input { Value = { '+(0.5+dx).toFixed(6)+', '+(0.5+dy).toFixed(6)+' }, },');
+  // Fusion dreht gegen den Uhrzeigersinn, eine Kompasspeilung im Uhrzeigersinn.
+  if(winkelTreiber)
+    L.push('\t\t\t\t\t\tAngle = '+bezierSourceRefInput(winkelTreiber)+',');
   L.push('\t\t\t\t\t\tInput = Input { SourceOp = "'+sourceOp+'", Source = "Output", },');
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
@@ -850,6 +863,141 @@ function buildRouteDiscSetting(){
   L.push(buildBezierSplineTool('Path1Displacement', dispKF, false, 2));
   L.push('\t},');
   L.push('\tActiveTool = "RouteDiscOverlay",');
+  L.push('}');
+  return L.join('\n');
+}
+
+// Kompass: feste Skala, drehender Pfeil. Die Geschwindigkeit steht als Zahl
+// rechts unten und zusaetzlich als Pegel am linken Rand der Skala.
+function buildCompassSetting(){
+  var c=cfg();
+  var W=c.W, H=c.H;
+  if(rawPoints.length<2||!headingData.length) return null;
+  var k=Math.min(W/ENTWURF_W, H/ENTWURF_H);
+  var dEntwurf=Math.max(0.10, Math.min(1, zahlOderVorgabe(c.compassSize,0.30)))*ENTWURF_H;
+  var D=dEntwurf*k, R=D/2;
+  var mx=W/2, my=H/2;
+
+  var skalaFarbe=hexToRgb(c.compassScaleColor||'#ffffff');
+  var pfeilFarbe=hexToRgb(c.compassArrowColor||'#e5484d');
+  var pegelFarbe=hexToRgb(c.compassLevelColor||'#3b82f6');
+  var textFarbe=hexToRgb(c.compassTextColor||'#ffffff');
+  var strich=(parseFloat(c.compassTickW)||3)*k;
+  var pegelBreite=(parseFloat(c.compassLevelW)||6)*k;
+
+  var maxSpd=parseFloat(c.maxSpeed)||9;
+  var einheit=unitDisplay(c.unit);
+  var richtung=stetigerWinkel(headingData);
+  var winkelKF=buildKeyframeList(richtung,function(p){ return -p.deg; });
+  var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); });
+  var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); });
+  if(!winkelKF.length||!tempoKF.length) return null;
+
+  function aufKreis(gradVonNorden, radius){
+    var a=(gradVonNorden-90)*Math.PI/180;      // 0 Grad = oben
+    return { px:mx+Math.cos(a)*radius, py:my+Math.sin(a)*radius };
+  }
+
+  var L=[];
+  L.push('{');
+  L.push('\tTools = ordered() {');
+  L.push('\t\tCompassOverlay = GroupOperator {');
+  L.push('\t\t\tCtrlWZoom = false,');
+  L.push('\t\t\tNameSet = true,');
+  L.push('\t\t\tOutputs = { Output1 = InstanceOutput { SourceOp = "OverlayPosition", Source = "Output", }, },');
+  L.push('\t\t\tViewInfo = GroupInfo {');
+  L.push('\t\t\t\tPos = { 0, 0 },');
+  L.push('\t\t\t\tFlags = { AllowPan = false, AutoSnap = true, RemoveRouters = true },');
+  L.push('\t\t\t\tSize = { 566, 132.364, 283, 24.2424 },');
+  L.push('\t\t\t\tDirection = "Horizontal",');
+  L.push('\t\t\t\tPipeStyle = "Direct",');
+  L.push('\t\t\t\tScale = 1,');
+  L.push('\t\t\t\tOffset = { 0, 0 }');
+  L.push('\t\t\t},');
+  L.push('\t\t\tTools = ordered() {');
+  L.push(buildBackgroundNode('BackgroundCanvas', null, [0,0,0], [-100,100], 0, W, H));
+  var lastBg='BackgroundCanvas', mergeN=0, xPos=0;
+  function chain(nextBg){
+    mergeN++; xPos+=100;
+    var name='Merge'+mergeN;
+    L.push(buildMergeNode(name, lastBg, nextBg, [xPos,100]));
+    lastBg=name;
+  }
+
+  // Zwoelf Striche, die vier Haupthimmelsrichtungen laenger
+  for(var t=0;t<12;t++){
+    var grad=t*30;
+    var haupt=(grad%90===0);
+    var aussen=R, innen=R-(haupt?R*0.20:R*0.11);
+    var a=aufKreis(grad,aussen), b=aufKreis(grad,innen);
+    var nm='Tick'+t;
+    L.push(buildPolylineShapeNodes(nm, nm+'Polyline',
+      [toFusionMaskCoord(a.px,a.py,W,H), toFusionMaskCoord(b.px,b.py,W,H)],
+      false, false, strich/H, false, [0,-400+t*30], W, H).node);
+    L.push(buildBackgroundNode('Bg'+nm, nm, skalaFarbe, [100,-400+t*30], undefined, W, H));
+    chain('Bg'+nm);
+  }
+
+  // Buchstaben knapp innerhalb der Skala
+  var buchstaben=[[0,'N'],[90,'E'],[180,'S'],[270,'W']];
+  for(var i=0;i<buchstaben.length;i++){
+    var bp=aufKreis(buchstaben[i][0], R-R*0.34);
+    L.push(buildStaticTextNode('Dir'+i, buchstaben[i][1], skalaFarbe, (R*0.26)/H,
+      {x:bp.px/W, y:1-(bp.py/H)}, [200,-400+i*40], W, H));
+    chain('Dir'+i);
+  }
+
+  // Pegel am linken Rand: unten beginnen, gegen den Uhrzeigersinn nach oben
+  L.push('\t\t\t\tLevelMask = EllipseMask {');
+  L.push('\t\t\t\t\tInputs = {');
+  L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
+  L.push('\t\t\t\t\t\tBorderWidth = Input { Value = '+(pegelBreite/W).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tSolid = Input { Value = 0, },');
+  L.push('\t\t\t\t\t\tWritePosition = Input { Value = 0.75, },');
+  L.push('\t\t\t\t\t\tWriteLength = Input { Value = 0, Expression = "(0.5/100)*Tempo" },');
+  L.push('\t\t\t\t\t\tTempo = '+bezierSourceRefInput('CompassLevel')+',');
+  L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
+  L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
+  L.push('\t\t\t\t\t\tPixelAspect = Input { Value = { 1, 1 }, },');
+  L.push('\t\t\t\t\t\tUseFrameFormatSettings = Input { Value = 1, },');
+  L.push('\t\t\t\t\t\tClippingMode = Input { Value = FuID { "None" }, },');
+  L.push('\t\t\t\t\t\tWidth = Input { Value = '+(D/W).toFixed(6)+', },');
+  L.push('\t\t\t\t\t\tHeight = Input { Value = '+(D/W).toFixed(6)+', Expression = "Width", }');
+  L.push('\t\t\t\t\t},');
+  L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { 300, -300 } },');
+  L.push('\t\t\t\t\tUserControls = ordered() { Tempo = { LINKS_Name = "Speed", LINKID_DataType = "Number", INPID_InputControl = "SliderControl", INP_Integer = false, INP_MinScale = 0, INP_MaxScale = 100, INP_MinAllowed = 0, INP_MaxAllowed = 100, ICS_ControlPage = "Controls" } }');
+  L.push('\t\t\t\t},');
+  L.push(buildBackgroundNode('BackgroundLevel', 'LevelMask', pegelFarbe, [400,-300], undefined, W, H));
+  chain('BackgroundLevel');
+
+  // Der Pfeil zeigt nach oben und wird gedreht
+  var pf=[[0,-R*0.62],[-R*0.17,R*0.12],[0,R*0.02],[R*0.17,R*0.12]];
+  var pfeilPts=pf.map(function(p){ return toFusionMaskCoord(mx+p[0], my+p[1], W, H); });
+  L.push(buildPolylineShapeNodes('ArrowShape','ArrowPolyline',pfeilPts,true,true,0,false,[300,-200],W,H).node);
+  L.push(buildBackgroundNode('BackgroundArrow', 'ArrowShape', pfeilFarbe, [400,-200], undefined, W, H));
+  L.push(buildTransformNode('ArrowRotate', 'BackgroundArrow', 0, 0, [500,-200], 'CompassHeading'));
+  chain('ArrowRotate');
+
+  // Geschwindigkeit als Zahl, rechts unterhalb der Mitte
+  var zp={x:(mx+R*0.46)/W, y:1-((my+R*0.52)/H)};
+  var ep={x:(mx+R*0.46)/W, y:1-((my+R*0.86)/H)};
+  L.push(buildStaticTextNode('SpeedValue','0',textFarbe,(R*0.52)/H, zp,[600,-100],W,H,
+    'CompassSpeed','string.format("%.0f", Wert)'));
+  chain('SpeedValue');
+  L.push(buildStaticTextNode('SpeedUnit',einheit,textFarbe,(R*0.20)/H, ep,[600,-60],W,H));
+  chain('SpeedUnit');
+
+  L.push(buildBrightnessNode('BrightAdjust', lastBg, [xPos+100,100]));
+  L.push(buildBezierSplineTool('CompassHeading', winkelKF, false));
+  L.push(buildBezierSplineTool('CompassLevel', tempoKF, false));
+  L.push(buildBezierSplineTool('CompassSpeed', zahlKF, false));
+  var altX=ANKER_RAND+dEntwurf/2, altY=ENTWURF_H-ANKER_RAND-dEntwurf/2;
+  var vp=fusionVersatz(c,'compass',{b:dEntwurf,h:dEntwurf},altX,altY);
+  L.push(buildTransformNode('OverlayPosition', 'BrightAdjust', vp.dx, vp.dy, [xPos+200,100]));
+  L.push('\t\t\t},');
+  L.push('\t\t},');
+  L.push('\t},');
+  L.push('\tActiveTool = "CompassOverlay",');
   L.push('}');
   return L.join('\n');
 }
