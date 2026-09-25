@@ -107,7 +107,7 @@ var UI_DE={
   'Compass Overlay':'Kompass-Overlay',
   '.setting file (needle, scale and speed level)':'.setting-Datei (Pfeil, Skala und Geschwindigkeitspegel)',
   '.jsx script (needle, scale and speed level)':'.jsx-Skript (Pfeil, Skala und Geschwindigkeitspegel)',
-  'A fixed scale with a needle that turns to your direction of travel. The speed appears as a number at the lower right and as a level along the left edge of the scale. The direction is computed from consecutive positions, smoothed, and held while you stand still.':'Eine feste Skala mit einem Pfeil, der sich in deine Fahrtrichtung dreht. Die Geschwindigkeit erscheint als Zahl rechts unten und als Pegel am linken Rand der Skala. Die Richtung wird aus aufeinanderfolgenden Positionen berechnet, gegl\u00e4ttet und im Stand festgehalten.',
+  'A ring of ticks that doubles as the speed scale, with \u201eN\u201c for north inside it and a needle that turns to your direction of travel. The speed also appears as a number. The direction is computed from consecutive positions, smoothed, and held while you stand still.':'Ein Strichring, der zugleich die Geschwindigkeitsskala ist, mit einem \u201eN\u201c f\u00fcr Norden darin und einem Pfeil, der sich in deine Fahrtrichtung dreht. Die Geschwindigkeit steht zus\u00e4tzlich als Zahl darin. Die Richtung wird aus aufeinanderfolgenden Positionen berechnet, gegl\u00e4ttet und im Stand festgehalten.',
   'Route disc overlay style':'Runde Streckenkarte',
   'Diameter (share of height)':'Durchmesser (Anteil der H\u00f6he)',
   'Disc color':'Scheibenfarbe',

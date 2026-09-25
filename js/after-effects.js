@@ -369,27 +369,27 @@ function buildCompassJsx(){
   var L=[aeHead('Compass Overlay')];
   // Skala
   L.push('  var sc=shapeLayer("Compass Scale");');
-  for(var t=0;t<12;t++){
-    var grad=t*30, haupt=(grad%90===0);
-    var a=aufKreis(grad,R), b=aufKreis(grad,R-(haupt?R*0.20:R*0.11));
+  for(var t=0;t<16;t++){
+    var grad=t*22.5, haupt=(grad===0);
+    var a=aufKreis(grad,R), b=aufKreis(grad,R-(haupt?R*0.22:R*0.13));
     L.push('  var g'+t+'=grpOf(sc,"Tick '+t+'");');
     L.push('  addPath(g'+t+',['+aeXY(a)+','+aeXY(b)+'],false);');
     L.push('  addStroke(g'+t+','+aeCol(c.compassScaleColor||'#ffffff')+','+aeNum(strich)+');');
   }
-  // Buchstaben
-  var buchstaben=[[0,'N'],[90,'E'],[180,'S'],[270,'W']];
-  for(var i=0;i<buchstaben.length;i++){
-    var bp=aufKreis(buchstaben[i][0], R-R*0.34);
-    L.push('  textLayer("Compass '+buchstaben[i][1]+'",'+aeStr(buchstaben[i][1])+','+aeXY(bp)+','
-      +aeNum(R*0.26)+','+aeCol(c.compassScaleColor||'#ffffff')+',true);');
-  }
+  // Nur Norden, innerhalb der Skala
+  var np=aufKreis(0, R-R*0.38);
+  L.push('  textLayer("Compass N","N",'+aeXY(np)+','+aeNum(R*0.26)+','
+    +aeCol(c.compassScaleColor||'#ffffff')+',true);');
   // Pegel am linken Rand: Trim ueber die halbe Ellipse, gedreht auf sechs Uhr
   L.push('  var lv=shapeLayer("Compass Level"), lg=grpOf(lv,"Level");');
   L.push('  addEllipse(lg,['+aeNum(D-pegelBreite)+','+aeNum(D-pegelBreite)+'],'+aeXY([mx,my])+');');
   L.push('  addStroke(lg,'+aeCol(c.compassLevelColor||'#3b82f6')+','+aeNum(pegelBreite)+');');
-  L.push('  var lt=addTrim(lg,50,50,0);');
+  // Trim laeuft im Uhrzeigersinn ab zwoelf Uhr. Der Pegel soll unten beginnen
+  // und gegen den Uhrzeigersinn wachsen, deshalb Start statt Ende und ein
+  // Versatz von einer halben Umdrehung.
+  L.push('  var lt=addTrim(lg,100,100,180);');
   L.push('  keys(lt.property("ADBE Vector Trim Start"),(function(k){');
-  L.push('    var o=[]; for(var i=0;i<k.length;i++) o.push([k[i][0], 50-k[i][1]/2]); return o;');
+  L.push('    var o=[]; for(var i=0;i<k.length;i++) o.push([k[i][0], 100-k[i][1]]); return o;');
   L.push('  })('+aeKf(tempoKF,2)+'));');
   // Pfeil
   var pf=[[0,-R*0.62],[-R*0.17,R*0.12],[0,R*0.02],[R*0.17,R*0.12]];
@@ -400,10 +400,10 @@ function buildCompassJsx(){
   L.push('  tf(ar,"ADBE Position").setValue('+aeXY([mx,my])+');');
   L.push('  keys(tf(ar,"ADBE Rotate Z"),'+aeKf(winkelKF,2)+');');
   // Geschwindigkeit
-  L.push('  var sv=textLayer("Compass Speed","0",'+aeXY([mx+R*0.46,my+R*0.52])+','+aeNum(R*0.52)+','
+  L.push('  var sv=textLayer("Compass Speed","0",'+aeXY([mx+R*0.30,my+R*0.32])+','+aeNum(R*0.46)+','
     +aeCol(c.compassTextColor||'#ffffff')+',true);');
   L.push('  driveText(sv,"Speed",'+aeKf(zahlKF,2)+',"v.toFixed(0);");');
-  L.push('  textLayer("Compass Unit",'+aeStr(einheit)+','+aeXY([mx+R*0.46,my+R*0.86])+','+aeNum(R*0.20)+','
+  L.push('  textLayer("Compass Unit",'+aeStr(einheit)+','+aeXY([mx+R*0.26,my+R*0.70])+','+aeNum(R*0.17)+','
     +aeCol(c.compassTextColor||'#ffffff')+',true);');
   L.push(aeTail());
   return L.join('\n');

@@ -500,11 +500,17 @@ function buildTransformNode(name, sourceOp, dx, dy, pos, winkelTreiber){
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tCenter = Input { Value = { '+(0.5+dx).toFixed(6)+', '+(0.5+dy).toFixed(6)+' }, },');
   // Fusion dreht gegen den Uhrzeigersinn, eine Kompasspeilung im Uhrzeigersinn.
-  if(winkelTreiber)
-    L.push('\t\t\t\t\t\tAngle = '+bezierSourceRefInput(winkelTreiber)+',');
+  // Der Winkel haengt an einem eigenen Bedienelement und wird per Ausdruck
+  // uebernommen - dasselbe Muster wie beim Bogen des Tachos.
+  if(winkelTreiber){
+    L.push('\t\t\t\t\t\tAngle = Input { Value = 0, Expression = "Peilung" },');
+    L.push('\t\t\t\t\t\tPeilung = '+bezierSourceRefInput(winkelTreiber)+',');
+  }
   L.push('\t\t\t\t\t\tInput = Input { SourceOp = "'+sourceOp+'", Source = "Output", },');
   L.push('\t\t\t\t\t},');
   L.push('\t\t\t\t\tViewInfo = OperatorInfo { Pos = { '+pos[0]+', '+pos[1]+' } },');
+  if(winkelTreiber)
+    L.push('\t\t\t\t\tUserControls = ordered() { Peilung = { LINKS_Name = "Heading", LINKID_DataType = "Number", INPID_InputControl = "SliderControl", INP_Integer = false, INP_MinScale = -720, INP_MaxScale = 720, INP_MinAllowed = -1000000, INP_MaxAllowed = 1000000, ICS_ControlPage = "Controls" } }');
   L.push('\t\t\t\t},');
   return L.join('\n');
 }
@@ -924,37 +930,35 @@ function buildCompassSetting(){
     lastBg=name;
   }
 
-  // Zwoelf Striche, die vier Haupthimmelsrichtungen laenger
-  for(var t=0;t<12;t++){
-    var grad=t*30;
-    var haupt=(grad%90===0);
-    var aussen=R, innen=R-(haupt?R*0.20:R*0.11);
+  // Sechzehn Striche als Skala, der bei Norden laenger
+  for(var t=0;t<16;t++){
+    var grad=t*22.5;
+    var haupt=(grad===0);
+    var aussen=R, innen=R-(haupt?R*0.22:R*0.13);
     var a=aufKreis(grad,aussen), b=aufKreis(grad,innen);
     var nm='Tick'+t;
     L.push(buildPolylineShapeNodes(nm, nm+'Polyline',
       [toFusionMaskCoord(a.px,a.py,W,H), toFusionMaskCoord(b.px,b.py,W,H)],
-      false, false, strich/H, false, [0,-400+t*30], W, H).node);
-    L.push(buildBackgroundNode('Bg'+nm, nm, skalaFarbe, [100,-400+t*30], undefined, W, H));
+      false, false, strich/H, false, [0,-400+t*24], W, H).node);
+    L.push(buildBackgroundNode('Bg'+nm, nm, skalaFarbe, [100,-400+t*24], undefined, W, H));
     chain('Bg'+nm);
   }
 
-  // Buchstaben knapp innerhalb der Skala
-  var buchstaben=[[0,'N'],[90,'E'],[180,'S'],[270,'W']];
-  for(var i=0;i<buchstaben.length;i++){
-    var bp=aufKreis(buchstaben[i][0], R-R*0.34);
-    L.push(buildStaticTextNode('Dir'+i, buchstaben[i][1], skalaFarbe, (R*0.26)/H,
-      {x:bp.px/W, y:1-(bp.py/H)}, [200,-400+i*40], W, H));
-    chain('Dir'+i);
-  }
+  // Nur Norden wird beschriftet, innerhalb der Skala. Der Ring selbst ist die
+  // Geschwindigkeitsskala.
+  var np=aufKreis(0, R-R*0.38);
+  L.push(buildStaticTextNode('DirN', 'N', skalaFarbe, (R*0.26)/H,
+    {x:np.px/W, y:1-(np.py/H)}, [200,-400], W, H));
+  chain('DirN');
 
-  // Pegel am linken Rand: unten beginnen, gegen den Uhrzeigersinn nach oben
+  // Pegel ueber den ganzen Kreis: unten beginnen, gegen den Uhrzeigersinn
   L.push('\t\t\t\tLevelMask = EllipseMask {');
   L.push('\t\t\t\t\tInputs = {');
   L.push('\t\t\t\t\t\tFilter = Input { Value = FuID { "Fast Gaussian" }, },');
   L.push('\t\t\t\t\t\tBorderWidth = Input { Value = '+(pegelBreite/W).toFixed(6)+', },');
   L.push('\t\t\t\t\t\tSolid = Input { Value = 0, },');
   L.push('\t\t\t\t\t\tWritePosition = Input { Value = 0.75, },');
-  L.push('\t\t\t\t\t\tWriteLength = Input { Value = 0, Expression = "(0.5/100)*Tempo" },');
+  L.push('\t\t\t\t\t\tWriteLength = Input { Value = 0, Expression = "(1/100)*Tempo" },');
   L.push('\t\t\t\t\t\tTempo = '+bezierSourceRefInput('CompassLevel')+',');
   L.push('\t\t\t\t\t\tMaskWidth = Input { Value = '+W+', },');
   L.push('\t\t\t\t\t\tMaskHeight = Input { Value = '+H+', },');
@@ -979,12 +983,12 @@ function buildCompassSetting(){
   chain('ArrowRotate');
 
   // Geschwindigkeit als Zahl, rechts unterhalb der Mitte
-  var zp={x:(mx+R*0.46)/W, y:1-((my+R*0.52)/H)};
-  var ep={x:(mx+R*0.46)/W, y:1-((my+R*0.86)/H)};
-  L.push(buildStaticTextNode('SpeedValue','0',textFarbe,(R*0.52)/H, zp,[600,-100],W,H,
+  var zp={x:(mx+R*0.30)/W, y:1-((my+R*0.32)/H)};
+  var ep={x:(mx+R*0.26)/W, y:1-((my+R*0.70)/H)};
+  L.push(buildStaticTextNode('SpeedValue','0',textFarbe,(R*0.46)/H, zp,[600,-100],W,H,
     'CompassSpeed','string.format("%.0f", Wert)'));
   chain('SpeedValue');
-  L.push(buildStaticTextNode('SpeedUnit',einheit,textFarbe,(R*0.20)/H, ep,[600,-60],W,H));
+  L.push(buildStaticTextNode('SpeedUnit',einheit,textFarbe,(R*0.17)/H, ep,[600,-60],W,H));
   chain('SpeedUnit');
 
   L.push(buildBrightnessNode('BrightAdjust', lastBg, [xPos+100,100]));
