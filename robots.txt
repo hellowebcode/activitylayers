@@ -1,0 +1,8 @@
+# activitylayers.com
+User-agent: *
+Allow: /
+
+# Hilfsskripte der Entwicklung, für Suchmaschinen ohne Wert
+Disallow: /tools/
+
+Sitemap: https://www.activitylayers.com/sitemap.xml
