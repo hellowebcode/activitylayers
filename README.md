@@ -17,6 +17,13 @@ bewusst nur auf dem Server und nicht im Repository. Beim lokalen Ausprobieren
 fehlt `stats.js` deshalb und erzeugt einen 404; auf die Seite selbst hat das
 keine Auswirkung.
 
+`stats.js` bindet einen Matomo-Tag-Manager-Container ein. Der wird über die
+Matomo-Oberfläche gepflegt und kann sich daher ohne Auslieferung ändern —
+anders als jede andere Datei hier. Das ist eine bewusste Entscheidung und kein
+übersehener Punkt: Der Trackingcode soll Adresse und Seiten-ID nicht öffentlich
+zeigen. Wer den Stand prüfen will, sieht ihn unter `/stats.js` und im dort
+geladenen Container.
+
 | Datei | Inhalt |
 |---|---|
 | `index.html` | das Tool |
