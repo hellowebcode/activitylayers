@@ -206,6 +206,7 @@ function buildDisplacementKeyframes(ptsArr){
 }
 
 function buildSetting(){
+  if(!speedData.length) return null;
   var c=cfg();
   var W=c.W, H=c.H;
   var maxSpd=parseFloat(c.maxSpeed)||9;
@@ -1056,7 +1057,7 @@ function buildElevSetting(){
   var c=cfg();
   var W=c.W, H=c.H;
   var elevPts=rawPoints.filter(function(p){return p.ele!==null && !isNaN(p.ele);});
-  if(!elevPts.length) return null;
+  if(elevPts.length<2) return null;
   var lc=hexToRgb(c.elevColor);
   var dc=hexToRgb(c.elevDotColor);
   var fillOn=c.elevFill==='1';
@@ -1176,6 +1177,7 @@ function buildElevSetting(){
 }
 
 function buildHRSetting(){
+  if(!hrData.length) return null;
   var c=cfg();
   var W=c.W, H=c.H;
   var hrKF=buildKeyframeList(hrData,function(p){return Math.round(p.hr);});
@@ -1338,6 +1340,7 @@ function buildHRSetting(){
 }
 
 function buildInclineSetting(){
+  if(!gradeData.length) return null;
   var c=cfg();
   var W=c.W, H=c.H;
   var unit=c.inclineUnit;
@@ -1510,6 +1513,7 @@ function buildInclineSetting(){
 }
 
 function buildMileSetting(){
+  if(!distData.length) return null;
   var c=cfg();
   var W=c.W, H=c.H;
   var unit=c.unit;

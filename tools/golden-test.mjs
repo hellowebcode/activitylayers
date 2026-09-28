@@ -260,7 +260,8 @@ function kunstPunkte(anzahl, je) {
 }
 function setzePunkte(pts) {
   ctx.rawPoints = pts;
-  ctx.speedData = ctx.computeSpeeds(pts, ctx.document.getElementById('unit').value);
+  const win = (parseInt(ctx.document.getElementById('smooth').value, 10) || 0) * 2 + 1;
+  ctx.speedData = ctx.smooth(ctx.computeSpeeds(pts, ctx.document.getElementById('unit').value), win);
   ctx.distData = ctx.buildDistData(pts);
   ctx.gradeData = ctx.buildGradeData(pts);
   ctx.headingData = ctx.buildHeadingData(pts, 5, 3, 25);
@@ -279,8 +280,10 @@ const FAELLE = [
   // der Pause dorthin, wo es erst danach hingeht.
   ['segmente/', () => setzePunkte(kunstPunkte(60, i => {
     const s = Math.floor(i / 20), k = i % 20;
+    // Jeder Abschnitt hat eine eigene Richtung und ein eigenes Tempo, sonst
+    // faellt eine Glaettung ueber die Grenze hinweg gar nicht auf.
     const start = [[50, 7], [50.5, 7.5], [51, 8]][s];
-    const richtung = [[0.00045, 0], [0, 0.0007], [-0.00045, 0]][s];
+    const richtung = [[0.00045, 0], [0, 0.00014], [-0.0009, 0]][s];
     return { lat: start[0] + k * richtung[0], lon: start[1] + k * richtung[1],
              ele: 100 + k * 2 + s * 30,
              time: new Date(T0 + (i + s * 300) * 1000), seg: s, dist: null, genau: 3 };
@@ -304,6 +307,9 @@ const FAELLE = [
   ['geist/', () => { fitLesen('demo-ride.fit');
     ctx.ghostPoints = ctx.rawPoints.map(p => ({ lat: p.lat + 0.001, lon: p.lon + 0.001, time: p.time, seg: p.seg })); }],
   ['hochformat/', () => { fitLesen('demo-ride.fit'); setzeFeld('compW', 1080); setzeFeld('compH', 1920); }],
+  // Ohne Punkte muss jeder Generator null liefern statt zu stolpern.
+  ['leer/', () => setzePunkte([])],
+  ['einPunkt/', () => setzePunkte([{ lat: 50, lon: 7, ele: 100, time: new Date(T0), seg: 0, dist: null, genau: 3 }])],
 ];
 
 function laufFall(praefix, vorbereiten) {

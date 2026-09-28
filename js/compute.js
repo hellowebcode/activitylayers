@@ -59,7 +59,7 @@ function kumulierteStrecke(pts){
 }
 
 function computeSpeeds(pts,unit){
-  var result=[];
+  var result=[], lauf=laufNummern(pts);
   for(var i=0;i<pts.length;i++){
     var p=pts[i],spd=(p.speed!==null&&!isNaN(p.speed))?p.speed:null;
     if(spd===null){
@@ -68,7 +68,8 @@ function computeSpeeds(pts,unit){
         spd=dt>0?haversine(p.lat,p.lon,pts[i+1].lat,pts[i+1].lon)/dt:0;
       } else spd=result.length?result[result.length-1].rawSpd:0;
     }
-    result.push({time:p.time,rawSpd:spd,spd:Math.max(0,unit==='mph'?spd*2.23694:spd*3.6)});
+    result.push({time:p.time,rawSpd:spd,lauf:lauf[i],
+                 spd:Math.max(0,unit==='mph'?spd*2.23694:spd*3.6)});
   }
   return result;
 }
@@ -140,26 +141,37 @@ function smoothSG(data, win) {
   if (!weights) return smoothRolling(data, win);
   var out = [];
   for (var i = 0; i < data.length; i++) {
-    var sum = 0, wSum = 0;
+    var sum = 0, wSum = 0, g = laufGrenzen(data, i);
     for (var k = -m; k <= m; k++) {
-      var idx = Math.min(Math.max(i + k, 0), data.length - 1);
+      var idx = Math.min(Math.max(i + k, g[0]), g[1]);
       var w = weights[k + m];
       sum += w * data[idx].spd;
       wSum += w;
     }
 
-    out.push({ time: data[i].time, spd: Math.max(0, wSum !== 0 ? sum / wSum : sum) });
+    out.push({ time: data[i].time, lauf: data[i].lauf,
+               spd: Math.max(0, wSum !== 0 ? sum / wSum : sum) });
   }
   return out;
+}
+
+// Geglaettet wird nur innerhalb eines Aufnahmeabschnitts: ueber eine Pause
+// hinweg gemittelt zoege die Geschwindigkeit von davor in die Zeit danach.
+function laufGrenzen(data, i) {
+  var l = data[i].lauf, von = i, bis = i;
+  while (von > 0 && data[von-1].lauf === l) von--;
+  while (bis < data.length-1 && data[bis+1].lauf === l) bis++;
+  return [von, bis];
 }
 
 function smoothRolling(data, win) {
   if (win <= 1) return data.slice();
   var out = [];
   for (var i = 0; i < data.length; i++) {
-    var h = Math.floor(win/2), s = Math.max(0,i-h), e = Math.min(data.length-1,i+h), sum = 0, n = 0;
+    var g = laufGrenzen(data, i), h = Math.floor(win/2);
+    var s = Math.max(g[0],i-h), e = Math.min(g[1],i+h), sum = 0, n = 0;
     for (var j = s; j <= e; j++) { sum += data[j].spd; n++; }
-    out.push({ time: data[i].time, spd: sum / n });
+    out.push({ time: data[i].time, lauf: data[i].lauf, spd: sum / n });
   }
   return out;
 }

@@ -80,17 +80,18 @@ Verhalten unterscheiden:
 Neu erzeugen mit `python3 tools/make-examples.py`. Die Dateien sind
 deterministisch, derselbe Lauf liefert dieselben Bytes.
 
-`tools/golden-test.mjs` schickt elf Fälle durch alle sechsundzwanzig Generatoren
-und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit den
-Prüfsummen in `tools/golden.json` — 297 Einträge:
+`tools/golden-test.mjs` schickt dreizehn Fälle durch alle sechsundzwanzig
+Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
+den Prüfsummen in `tools/golden.json` — 351 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
 
-Die Fälle sind die vier Beispieldateien und sieben gebaute Grenzfälle: mehrere
-Aufnahmeabschnitte mit eigener Fahrtrichtung, Gerätestrecken mit Lücken und
-ohne Nullpunkt, negativer Versatz mit Abweichungsfaktor, die Datumsgrenze,
-vertauschte Zonengrenzen, eine Geisterspur und ein Hochformat.
+Die Fälle sind die vier Beispieldateien und neun gebaute Grenzfälle: mehrere
+Aufnahmeabschnitte mit eigener Fahrtrichtung und eigenem Tempo, Gerätestrecken
+mit Lücken und ohne Nullpunkt, negativer Versatz mit Abweichungsfaktor, die
+Datumsgrenze, vertauschte Zonengrenzen, eine Geisterspur, ein Hochformat sowie
+ein leerer und ein einpunktiger Track.
 
 Der Test braucht keine Abhängigkeiten. Er bewertet nicht, ob ein Overlay gut
 aussieht – er findet Änderungen an gemeinsam genutztem Code, die unbemerkt
