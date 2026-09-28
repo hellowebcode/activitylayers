@@ -53,17 +53,34 @@ function grenzeZwischen(vonZeit, bisZeit, pts){
   return false;
 }
 
-// An einer Aufnahmegrenze haelt der Punkt an der letzten aufgezeichneten Stelle
-// und springt erst im naechsten Bild weiter. Ohne diesen Halt faehrt er die
-// ganze Pause ueber die unsichtbare Verbindung - bei fuenf Minuten Pause
-// minutenlang durch leeres Bild. kf sind [Bild, Wert]-Paare, idx die
-// dazugehoerigen Indizes in pts.
-function haltAnGrenzen(kf, idx, pts){
+// Zeitpunkte, an denen die Aufzeichnung nach einer Pause wieder einsetzt.
+// Die Antwort haengt nur an den Punkten, wird aber von jedem Generator
+// gebraucht - deshalb einmal gerechnet und gemerkt.
+var grenzZeitenQuelle=null, grenzZeitenLaenge=-1, grenzZeitenWerte=[];
+function grenzZeiten(pts){
+  if(!pts||pts.length<2) return [];
+  if(pts===grenzZeitenQuelle && pts.length===grenzZeitenLaenge) return grenzZeitenWerte;
+  var raus=[];
+  for(var i=1;i<pts.length;i++) if(istGrenze(pts[i-1],pts[i])) raus.push(pts[i].time);
+  grenzZeitenQuelle=pts; grenzZeitenLaenge=pts.length; grenzZeitenWerte=raus;
+  return raus;
+}
+
+// Ueber eine Aufnahmepause hinweg darf nichts ueberblenden: weder der Punkt auf
+// der Strecke noch ein Messwert. Vor dem ersten Keyframe nach der Pause haelt
+// deshalb einer den letzten aufgezeichneten Wert, danach wird gesprungen.
+// kf sind [Bild, Wert]-Paare, zeiten die Zeitpunkte der zugehoerigen Messwerte.
+function haltAnGrenzen(kf, zeiten, pts){
   if(!kf || kf.length<2) return kf||[];
-  var lauf=laufNummern(pts), raus=[];
+  var gz=grenzZeiten(pts);
+  if(!gz.length) return kf;
+  var raus=[], g=0;
   for(var k=0;k<kf.length;k++){
-    if(k>0 && lauf[idx[k]]!==lauf[idx[k-1]] && kf[k][0]-1>kf[k-1][0])
-      raus.push([kf[k][0]-1, kf[k-1][1]]);
+    if(k>0){
+      while(g<gz.length && gz[g]<=zeiten[k-1]) g++;
+      if(g<gz.length && gz[g]<=zeiten[k] && kf[k][0]-1>kf[k-1][0])
+        raus.push([kf[k][0]-1, kf[k-1][1]]);
+    }
     raus.push(kf[k]);
   }
   return raus;

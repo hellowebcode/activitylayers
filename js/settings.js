@@ -293,10 +293,16 @@ function vorlageAusgeben(){
   dl(inhalt, sanitizeFilename('Activity Layers preset - '+titel)+'.json');
 }
 
+var vorlagenLauf=0;
 function vorlageEinlesen(datei){
+  // Wie beim Track: nur die jeweils letzte Anforderung darf noch etwas
+  // uebernehmen oder melden.
+  var meine=++vorlagenLauf;
+  var aktuell=function(){ return meine===vorlagenLauf; };
   var leser=new FileReader();
-  leseFehler(leser, datei);
+  leseFehler(leser, datei, aktuell);
   leser.onload=function(e){
+    if(!aktuell()) return;
     var d=null;
     try{ d=JSON.parse(e.target.result); }catch(err){}
     if(!d||!d.values||typeof d.values!=='object'){

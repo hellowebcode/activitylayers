@@ -47,6 +47,13 @@ function buildLapKeyframes(){
 }
 
 function buildTextOverlaySetting(cfg){
+  // Liegt die ganze Aufzeichnung vor dem Videostart, bleibt jede Keyframeliste
+  // leer. Eine Datei mit leerer Kurve sieht aus wie ein Erfolg, zeigt im
+  // Schnittprogramm aber nichts.
+  var hatWerte=false;
+  for(var d=0; cfg.drives && d<cfg.drives.length; d++)
+    if(cfg.drives[d].kf && cfg.drives[d].kf.length) hatWerte=true;
+  if(!hatWerte) return null;
   // cfg ist hier das uebergebene Beschreibungsobjekt, nicht die Funktion cfg();
   // die Leinwand kommt deshalb direkt aus den Bedienelementen.
   var W=leinwandMass('compW',COMP_DESIGN_W), H=leinwandMass('compH',COMP_DESIGN_H);
@@ -262,6 +269,7 @@ function buildCadenceJsx(){
   if(!cadData.length) return null;
   var size=(parseFloat(c.cadSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(cadData,function(p){return p.cad;}, {aufNull:true});
+  if(!kf.length) return null;
   var L=[aeHead('Cadence Overlay')];
   L.push('  var num=textLayer("Cadence","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
@@ -275,6 +283,7 @@ function buildPaceJsx(){
   if(!paceData.length) return null;
   var size=(parseFloat(c.paceSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(paceData,function(p){return Math.round(p.sec);}, {aufNull:true});
+  if(!kf.length) return null;
   var ausdruck='var t=v; var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
                'm+":"+(s<10?"0":"")+s+" '+paceLabel(c)+'";';
   var L=[aeHead('Pace Overlay')];
@@ -290,6 +299,7 @@ function buildTempJsx(){
   if(!tempData.length) return null;
   var size=(parseFloat(c.tempSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(tempData,function(p){return p.temp;}, {aufNull:true});
+  if(!kf.length) return null;
   var L=[aeHead('Temperature Overlay')];
   L.push('  var num=textLayer("Temperature","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.tempColor)+',false);');
   L.push('  driveText(num,"Temperature",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().temp+'";')+');');
@@ -303,6 +313,7 @@ function buildPowerJsx(){
   if(!powerData.length) return null;
   var size=(parseFloat(c.powerSize)||0.07)*AE_H*aeFaktor(c);
   var kf=buildKeyframeList(powerData,function(p){return p.power;}, {aufNull:true});
+  if(!kf.length) return null;
   var L=[aeHead('Power Overlay')];
   var zonen = c.powerZones ? zonenDeckkraft(powerData,function(p){return p.power;},
     zahlOderVorgabe(c.powerZone2,200), zahlOderVorgabe(c.powerZone3,280)) : null;

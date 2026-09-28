@@ -266,8 +266,14 @@ function setzePunkte(pts) {
   ctx.gradeData = ctx.buildGradeData(pts);
   ctx.headingData = ctx.buildHeadingData(pts, 5, 3, 25);
   ctx.totalDistM = ctx.distData.length ? ctx.distData[ctx.distData.length - 1].distM : 0;
-  ctx.hrData = []; ctx.cadData = []; ctx.powerData = []; ctx.tempData = [];
-  ctx.paceData = []; ctx.lapData = [];
+  // Sensorreihen entstehen nur, wo die Punkte die Werte auch tragen.
+  const reihe = (feld) => pts.filter(p => p[feld] !== undefined && p[feld] !== null)
+                             .map(p => ({ time: p.time, [feld]: p[feld] }));
+  ctx.hrData = reihe('hr'); ctx.cadData = reihe('cad');
+  ctx.powerData = reihe('power'); ctx.tempData = reihe('temp');
+  ctx.paceData = pts.filter(p => p.pace !== undefined)
+                    .map(p => ({ time: p.time, sec: p.pace }));
+  ctx.lapData = [];
 }
 
 const FAELLE = [
@@ -338,6 +344,19 @@ const FAELLE = [
     }));
     setzeFeld('offset', -305);
   }],
+  // Eine Pause mitten im Video, mit Sensorwerten: Ueber die Pause hinweg darf
+  // kein Messwert ueberblenden, vor dem ersten Keyframe danach haelt einer.
+  ['pauseMitWerten/', () => setzePunkte(kunstPunkte(40, i => {
+    const s = Math.floor(i / 20), k = i % 20;
+    return { lat: 50 + s * 0.5 + k * 0.00045, lon: 7 + s, ele: 100 + k + s * 50,
+             time: new Date(T0 + (i + s * 600) * 1000), seg: s, segHart: true,
+             dist: null, genau: 3,
+             hr: 120 + s * 40 + k, cad: 70 + s * 20, power: 150 + s * 120,
+             temp: 5 + s * 20, pace: 400 - s * 150 };
+  }))],
+  // Die ganze Aufzeichnung liegt vor Bild 0: Jede Keyframeliste bleibt leer,
+  // eine Datei mit leerer Kurve waere ein Erfolg ohne Inhalt.
+  ['keineUeberlappung/', () => { fitLesen('demo-ride.fit'); setzeFeld('offset', -5000); }],
   // Am Suedpol liefert Mercator ohne Klemme minus unendlich.
   ['pol/', () => setzePunkte(kunstPunkte(20, i => ({
     lat: -89.9 + i * 0.0004, lon: 30 + i * 0.001, ele: 2800 + i,

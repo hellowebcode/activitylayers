@@ -184,12 +184,12 @@ function aeRoutePoints(c,pad){
 
 function aePathKeys(dataArr, pts){
   var idx=buildKeyframeList(dataArr,function(p,i){return i;}, {aufNull:'halten'});
-  var out=[], benutzt=[];
+  var out=[];
   for(var i=0;i<idx.length;i++){
-    var j=idx[i][1], p=pts[j];
-    if(p){ out.push([idx[i][0],p]); benutzt.push(j); }
+    var p=pts[idx[i][1]];
+    if(p) out.push([idx[i][0],p]);
   }
-  return haltAnGrenzen(out, benutzt, dataArr);
+  return out;
 }
 
 function buildSpeedJsx(){
@@ -198,6 +198,7 @@ function buildSpeedJsx(){
   var maxSpd=parseFloat(c.maxSpeed)||9;
   var unit=unitDisplay(c.unit);
   var kf=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);}, {aufNull:true});
+  if(!kf.length) return null;
   var CX=320, CY=760, DISC=200, R=148, SPAN=86.111, OFF=205;
   var vs=ankerVersatz(c,'speed',OVERLAY_MASSE.speed,CX,CY); CX+=vs.dx; CY+=vs.dy;
   var L=[aeHead('Speed Overlay')];
@@ -255,6 +256,7 @@ function buildRouteJsx(){
   var dr=parseFloat(c.dotR)||12;
   var so=zahlOderVorgabe(c.shadowOffset,5);
   var dotKf=aePathKeys(rawPoints,pts);
+  if(!dotKf.length) return null;
   var L=[aeHead('Route Overlay')];
   if(spuren.ghost.length>1){
     var gAlpha=Math.max(0.05,Math.min(1,zahlOderVorgabe(c.ghostAlpha,0.55)));
@@ -309,6 +311,7 @@ function buildRouteDiscJsx(){
   var geist=[];
   for(var g=0; g<ghostPoints.length; g++) geist.push(auf(rawPoints.length+g));
   var dotKf=aePathKeys(rawPoints, pts);
+  if(!dotKf.length) return null;
 
   var L=[aeHead('Route Disc Overlay')];
   L.push('  var disc=shapeLayer("Route Disc"), dcg=grpOf(disc,"Disc");');
@@ -455,6 +458,7 @@ function buildElevJsx(){
   closed.push([ox+xy.xs[xy.xs.length-1], oy+iH]);
   closed.push([ox+xy.xs[0], oy+iH]);
   var dotKf=aePathKeys(elevPts,pts);
+  if(!dotKf.length) return null;
   var L=[aeHead('Elevation Overlay')];
   L.push('  var PTS='+aePts(pts)+';');
   if(fillOn){
@@ -495,6 +499,7 @@ function buildHRJsx(){
   var sizeEntwurf=(parseFloat(c.hrSize)||0.07)*AE_H;
   var size=sizeEntwurf*aeFaktor(c);
   var kf=buildKeyframeList(hrData,function(p){return p.hr;}, {aufNull:true});
+  if(!kf.length) return null;
   var HX=250, HY=880;
   var vs=ankerVersatz(c,'hr',OVERLAY_MASSE.hr,HX,HY); HX+=vs.dx; HY+=vs.dy;
   var ort=aeOrt(c,HX+sizeEntwurf*1.2,HY+sizeEntwurf*0.4);
@@ -532,6 +537,7 @@ function buildInclineJsx(){
   if(!gradeData.length) return null;
   var unit=c.inclineUnit;
   var kf=buildKeyframeList(gradeData,function(p){return p.pct;}, {aufNull:true});
+  if(!kf.length) return null;
   var rot=[],i;
   for(i=0;i<kf.length;i++) rot.push([kf[i][0], -Math.atan(kf[i][1]/100)*180/Math.PI]);
   var BX=260, BY=880;
@@ -559,6 +565,7 @@ function buildMileJsx(){
   var div=unit==='mph'?1609.344:1000;
   var label=unit==='mph'?'mi':'km';
   var kf=buildKeyframeList(distData,function(p){return p.distM/div;}, {aufNull:true});
+  if(!kf.length) return null;
   var MX=260, MY=880;
   var vs=ankerVersatz(c,'mile',OVERLAY_MASSE.mile,MX,MY); MX+=vs.dx; MY+=vs.dy;
   var L=[aeHead('Mile Marker Overlay')];

@@ -107,7 +107,8 @@ function buildKeyframeList(dataArr, valueFn, optionen){
   var drift=parseFloat(c.driftFactor)||1.0;
   var t0=(typeof rawPoints!=='undefined'&&rawPoints.length)?rawPoints[0].time:dataArr[0].time;
   function bild(i){ return Math.round(((dataArr[i].time-t0)/1000*drift+offset)*fps); }
-  var out=[],lf=-1,letzterVor=-1;
+  var quelle=(typeof rawPoints!=='undefined')?rawPoints:null;
+  var out=[],zeiten=[],lf=-1,letzterVor=-1;
   for(var i=0;i<dataArr.length;i++){
     var fr=bild(i);
     if(fr<0){ letzterVor=i; continue; }
@@ -115,7 +116,6 @@ function buildKeyframeList(dataArr, valueFn, optionen){
     if(o.aufNull && !out.length && fr>0 && letzterVor>=0){
       var fv=bild(letzterVor), vv=valueFn(dataArr[letzterVor], letzterVor);
       var nv=valueFn(dataArr[i], i);
-      var quelle=(typeof rawPoints!=='undefined')?rawPoints:null;
       var halten=(o.aufNull==='halten')
         || grenzeZwischen(dataArr[letzterVor].time, dataArr[i].time, quelle);
       var wert=null;
@@ -123,16 +123,16 @@ function buildKeyframeList(dataArr, valueFn, optionen){
       else if(typeof vv==='number' && typeof nv==='number'
               && isFinite(vv) && isFinite(nv) && fr>fv) wert=vv+(nv-vv)*((0-fv)/(fr-fv));
       if(wert!==null){
-        out.push([0, wert]);
+        out.push([0, wert]); zeiten.push(dataArr[letzterVor].time);
         if(o.indizes) o.indizes.push(letzterVor);
         lf=0;
       }
     }
-    out.push([fr, valueFn(dataArr[i], i)]);
+    out.push([fr, valueFn(dataArr[i], i)]); zeiten.push(dataArr[i].time);
     if(o.indizes) o.indizes.push(i);
     lf=fr;
   }
-  return out;
+  return haltAnGrenzen(out, zeiten, quelle);
 }
 
 function buildBezierSplineTool(name, keyframes, isPoint, indentTabs){
@@ -233,10 +233,7 @@ function buildDisplacementKeyframes(ptsArr){
   }
   var total=cum[cum.length-1];
   var frac=cum.map(function(c){return total>0?c/total:0;});
-  var idx=[];
-  var kf=buildKeyframeList(ptsArr, function(p,i){return frac[i];},
-                           {aufNull:true, indizes:idx});
-  return haltAnGrenzen(kf, idx, ptsArr);
+  return buildKeyframeList(ptsArr, function(p,i){return frac[i];}, {aufNull:true});
 }
 
 function buildSetting(){
@@ -246,6 +243,7 @@ function buildSetting(){
   var maxSpd=parseFloat(c.maxSpeed)||9;
   var unit=c.unit,u=unitDisplay(unit),ms=maxSpd.toFixed(2);
   var speedKF=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);}, {aufNull:true});
+  if(!speedKF.length) return null;
   var bgRgb=hexToRgb(c.gaugeBgColor);
   var ringRgb=hexToRgb(c.gaugeRingColor);
   var arcRgb=hexToRgb(c.gaugeArcColor);
@@ -730,6 +728,7 @@ function buildRouteSetting(){
 
   var dotCenter01=pxPts.map(function(p){return {x:p.px/W, y:1-(p.py/H)};});
   var dispKF=buildDisplacementKeyframes(rawPoints);
+  if(!dispKF.length) return null;
   var dotDiaPx=dR*2, shadowDotDiaPx=dR*2*1.15;
 
   var geistPts=[];
@@ -841,6 +840,7 @@ function buildRouteDiscSetting(){
   var gc=hexToRgb(c.ghostColor||'#8892a4');
   var gAlpha=Math.max(0.05, Math.min(1, zahlOderVorgabe(c.ghostAlpha,0.55)));
   var dispKF=buildDisplacementKeyframes(rawPoints);
+  if(!dispKF.length) return null;
   // Anteil der zurueckgelegten Strecke in Prozent, fuer den Ring am Rand.
   var fortschrittAn=(c.discProgress!=='0');
   var pW=parseFloat(c.discProgressW)||5;
@@ -1125,6 +1125,8 @@ function buildElevSetting(){
 
   var dispKF=buildDisplacementKeyframes(elevPts);
 
+  if(!dispKF.length) return null;
+
   var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,lw/CH,true,[0,50],CW,CH,'Publish1');
   var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,sw/CH,true,[0,150],CW,CH,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
 
@@ -1215,6 +1217,7 @@ function buildHRSetting(){
   var c=cfg();
   var W=c.W, H=c.H;
   var hrKF=buildKeyframeList(hrData,function(p){return Math.round(p.hr);}, {aufNull:true});
+  if(!hrKF.length) return null;
   var textRgb=hexToRgb(c.hrColor);
   var textSize=parseFloat(c.hrSize)||0.07;
 
@@ -1383,6 +1386,7 @@ function buildInclineSetting(){
     ? "string.format('%.1f°', math.atan(NumberDrive/100) * (180/math.pi))"
     : "string.format('%.1f%%', NumberDrive)";
   var inclineKF=buildKeyframeList(gradeData,function(p){return p.pct;}, {aufNull:true});
+  if(!inclineKF.length) return null;
   var numRgb=hexToRgb(c.inclineNumberColor);
   var rF=(numRgb[0]/255).toFixed(6), gF=(numRgb[1]/255).toFixed(6), bF=(numRgb[2]/255).toFixed(6);
   var wedgeRgb=hexToRgb(c.inclineWedgeColor);
@@ -1556,6 +1560,7 @@ function buildMileSetting(){
   var totalDispDist = unit==='mph' ? totalDistM/1609.344 : totalDistM/1000;
   if(!isFinite(totalDispDist) || totalDispDist<=0) totalDispDist = 1;
   var mileKF=buildKeyframeList(distData,function(p){return unit==='mph' ? p.distM/1609.344 : p.distM/1000;}, {aufNull:true});
+  if(!mileKF.length) return null;
   var mileDec=parseInt(c.mileDecimals,10)||1;
   var lineDistRgb=hexToRgb(c.mileLineDistColor);
   var mileTextRgb=hexToRgb(c.mileColor);

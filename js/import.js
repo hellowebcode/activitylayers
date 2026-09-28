@@ -98,6 +98,10 @@ function leseFehler(reader, file, nochAktuell){
 }
 
 function handleFile(file){
+  // Der Zaehler steigt vor den Pruefungen: Auch eine abgelehnte Auswahl loest
+  // die vorige ab, sonst ueberschreibt ein noch laufender aelterer Lesevorgang
+  // die Fehlermeldung mit seinem Ergebnis.
+  var meine=++ladeLauf;
   var name=file.name.toLowerCase();
   if(!name.endsWith('.gpx')&&!name.endsWith('.fit')&&!name.endsWith('.tcx')){setStatus('Please upload a .gpx, .fit or .tcx file','err');return;}
   if(file.size>MAX_FILE_BYTES){
@@ -106,10 +110,6 @@ function handleFile(file){
   }
   resetTrackState();
   setStatus('Reading '+file.name+'...');
-  // Wird schnell hintereinander zweimal gewaehlt, kann der langsamere
-  // Lesevorgang spaeter fertig werden und den neueren ueberschreiben. Nur die
-  // jeweils letzte Anforderung darf noch etwas uebernehmen.
-  var meine=++ladeLauf;
   var reader=new FileReader();
   leseFehler(reader, file, function(){ return meine===ladeLauf; });
   function fertig(verarbeite){
@@ -138,6 +138,7 @@ var importZiel='haupt', geistKandidat=null;
 var ladeLauf=0, geistLauf=0;
 
 function handleGhostFile(file){
+  var meine=++geistLauf;
   var name=file.name.toLowerCase();
   if(!name.endsWith('.gpx')&&!name.endsWith('.fit')&&!name.endsWith('.tcx')){
     setStatus('Please upload a .gpx, .fit or .tcx file','err'); return;
@@ -148,7 +149,6 @@ function handleGhostFile(file){
   }
   setStatus('Reading '+file.name+'...');
   var reader=new FileReader();
-  var meine=++geistLauf;
   leseFehler(reader, file, function(){ return meine===geistLauf; });
   function lies(inhalt){
     var merk={rawPoints:rawPoints, lapData:lapData, totalDistM:totalDistM, currentFilename:currentFilename};
