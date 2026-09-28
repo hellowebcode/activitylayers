@@ -160,6 +160,7 @@ var UI_DE={
   'Peak speed':'Höchstgeschwindigkeit',
   'copy':'kopieren',
   'Speedometer preview':'Tacho-Vorschau',
+  'Download single overlays':'Einzelne Overlays herunterladen',
   'Route preview':'Routenvorschau',
   'Speed curve':'Geschwindigkeitskurve',
   'Heart rate':'Herzfrequenz',

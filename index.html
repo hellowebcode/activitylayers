@@ -259,10 +259,10 @@
     </div>
   </div>
   <p class="card-note">Both export formats follow this size. Overlays keep their distance from the edge and their proportions on any canvas.</p>
-  <div class="card-title how-header" id="syncInfoHeader" style="font-size:.78rem;color:var(--muted);margin-top:10px;font-family:'DM Mono',monospace;font-weight:500">
+  <button type="button" class="card-title how-header" id="syncInfoHeader" aria-expanded="false" aria-controls="syncInfoBody" style="font-size:.78rem;color:var(--muted);margin-top:10px;font-family:'DM Mono',monospace;font-weight:500">
     What do these mean?
-    <span class="how-arrow" id="syncInfoArrow">▾</span>
-  </div>
+    <span class="how-arrow" id="syncInfoArrow" aria-hidden="true">▾</span>
+  </button>
   <div id="syncInfoBody" style="display:none">
     <div class="hint" style="margin-top:8px">
       <p><strong>The GPS offset</strong> tells the overlay where your recording sits on the video timeline. It is the video timecode, in seconds, at the moment the watch started recording. If the watch was already running before you hit record on the camera, the value is negative.</p>
@@ -848,6 +848,11 @@
 <div class="card indexed-section" id="outputs-card">
   <span class="section-step" aria-hidden="true">04</span>
   <div class="card-title">Download outputs</div>
+  <button type="button" class="card-title how-header" id="dlSingleHeader" aria-expanded="false" aria-controls="dlSingleBody" style="font-size:.78rem;color:var(--muted);margin-top:0;font-family:'DM Mono',monospace;font-weight:500">
+    Download single overlays
+    <span class="how-arrow" id="dlSingleArrow" aria-hidden="true">▾</span>
+  </button>
+  <div id="dlSingleBody" style="display:none">
   <div class="dl-section-label">DaVinci Resolve — Fusion .setting files</div>
   <div class="dl-grid">
     <button type="button" class="dl-btn primary" id="btnSetting" disabled>Speedometer<div class="dl-sub">.setting file (spline baked in)</div></button>
@@ -879,6 +884,7 @@
     <button type="button" class="dl-btn" id="btnTempJsx" disabled>Temperature Overlay<div class="dl-sub">.jsx script (temperature value)</div></button>
     <button type="button" class="dl-btn" id="btnPaceJsx" disabled>Pace Overlay<div class="dl-sub">.jsx script (pace value)</div></button>
     <button type="button" class="dl-btn" id="btnLapJsx" disabled>Lap Marker Overlay<div class="dl-sub">.jsx script (.fit and .tcx only)</div></button>
+  </div>
   </div>
   <div class="dl-split">
     <button type="button" class="dl-all-btn dl-all-secondary" id="btnDownloadFusion" disabled><svg class="ico" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Download DaVinci Resolve files</button>

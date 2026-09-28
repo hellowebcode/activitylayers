@@ -353,12 +353,20 @@ function stelleEinstellungenWiederHer(){
   });
 })();
 
-document.getElementById('syncInfoHeader').addEventListener('click',function(){
-  var body=document.getElementById('syncInfoBody'), arrow=document.getElementById('syncInfoArrow');
-  var open=body.style.display==='block';
-  body.style.display=open?'none':'block';
-  arrow.classList.toggle('open',!open);
-});
+// Ausklappbare Abschnitte: Kopfzeile, Inhalt und Pfeil gehoeren zusammen.
+function macheAusklapper(kopfId, koerperId, pfeilId){
+  var kopf=document.getElementById(kopfId), koerper=document.getElementById(koerperId),
+      pfeil=document.getElementById(pfeilId);
+  if(!kopf||!koerper) return;
+  kopf.addEventListener('click',function(){
+    var offen=koerper.style.display==='block';
+    koerper.style.display=offen?'none':'block';
+    if(pfeil) pfeil.classList.toggle('open',!offen);
+    kopf.setAttribute('aria-expanded',offen?'false':'true');
+  });
+}
+macheAusklapper('syncInfoHeader','syncInfoBody','syncInfoArrow');
+macheAusklapper('dlSingleHeader','dlSingleBody','dlSingleArrow');
 
 document.getElementById('copyDur').addEventListener('click',function(){
   var dur=document.getElementById('statDur').textContent;
