@@ -80,16 +80,16 @@ Verhalten unterscheiden:
 | Datei | Ergibt |
 |---|---|
 | `demo-ride.fit` | alle dreizehn Overlays, drei Runden |
-| `demo-ride.gpx` | zehn Overlays, GPX kennt keine Runden |
+| `demo-ride.tcx` | elf Overlays, ohne Leistung und Temperatur |
+| `demo-ride.gpx` | neun Overlays, ohne Puls, Trittfrequenz, Temperatur und Runden |
 | `demo-minimal.gpx` | sechs Overlays, weder Höhe noch Sensorwerte |
-| `demo-ride.tcx` | zehn Overlays, TCX führt keine Temperatur |
 
 Neu erzeugen mit `python3 tools/make-examples.py`. Die Dateien sind
 deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt neunzehn Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 600 Einträge:
+den Prüfsummen in `tools/golden.json` — 602 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
@@ -102,6 +102,11 @@ eine Pause mit Sensorwerten mitten im Video, ein Versatz ohne jede zeitliche
 Überlappung, die Datumsgrenze, der Südpol,
 vertauschte Zonengrenzen, eine Geisterspur, ein Hochformat sowie ein leerer,
 ein einpunktiger und ein aus lauter Einzelpunkten bestehender Track.
+
+Zwei Einträge prüfen keine Ausgabe, sondern Angaben, die an zwei Stellen stehen:
+die Dateigrenze aus `js/import.js` gegen die Zahl im Blog und die Overlayzahlen
+der Beispieldateien gegen die Tabelle oben. Beides war schon einmal
+auseinandergelaufen.
 
 Dazu kommen drei Fälle, die nicht die Generatoren prüfen, sondern die
 Oberfläche: Sie lösen die echten Klickbehandler aller sechsundzwanzig

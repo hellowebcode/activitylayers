@@ -412,7 +412,9 @@ const KNOEPFE = [
   'btnInclineJsx','btnMileJsx','btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx',
 ];
 
-function laufKnoepfe(praefix, vorbereiten) {
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+async function laufKnoepfe(praefix, vorbereiten) {
   feldZurueck();
   ctx.resetTrackState();
   ctx.ghostPoints = [];
@@ -432,11 +434,23 @@ function laufKnoepfe(praefix, vorbereiten) {
   }
   for (const [id, name] of [['btnDownloadFusion','fusion'],['btnDownloadAe','ae'],['btnDownloadAll','alle']]) {
     protokoll.zipDateien = 0; protokoll.zipErzeugt = 0; status.textContent = '';
-    try { ctx.document.getElementById(id).click(); }
+    const knopf = ctx.document.getElementById(id);
+    try { knopf.click(); }
     catch (e) { ergebnis[praefix + name] = 'AUSNAHME: ' + e.message; continue; }
-    ergebnis[praefix + name] = protokoll.zipDateien
+    // Waehrend des Packens muss der Knopf gesperrt sein, und ein zweiter Klick
+    // darf nichts ausloesen. Danach muss die Sperre wieder fallen.
+    const waehrendGesperrt = knopf.disabled;
+    const vorher = protokoll.zipDateien;
+    knopf.click();
+    const doppelt = protokoll.zipDateien > vorher;
+    await tick();
+    const leerlauf = !protokoll.zipDateien && !protokoll.zipErzeugt;
+    ergebnis[praefix + name] = (protokoll.zipDateien
       ? 'Archiv mit ' + protokoll.zipDateien + ' Dateien'
-      : (protokoll.zipErzeugt ? 'LEERES ARCHIV ERZEUGT' : 'kein Archiv: ' + status.textContent);
+      : (protokoll.zipErzeugt ? 'LEERES ARCHIV ERZEUGT' : 'kein Archiv: ' + status.textContent))
+      + (doppelt ? ' | ZWEITER LAUF GESTARTET' : '')
+      + ((waehrendGesperrt || leerlauf) ? '' : ' | WAEHREND DES PACKENS NICHT GESPERRT')
+      + (knopf.disabled ? ' | KNOPF BLEIBT GESPERRT' : '');
   }
   return ergebnis;
 }
@@ -450,17 +464,42 @@ const KNOPFFAELLE = [
   })))],
 ];
 
-function lauf() {
-  let alles = {};
+/* ---------- Angaben in Text und Code ----------
+   Zahlen, die an zwei Stellen stehen, laufen sonst auseinander: Der Blog nannte
+   einmal "kein Limit", waehrend import.js 32 MB setzte. */
+function abgleich() {
+  const raus = {};
+  const imp = fs.readFileSync(path.join(WURZEL, 'js', 'import.js'), 'utf8');
+  const m = /MAX_FILE_BYTES\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024/.exec(imp);
+  const mb = m ? Number(m[1]) : null;
+  const blog = fs.readFileSync(path.join(WURZEL, 'blog', 'nichts-verlaesst-dein-geraet.html'), 'utf8');
+  const genannt = [...blog.matchAll(/(\d+)&nbsp;MB/g)].map((x) => Number(x[1]));
+  raus['__dateigrenze__'] = mb === null ? 'MAX_FILE_BYTES nicht gefunden'
+    : (genannt.length && genannt.every((g) => g === mb)
+        ? mb + ' MB, im Blog ' + genannt.length + 'x genannt'
+        : 'WIDERSPRUCH: Code ' + mb + ' MB, Blog ' + (genannt.join(',') || 'keine Angabe'));
+  return raus;
+}
+
+// Wieviele Overlays jede Beispieldatei ergibt, steht auch im README.
+function beispielZahlen(alles) {
+  const zaehle = (pre) => GENERATOREN.filter(([n]) => n.endsWith('.setting'))
+    .filter(([n]) => alles[pre + n] && alles[pre + n] !== 'null').length;
+  return { '__beispiele__': 'fit=' + zaehle('') + ' tcx=' + zaehle('tcx/')
+           + ' gpx=' + zaehle('gpx/') + ' minimal=' + zaehle('minimal/') };
+}
+
+async function lauf() {
+  let alles = abgleich();
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }
   }
   for (const [praefix, vorbereiten] of KNOPFFAELLE) {
-    try { alles = Object.assign(alles, laufKnoepfe(praefix, vorbereiten)); }
+    try { alles = Object.assign(alles, await laufKnoepfe(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }
   }
-  return alles;
+  return Object.assign(alles, beispielZahlen(alles));
 }
 
 if (ladefehler && typeof ctx.parseFIT !== 'function') {
@@ -469,7 +508,7 @@ if (ladefehler && typeof ctx.parseFIT !== 'function') {
 }
 if (ladefehler) console.error('Hinweis: Ladefehler ignoriert (' + ladefehler.message + ')');
 
-const jetzt = lauf();
+const jetzt = await lauf();
 if (schreiben) {
   fs.writeFileSync(GOLD, JSON.stringify(jetzt, null, 2) + '\n');
   console.log('Prüfsummen aufgenommen: ' + Object.keys(jetzt).length + ' Einträge');

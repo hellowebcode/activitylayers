@@ -1,4 +1,5 @@
 {
+  "__dateigrenze__": "32 MB, im Blog 2x genannt",
   "__daten__": "punkte=721 hr=691 cad=721 power=721 temp=721 pace=721 runden=3 abschnitte=1 distanz=6.001",
   "Speed_Overlay.setting": "98d47f30b985d0e1  29977",
   "Route_Overlay.setting": "5836c246c6bcfe01  109778",
@@ -598,5 +599,6 @@
   "knopfEinzelpunkte/btnLapJsx": "kein Download: No data for this overlay in this file",
   "knopfEinzelpunkte/fusion": "Archiv mit 5 Dateien",
   "knopfEinzelpunkte/ae": "Archiv mit 5 Dateien",
-  "knopfEinzelpunkte/alle": "Archiv mit 10 Dateien"
+  "knopfEinzelpunkte/alle": "Archiv mit 10 Dateien",
+  "__beispiele__": "fit=13 tcx=11 gpx=9 minimal=6"
 }

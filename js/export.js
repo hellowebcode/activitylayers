@@ -71,7 +71,11 @@ function leer(reihe){ return function(){ return !reihe().length; }; }
  ['btnLapJsx',     function(){return buildLapJsx();},       'Lap_Marker_Overlay']
 ].forEach(function(a){ einzelDownload(a[0], a[1], a[2]+'_AE', 'jsx'); });
 
+// Das Ausblenden ist verzoegert. Ohne Merken wuerde der Timer eines beendeten
+// Laufs die Anzeige eines gerade gestarteten wieder wegnehmen.
+var ausblendTimer=null;
 function showExportProgress(){
+  clearTimeout(ausblendTimer); ausblendTimer=null;
   document.getElementById('exportProgressWrap').style.display='block';
   updateExportProgress(0,'Preparing files…');
 }
@@ -80,7 +84,11 @@ function updateExportProgress(pct,label){
   if(label) document.getElementById('exportProgressLabel').textContent=localizeRuntimeText(label);
 }
 function hideExportProgress(){
-  setTimeout(function(){document.getElementById('exportProgressWrap').style.display='none';},600);
+  clearTimeout(ausblendTimer);
+  ausblendTimer=setTimeout(function(){
+    ausblendTimer=null;
+    document.getElementById('exportProgressWrap').style.display='none';
+  },600);
 }
 
 function exportSteps(){
@@ -114,14 +122,32 @@ function exportSteps(){
   ];
 }
 
+var SAMMELKNOEPFE=['btnDownloadFusion','btnDownloadAe','btnDownloadAll'];
+var exportLaeuft=false;
+
+// Waehrend ein Archiv gepackt wird, bleiben die drei Sammelknoepfe gesperrt.
+// Zwei Laeufe nebeneinander fressen doppelt Speicher und schreiben sich
+// gegenseitig Fortschritt und Meldung um.
+function sammelKnoepfeSperren(sperren){
+  SAMMELKNOEPFE.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.disabled=sperren;
+  });
+}
+
 function runZipExport(kind, zipName){
+  if(exportLaeuft) return;
+  exportLaeuft=true;
+  sammelKnoepfeSperren(true);
   showExportProgress();
+  function fertig(){ exportLaeuft=false; sammelKnoepfeSperren(false); }
   // Ohne Fehlerbehandlung bleibt die Fortschrittsanzeige bei einem Fehler
   // sichtbar stehen und die alte Erfolgsmeldung daneben.
   function abbruch(e){
     console.error(e);
     setStatus('Export failed: '+(e&&e.message?e.message:e),'err');
     hideExportProgress();
+    fertig();
   }
   try{
     var steps=exportSteps().filter(function(s){ return !kind || s.kind===kind; });
@@ -138,6 +164,7 @@ function runZipExport(kind, zipName){
     if(!dabei){
       hideExportProgress();
       setStatus('Nothing to export','err');
+      fertig();
       return;
     }
     updateExportProgress(BUILD_SHARE,'Compressing…');
@@ -149,6 +176,7 @@ function runZipExport(kind, zipName){
       a.href=u; a.download=zipName; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
       setStatus('Downloaded '+zipName,'ok');
       hideExportProgress();
+      fertig();
       promptSupport();
     })['catch'](abbruch);
   }catch(e){ abbruch(e); }
