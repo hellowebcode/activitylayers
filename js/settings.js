@@ -138,6 +138,7 @@ var btnIds=['btnSetting','btnRouteSetting','btnDiscSetting','btnDiscJsx','btnCom
   'btnCadSetting','btnPowerSetting','btnTempSetting','btnPaceSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
   'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
+var DRIFT_MIN=0.9, DRIFT_MAX=1.1;
 var syncCalcResult={offset:null,drift:null};
 var syncDialogSchliessen=function(){};
 
@@ -460,24 +461,43 @@ document.getElementById('syncCalc').addEventListener('click',function(){
   var applyBtn=document.getElementById('syncApply');
   if(isNaN(v1)||isNaN(g1)){res.textContent=localizeRuntimeText('Enter event 1 values');res.style.color='var(--danger)';applyBtn.disabled=true;return;}
   // Modell: video = gps * drift + offset. Mit zwei Ereignissen ergibt sich der
-  // Faktor aus beiden Differenzen; erst danach laesst sich der Versatz bestimmen.
-  var drift=1.0;
+  // Faktor aus beiden Differenzen. Er wird sofort auf das begrenzt, was das Feld
+  // zulaesst, und der Versatz erst danach gerechnet - sonst passt der Versatz
+  // nach dem Begrenzen nicht einmal mehr zum ersten Ereignis.
+  var roh=1.0;
   if(!isNaN(v2)&&!isNaN(g2)&&g2!==g1){
-    drift=Math.round(((v2-v1)/(g2-g1))*100000)/100000;
+    roh=Math.round(((v2-v1)/(g2-g1))*100000)/100000;
   }
+  var drift=(!isFinite(roh)||roh<=0)?1.0:Math.max(DRIFT_MIN, Math.min(DRIFT_MAX, roh));
+  var begrenzt=(drift!==roh);
   var offset=Math.round((v1-drift*g1)*100)/100;
   syncCalcResult={offset:offset,drift:drift};
   var msg=(uiLanguage==='de'?'GPS-Versatz: ':'GPS Offset: ')+offset+'s';
   if(!isNaN(v2)&&!isNaN(g2)&&g2!==g1) msg+=(uiLanguage==='de'?'   Abweichung: ':'   Drift: ')+drift;
+  if(begrenzt) msg+=(uiLanguage==='de'
+    ?'   (auf '+DRIFT_MIN+'\u2013'+DRIFT_MAX+' begrenzt)'
+    :'   (limited to '+DRIFT_MIN+'\u2013'+DRIFT_MAX+')');
   res.textContent=msg; res.style.color='var(--accent)';
   applyBtn.disabled=false;
 });
 
+// Wer nach dem Rechnen noch an den Zeitcodes dreht, soll nicht das alte Ergebnis
+// uebernehmen koennen.
+['sv1','sg1','sv2','sg2'].forEach(function(id){
+  document.getElementById(id).addEventListener('input',function(){
+    var applyBtn=document.getElementById('syncApply');
+    if(applyBtn.disabled) return;
+    applyBtn.disabled=true;
+    syncCalcResult={offset:null,drift:null};
+    var res=document.getElementById('syncResult');
+    res.textContent=localizeRuntimeText('Recalculate after changing a timecode');
+    res.style.color='var(--muted)';
+  });
+});
+
 document.getElementById('syncApply').addEventListener('click',function(){
-  // Das Feld laesst 0,9 bis 1,1 zu; ausserhalb entstehen rueckwaerts laufende
-  // oder leere Keyframes.
-  var d=Math.max(0.9, Math.min(1.1, syncCalcResult.drift));
-  if(!isFinite(d)||d<=0) d=1.0;
+  // Begrenzt wurde schon beim Rechnen, hier wird nur uebernommen, was dort stand.
+  var d=isFinite(syncCalcResult.drift)?syncCalcResult.drift:1.0;
   var o=isFinite(syncCalcResult.offset)?syncCalcResult.offset:0;
   document.getElementById('offset').value=o;
   document.getElementById('driftFactor').value=d;
@@ -486,10 +506,7 @@ document.getElementById('syncApply').addEventListener('click',function(){
   // angestossen werden.
   speichereEinstellungen();
   if(rawPoints.length) reprocess();
-  if(d!==syncCalcResult.drift)
-    setStatus('Sync applied — drift limited to '+d,'err');
-  else
-    setStatus('Sync applied — offset: '+o+'s, drift: '+d,'ok');
+  setStatus('Sync applied — offset: '+o+'s, drift: '+d,'ok');
 });
 
 // Leinwandgroesse: die Auswahl fuellt die beiden Zahlenfelder, eine Eingabe

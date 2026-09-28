@@ -56,19 +56,26 @@ function drawRoute(){
   var mnX=minOf(xs),mxX=maxOf(xs),mnY=minOf(ys),mxY=maxOf(ys);
   function auf(p){ return {x:pad+(p.x-mnX)/(mxX-mnX||1)*(W-pad*2),
                            y:pad+(p.y-mnY)/(mxY-mnY||1)*(H-pad*2)}; }
-  function linie(liste,farbe,breite,deckkraft,dx,dy){
+  // Gezeichnet wird abschnittsweise. Eine Pause in der Aufnahme bleibt eine
+  // Luecke und wird nicht zur geraden Verbindungslinie.
+  function linie(liste,quelle,farbe,breite,deckkraft,dx,dy){
     if(liste.length<2) return;
+    var laeufe=segmentLaeufe(quelle||liste);
     ctx.save(); ctx.globalAlpha=deckkraft;
     ctx.beginPath();
-    for(var i=0;i<liste.length;i++){ var q=auf(liste[i]);
-      if(i===0) ctx.moveTo(q.x+(dx||0),q.y+(dy||0)); else ctx.lineTo(q.x+(dx||0),q.y+(dy||0)); }
+    for(var l=0;l<laeufe.length;l++){
+      var von=laeufe[l][0], bis=Math.min(laeufe[l][1], liste.length);
+      if(bis-von<2) continue;
+      for(var i=von;i<bis;i++){ var q=auf(liste[i]);
+        if(i===von) ctx.moveTo(q.x+(dx||0),q.y+(dy||0)); else ctx.lineTo(q.x+(dx||0),q.y+(dy||0)); }
+    }
     ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.lineJoin='round'; ctx.lineCap='round';
     ctx.stroke(); ctx.restore();
   }
   var geist=alle.slice(rawPoints.length), spur=alle.slice(0,rawPoints.length);
-  linie(geist, wert('ghostColor','#8892a4'), gW, gA);
-  if(sOf>0) linie(spur, wert('shadowColor','#000000'), tW*SHADOW_WIDTH_RATIO, 0.55, sOf, sOf);
-  linie(spur, wert('trackColor','#ff6600'), tW, 1);
+  linie(geist, ghostPoints, wert('ghostColor','#8892a4'), gW, gA);
+  if(sOf>0) linie(spur, rawPoints, wert('shadowColor','#000000'), tW*SHADOW_WIDTH_RATIO, 0.55, sOf, sOf);
+  linie(spur, rawPoints, wert('trackColor','#ff6600'), tW, 1);
   if(spur.length){
     var d=auf(spur[0]);
     ctx.beginPath(); ctx.arc(d.x,d.y,dR,0,Math.PI*2);
@@ -78,11 +85,33 @@ function drawRoute(){
 
 var mapInstance=null, mapRouteLayer=null, mapLoaded=false, lastMapTrackId=null;
 
+// Fuer die Karte werden die Laengengrade entrollt, sonst spannt eine Strecke
+// ueber die Datumsgrenze fast die ganze Weltkarte auf. Leaflet kommt mit Werten
+// jenseits von 180 Grad zurecht. Gezeichnet wird abschnittsweise, damit eine
+// Pause in der Aufnahme keine gerade Verbindungslinie ergibt.
+function kartenLaeufe(){
+  var alle=rawPoints.concat(ghostPoints);
+  var lons=entrollteLaenge(alle);
+  function laeufeVon(quelle, versatz){
+    var raus=[], laeufe=segmentLaeufe(quelle);
+    for(var l=0;l<laeufe.length;l++){
+      var stueck=[];
+      for(var i=laeufe[l][0];i<laeufe[l][1];i++){
+        if(validLatLon(quelle[i].lat,quelle[i].lon)) stueck.push([quelle[i].lat, lons[versatz+i]]);
+      }
+      if(stueck.length>1) raus.push(stueck);
+    }
+    return raus;
+  }
+  return { spur:laeufeVon(rawPoints,0), geist:laeufeVon(ghostPoints,rawPoints.length) };
+}
+
 function trackBounds(){
   var alle=rawPoints.concat(ghostPoints);
-  var la=alle.map(function(p){return p.lat;}), lo=alle.map(function(p){return p.lon;});
+  var lons=entrollteLaenge(alle);
+  var la=alle.map(function(p){return p.lat;});
   return{minLat:minOf(la),maxLat:maxOf(la),
-         minLon:minOf(lo),maxLon:maxOf(lo)};
+         minLon:minOf(lons),maxLon:maxOf(lons)};
 }
 
 function jumpToSettings(){
@@ -143,27 +172,24 @@ function showMapPreview(){
       }).addTo(mapInstance);
     }
     if(mapRouteLayer){ mapInstance.removeLayer(mapRouteLayer); mapRouteLayer=null; }
-    var pts=[];
-    for(var i=0;i<rawPoints.length;i++){
-      if(validLatLon(rawPoints[i].lat,rawPoints[i].lon)) pts.push([rawPoints[i].lat,rawPoints[i].lon]);
-    }
-    if(pts.length<2) throw new Error('no valid coordinates');
-    var geistPts=[];
-    for(var g=0;g<ghostPoints.length;g++){
-      if(validLatLon(ghostPoints[g].lat,ghostPoints[g].lon)) geistPts.push([ghostPoints[g].lat,ghostPoints[g].lon]);
-    }
+    var laeufe=kartenLaeufe();
+    if(!laeufe.spur.length) throw new Error('no valid coordinates');
+    var erste=laeufe.spur[0], letzte=laeufe.spur[laeufe.spur.length-1];
     var ebenen=[];
-    if(geistPts.length>1){
+    if(laeufe.geist.length){
       var gf=document.getElementById('ghostColor');
-      ebenen.push(L.polyline(geistPts,{color:'#ffffff',weight:5,opacity:.6,lineJoin:'round',lineCap:'round'}));
-      ebenen.push(L.polyline(geistPts,{color:(gf&&gf.value)||'#8892a4',weight:3,opacity:.85,dashArray:'6 5',lineJoin:'round',lineCap:'round'}));
+      laeufe.geist.forEach(function(stueck){
+        ebenen.push(L.polyline(stueck,{color:'#ffffff',weight:5,opacity:.6,lineJoin:'round',lineCap:'round'}));
+        ebenen.push(L.polyline(stueck,{color:(gf&&gf.value)||'#8892a4',weight:3,opacity:.85,dashArray:'6 5',lineJoin:'round',lineCap:'round'}));
+      });
     }
-    mapRouteLayer=L.layerGroup(ebenen.concat([
-      L.polyline(pts,{color:'#ffffff',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}),
-      L.polyline(pts,{color:'#f97316',weight:3,lineJoin:'round',lineCap:'round'}),
-      L.circleMarker(pts[0],{radius:6,color:'#fff',weight:2,fillColor:'#16a34a',fillOpacity:1}),
-      L.circleMarker(pts[pts.length-1],{radius:6,color:'#fff',weight:2,fillColor:'#dc2626',fillOpacity:1})
-    ])).addTo(mapInstance);
+    laeufe.spur.forEach(function(stueck){
+      ebenen.push(L.polyline(stueck,{color:'#ffffff',weight:6,opacity:.85,lineJoin:'round',lineCap:'round'}));
+      ebenen.push(L.polyline(stueck,{color:'#f97316',weight:3,lineJoin:'round',lineCap:'round'}));
+    });
+    ebenen.push(L.circleMarker(erste[0],{radius:6,color:'#fff',weight:2,fillColor:'#16a34a',fillOpacity:1}));
+    ebenen.push(L.circleMarker(letzte[letzte.length-1],{radius:6,color:'#fff',weight:2,fillColor:'#dc2626',fillOpacity:1}));
+    mapRouteLayer=L.layerGroup(ebenen).addTo(mapInstance);
     var b=trackBounds();
     mapInstance.fitBounds([[b.minLat,b.minLon],[b.maxLat,b.maxLon]],{padding:[24,24]});
     setTimeout(function(){ if(mapInstance) mapInstance.invalidateSize(); },60);
@@ -284,10 +310,11 @@ function drawHR(){
 function buildElevXY(elevPts,iW,iH,pad){
   var eles=elevPts.map(function(p){return p.ele;});
   var minEle=minOf(eles),maxEle=maxOf(eles),eleRange=maxEle-minEle||1;
-  var totalDKm=0;
-  for(var i=1;i<elevPts.length;i++) totalDKm+=haversine(elevPts[i-1].lat,elevPts[i-1].lon,elevPts[i].lat,elevPts[i].lon)/1000;
-  var cum=[0];
-  for(var i=1;i<elevPts.length;i++) cum.push(cum[i-1]+haversine(elevPts[i-1].lat,elevPts[i-1].lon,elevPts[i].lat,elevPts[i].lon)/1000);
+  // Die x-Achse ist die gefahrene Strecke. Der Sprung ueber eine Aufnahmegrenze
+  // gehoert nicht dazu, sonst quetscht er das Profil an den Rand.
+  var cumM=kumulierteStrecke(elevPts);
+  var cum=cumM.map(function(m){return m/1000;});
+  var totalDKm=cum.length?cum[cum.length-1]:0;
   var xs=[],ys=[];
   for(var i=0;i<elevPts.length;i++){
     xs.push(pad+(totalDKm>0?(cum[i]/totalDKm)*iW:0));

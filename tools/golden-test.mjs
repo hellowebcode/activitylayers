@@ -33,6 +33,52 @@ for (const m of html.matchAll(/<select[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/sele
   vorgaben[id] = sel ? sel[1] : '';
 }
 
+/* ---------- Kleiner XML-Leser fuer GPX und TCX ----------
+   Die Attrappe kennt nur, was import.js tatsaechlich abfragt: Elementnamen,
+   Attribute, Textinhalt und die Suche nach einem Tagnamen. Das reicht fuer die
+   Beispieldateien und haelt den Test ohne Abhaengigkeit lauffaehig. */
+function xmlKnoten(name) {
+  return {
+    localName: name, nodeName: name, tagName: name,
+    attrs: Object.create(null), kinder: [], eigenerText: '',
+    get childNodes() { return this.kinder; },
+    get children() { return this.kinder; },
+    getAttribute(n) { return n in this.attrs ? this.attrs[n] : null; },
+    get textContent() {
+      return this.eigenerText + this.kinder.map(k => k.textContent).join('');
+    },
+    alle(treffer) {
+      for (const k of this.kinder) { treffer.push(k); k.alle(treffer); }
+      return treffer;
+    },
+    getElementsByTagName(t) {
+      const a = this.alle([]);
+      return t === '*' ? a : a.filter(k => k.localName === t);
+    },
+    querySelectorAll(t) { return this.getElementsByTagName(t); },
+    querySelector(t) { const a = this.getElementsByTagName(t); return a.length ? a[0] : null; },
+  };
+}
+function xmlParsen(text) {
+  const wurzel = xmlKnoten('#document');
+  const stapel = [wurzel];
+  const ohneKopf = text.replace(/<\?[\s\S]*?\?>/g, '').replace(/<!--[\s\S]*?-->/g, '');
+  const muster = /<\/?([A-Za-z_][\w.\-]*)((?:\s+[\w:.\-]+\s*=\s*"[^"]*")*)\s*(\/?)>/g;
+  let zuletzt = 0, m;
+  while ((m = muster.exec(ohneKopf)) !== null) {
+    const text_davor = ohneKopf.slice(zuletzt, m.index);
+    if (text_davor.trim()) stapel[stapel.length - 1].eigenerText += text_davor.trim();
+    zuletzt = muster.lastIndex;
+    const [ganz, name, attrTeil, selbstSchliessend] = m;
+    if (ganz.startsWith('</')) { if (stapel.length > 1) stapel.pop(); continue; }
+    const k = xmlKnoten(name);
+    for (const a of attrTeil.matchAll(/([\w:.\-]+)\s*=\s*"([^"]*)"/g)) k.attrs[a[1]] = a[2];
+    stapel[stapel.length - 1].kinder.push(k);
+    if (!selbstSchliessend) stapel.push(k);
+  }
+  return wurzel;
+}
+
 /* ---------- DOM-Attrappe ---------- */
 function element(id) {
   const el = {
@@ -100,11 +146,12 @@ const sandbox = {
   Blob: class { constructor(p){ this.parts = p; } },
   URL: { createObjectURL(){ return 'blob:x'; }, revokeObjectURL(){} },
   FileReader: class { readAsText(){} readAsArrayBuffer(){} },
-  DOMParser: class { parseFromString(){ return { querySelector(){ return null; }, querySelectorAll(){ return []; } }; } },
+  DOMParser: class { parseFromString(t){ return xmlParsen(t); } },
   JSZip: class { folder(){ return { file(){} }; } generateAsync(){ return Promise.resolve({}); } },
-  L: { map(){ return { setView(){ return this; }, remove(){}, fitBounds(){}, addLayer(){} }; },
+  L: { map(){ return { setView(){ return this; }, remove(){}, fitBounds(){}, addLayer(){}, removeLayer(){}, invalidateSize(){} }; },
        tileLayer(){ return { addTo(){} }; }, polyline(){ return { addTo(){} }; },
-       circleMarker(){ return { addTo(){} }; }, latLngBounds(){ return {}; } },
+       circleMarker(){ return { addTo(){} }; }, latLngBounds(){ return {}; },
+       layerGroup(){ return { addTo(){ return this; } }; } },
   NodeFilter: { SHOW_ALL:0xFFFFFFFF, SHOW_ELEMENT:1, SHOW_TEXT:4, FILTER_ACCEPT:1, FILTER_REJECT:2, FILTER_SKIP:3 },
   Node: { ELEMENT_NODE:1, TEXT_NODE:3 },
   Image: class {},
@@ -185,29 +232,114 @@ function inhaltspruefung(name, text) {
 
 function pruefsumme(s) { return crypto.createHash('sha256').update(s, 'utf8').digest('hex').slice(0, 16); }
 
-function lauf() {
-  const fit = fs.readFileSync(path.join(WURZEL, 'examples', 'demo-ride.fit'));
-  const puffer = fit.buffer.slice(fit.byteOffset, fit.byteOffset + fit.byteLength);
-  ctx.parseFIT(puffer, 'demo-ride.fit');
+/* ---------- Faelle ----------
+   Der Standardfall laeuft ohne Praefix und haelt die eingespielten Pruefsummen.
+   Die uebrigen Faelle decken die Grenzen ab, an denen sich gemeinsam genutzter
+   Code anders verhaelt: andere Dateiformate, mehrere Aufnahmeabschnitte,
+   Geraetestrecken mit Luecken, Versatz mit Abweichungsfaktor, die Datumsgrenze,
+   vertauschte Zonengrenzen, eine Geisterspur und ein Hochformat. */
+
+function setzeFeld(id, wert) { ctx.document.getElementById(id).value = String(wert); }
+function feldZurueck() {
+  for (const [id, el] of cacheEl) {
+    if (vorgaben[id] !== undefined) el.value = vorgaben[id];
+    el.checked = !!vorgaben['__checked__' + id];
+  }
+}
+function beispiel(name) { return fs.readFileSync(path.join(WURZEL, 'examples', name), 'utf8'); }
+function fitLesen(name) {
+  const b = fs.readFileSync(path.join(WURZEL, 'examples', name));
+  ctx.parseFIT(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength), name);
+}
+
+const T0 = Date.UTC(2026, 0, 1, 0, 0, 0);
+function kunstPunkte(anzahl, je) {
+  const p = [];
+  for (let i = 0; i < anzahl; i++) p.push(je(i));
+  return p;
+}
+function setzePunkte(pts) {
+  ctx.rawPoints = pts;
+  ctx.speedData = ctx.computeSpeeds(pts, ctx.document.getElementById('unit').value);
+  ctx.distData = ctx.buildDistData(pts);
+  ctx.gradeData = ctx.buildGradeData(pts);
+  ctx.headingData = ctx.buildHeadingData(pts, 5, 3, 25);
+  ctx.totalDistM = ctx.distData.length ? ctx.distData[ctx.distData.length - 1].distM : 0;
+  ctx.hrData = []; ctx.cadData = []; ctx.powerData = []; ctx.tempData = [];
+  ctx.paceData = []; ctx.lapData = [];
+}
+
+const FAELLE = [
+  ['', () => fitLesen('demo-ride.fit')],
+  ['gpx/', () => ctx.parseGPX(beispiel('demo-ride.gpx'), 'demo-ride.gpx')],
+  ['tcx/', () => ctx.parseTCX(beispiel('demo-ride.tcx'), 'demo-ride.tcx')],
+  ['minimal/', () => ctx.parseGPX(beispiel('demo-minimal.gpx'), 'demo-minimal.gpx')],
+  // Drei Abschnitte mit je eigener Fahrtrichtung, getrennt durch fuenf Minuten
+  // Pause. Ueber die Grenze hinweg geglaettet zeigt der Pfeil sonst schon vor
+  // der Pause dorthin, wo es erst danach hingeht.
+  ['segmente/', () => setzePunkte(kunstPunkte(60, i => {
+    const s = Math.floor(i / 20), k = i % 20;
+    const start = [[50, 7], [50.5, 7.5], [51, 8]][s];
+    const richtung = [[0.00045, 0], [0, 0.0007], [-0.00045, 0]][s];
+    return { lat: start[0] + k * richtung[0], lon: start[1] + k * richtung[1],
+             ele: 100 + k * 2 + s * 30,
+             time: new Date(T0 + (i + s * 300) * 1000), seg: s, dist: null, genau: 3 };
+  }))],
+  ['geraetestrecke/', () => setzePunkte(kunstPunkte(30, i => ({
+    lat: 50 + i * 0.00045, lon: 7, ele: 100 + i,
+    time: new Date(T0 + i * 1000), seg: 0,
+    dist: (i % 7 === 3) ? null : 10000 + i * 50, genau: 3,
+  })))],
+  ['versatz/', () => { fitLesen('demo-ride.fit'); setzeFeld('offset', -300); setzeFeld('driftFactor', 0.94); }],
+  ['datumsgrenze/', () => setzePunkte(kunstPunkte(40, i => {
+    let lon = 179.99 + i * 0.0005; if (lon > 180) lon -= 360;
+    return { lat: 0.5, lon: lon, ele: 10 + i, time: new Date(T0 + i * 1000), seg: 0, dist: null, genau: 3 };
+  }))],
+  // Vertauschte Grenzen bei eingeschalteter Zonenfaerbung: Ohne Ordnen bliebe
+  // die mittlere Zone unerreichbar, weil zuerst auf die obere geprueft wird.
+  ['zonen/', () => { fitLesen('demo-ride.fit');
+    setzeFeld('hrZones', 1); setzeFeld('powerZones', 1);
+    setzeFeld('hrZone2', 160); setzeFeld('hrZone3', 130);
+    setzeFeld('powerZone2', 290); setzeFeld('powerZone3', 210); }],
+  ['geist/', () => { fitLesen('demo-ride.fit');
+    ctx.ghostPoints = ctx.rawPoints.map(p => ({ lat: p.lat + 0.001, lon: p.lon + 0.001, time: p.time, seg: p.seg })); }],
+  ['hochformat/', () => { fitLesen('demo-ride.fit'); setzeFeld('compW', 1080); setzeFeld('compH', 1920); }],
+];
+
+function laufFall(praefix, vorbereiten) {
+  feldZurueck();
+  ctx.resetTrackState();
+  ctx.ghostPoints = [];
+  vorbereiten();
   const ergebnis = {};
-  ergebnis['__daten__'] = [
+  ergebnis[praefix + '__daten__'] = [
     'punkte=' + ctx.rawPoints.length, 'hr=' + ctx.hrData.length,
     'cad=' + ctx.cadData.length, 'power=' + ctx.powerData.length,
     'temp=' + ctx.tempData.length, 'pace=' + ctx.paceData.length,
     'runden=' + ctx.lapData.length,
+    'abschnitte=' + ctx.segmentLaeufe(ctx.rawPoints).length,
     'distanz=' + (ctx.totalDistM / 1000).toFixed(3),
   ].join(' ');
   for (const [name, fn] of GENERATOREN) {
     const f = ctx[fn];
-    if (typeof f !== 'function') { ergebnis[name] = 'FUNKTION FEHLT'; continue; }
+    if (typeof f !== 'function') { ergebnis[praefix + name] = 'FUNKTION FEHLT'; continue; }
     let out;
-    try { out = f(); } catch (e) { ergebnis[name] = 'FEHLER: ' + e.message; continue; }
-    if (out === null) { ergebnis[name] = 'null'; continue; }
+    try { out = f(); } catch (e) { ergebnis[praefix + name] = 'FEHLER: ' + e.message; continue; }
+    if (out === null) { ergebnis[praefix + name] = 'null'; continue; }
     const maengel = inhaltspruefung(name, out);
-    if (maengel.length) { ergebnis[name] = 'INHALT: ' + maengel.join(', '); continue; }
-    ergebnis[name] = pruefsumme(out) + '  ' + out.length;
+    if (maengel.length) { ergebnis[praefix + name] = 'INHALT: ' + maengel.join(', '); continue; }
+    ergebnis[praefix + name] = pruefsumme(out) + '  ' + out.length;
   }
   return ergebnis;
+}
+
+function lauf() {
+  let alles = {};
+  for (const [praefix, vorbereiten] of FAELLE) {
+    try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
+    catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }
+  }
+  return alles;
 }
 
 if (ladefehler && typeof ctx.parseFIT !== 'function') {

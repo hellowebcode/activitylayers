@@ -18,6 +18,8 @@ function buildLapKeyframes(){
   var c=cfg();
   if(!lapData.length||!rawPoints.length) return null;
   var fps=parseFloat(c.fps)||30;
+  var drift=parseFloat(c.driftFactor)||1.0;
+  if(!isFinite(drift)||drift<=0) drift=1.0;
   var t0=rawPoints[0].time, num=[], sec=[], last=-1;
   for(var i=0;i<lapData.length;i++){
     var a=timeToFrame(lapData[i].start,t0), b=timeToFrame(lapData[i].end,t0);
@@ -29,8 +31,10 @@ function buildLapKeyframes(){
     var beginn=0;
     if(a<0){
       // Die Runde lief schon, bevor das Video anfing: Die Anzeige beginnt
-      // nicht wieder bei null, sondern beim bereits verstrichenen Teil.
-      beginn=Math.max(0, Math.min(dauer, -a/fps));
+      // nicht wieder bei null, sondern beim bereits verstrichenen Teil. Die
+      // Bilder liegen in Videozeit, die Rundenzeit laeuft in Aufnahmezeit -
+      // zwischen beiden steht der Abweichungsfaktor.
+      beginn=Math.max(0, Math.min(dauer, -a/(fps*drift)));
       a=0;
     }
     if(a<=last) a=last+1;

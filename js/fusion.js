@@ -29,7 +29,19 @@ function cfg(){
   // Die Leinwand geht in jede Ausgabe ein, deshalb hier einmal geprueft.
   c.W=leinwandMass('compW',COMP_DESIGN_W);
   c.H=leinwandMass('compH',COMP_DESIGN_H);
+  // Die Zonengrenzen werden der Groesse nach geordnet. Steht die obere unter der
+  // unteren, wird die mittlere Zone sonst nie erreicht, weil zuerst auf die
+  // obere geprueft wird.
+  ordneZonen(c, 'hrZone2', 'hrZone3', 140, 165);
+  ordneZonen(c, 'powerZone2', 'powerZone3', 200, 280);
   return c;
+}
+
+function ordneZonen(c, unten, oben, vorgabeUnten, vorgabeOben){
+  var u=zahlOderVorgabe(c[unten], vorgabeUnten);
+  var o=zahlOderVorgabe(c[oben], vorgabeOben);
+  c[unten]=Math.min(u,o);
+  c[oben]=Math.max(u,o);
 }
 
 // Stufenweise Farbkanaele fuer Zonenfaerbung. Die Farbe soll springen, nicht
@@ -147,6 +159,40 @@ function buildPolyPathTool(name, displacementSourceOp, polylineSourceOp){
 
 function polyPathPositionInput(polyPathName){
   return 'Input { SourceOp = "'+polyPathName+'", Source = "Position", }';
+}
+
+// Eine Spur kann aus mehreren Aufnahmeabschnitten bestehen. Jeder Abschnitt
+// bekommt seine eigene Maske, sonst zieht Fusion eine gerade Linie ueber die
+// Pause. Bei einem einzigen Abschnitt heissen die Knoten wie eh und je.
+function buildSpurMasken(L, quelle, maskPts, maskeBasis, hgBasis, farbe, breiteFrac,
+                         deckkraft, pos, W, H, publishSourceOp, borderWidthExpr){
+  var laeufe=segmentLaeufe(quelle), namen=[];
+  for(var r=0;r<laeufe.length;r++){
+    var von=laeufe[r][0], bis=Math.min(laeufe[r][1], maskPts.length);
+    if(bis-von<2) continue;
+    var nr=namen.length, suffix=nr?String(nr+1):'';
+    var maske=maskeBasis+suffix, hg=hgBasis+suffix;
+    var einzeln=(laeufe.length===1);
+    var form=buildPolylineShapeNodes(maske, maske+'Polyline',
+      einzeln?maskPts:maskPts.slice(von,bis), false, false, breiteFrac, false,
+      [pos[0], pos[1]+nr*25], W, H,
+      einzeln?publishSourceOp:undefined, borderWidthExpr);
+    L.push(form.node);
+    L.push(buildBackgroundNode(hg, maske, farbe, [pos[0]+100, pos[1]+nr*25], deckkraft, W, H));
+    namen.push(hg);
+  }
+  return namen;
+}
+
+// Legt mehrere Ebenen gleicher Art uebereinander und liefert den obersten Knoten.
+function stapleEbenen(L, namen, mergeBasis, pos){
+  var unten=namen[0];
+  for(var i=1;i<namen.length;i++){
+    var name=mergeBasis+(i+1);
+    L.push(buildMergeNode(name, unten, namen[i], [pos[0]+i*40, pos[1]]));
+    unten=name;
+  }
+  return unten;
 }
 
 function buildDisplacementKeyframes(ptsArr){
@@ -614,6 +660,7 @@ function buildPolylineShapeNodes(maskName, splineToolName, pts, closed, solid, b
 }
 
 function buildRouteSetting(){
+  if(rawPoints.length<2) return null;
   var c=cfg();
   var W=c.W, H=c.H;
   var tW=parseFloat(c.trackW)||4;
@@ -658,12 +705,6 @@ function buildRouteSetting(){
   var gW=parseFloat(c.ghostW)||4;
   var gc=hexToRgb(c.ghostColor||'#8892a4');
   var gAlpha=Math.max(0.05,Math.min(1,zahlOderVorgabe(c.ghostAlpha,0.55)));
-  var geistShape=geistPts.length>1
-    ? buildPolylineShapeNodes('GhostPath','GhostPathPolyline',geistPts,false,false,gW/H,false,[0,250], W, H)
-    : null;
-
-  var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,tW/H,false,[0,50], W, H,'Publish1');
-  var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,sW/H,false,[0,150], W, H,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
 
   var L=[];
   L.push('{');
@@ -683,21 +724,28 @@ function buildRouteSetting(){
   L.push('\t\t\t},');
   L.push('\t\t\tTools = ordered() {');
   L.push(buildBackgroundNode('BackgroundCanvas', null, [0,0,0], [-100,100], 0, W, H));
-  L.push(shadowShape.node);
-  L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, W, H));
-  L.push(mainShape.node);
-  L.push(buildBackgroundNode('BackgroundMain', 'MainPath', tc, [100,50], undefined, W, H));
-  var unterlage='BackgroundShadow';
-  if(geistShape){
-    L.push(geistShape.node);
-    L.push(buildBackgroundNode('BackgroundGhost', 'GhostPath', gc, [100,250], gAlpha, W, H));
-    L.push(buildMergeNode('MergeGhost', 'BackgroundGhost', 'BackgroundShadow', [200,200]));
-    unterlage='MergeGhost';
+  var schatten=buildSpurMasken(L, rawPoints, shadowMaskPts, 'ShadowPath', 'BackgroundShadow',
+    sc, sW/H, undefined, [0,150], W, H, undefined,
+    'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
+  var haupt=buildSpurMasken(L, rawPoints, maskPts, 'MainPath', 'BackgroundMain',
+    tc, tW/H, undefined, [0,50], W, H, 'Publish1');
+  var unterlage=stapleEbenen(L, schatten, 'MergeShadow', [200,150]);
+  if(geistPts.length>1){
+    var geist=buildSpurMasken(L, ghostPoints, geistPts, 'GhostPath', 'BackgroundGhost',
+      gc, gW/H, gAlpha, [0,250], W, H);
+    if(geist.length){
+      var geistOben=stapleEbenen(L, geist, 'MergeGhostRun', [200,250]);
+      L.push(buildMergeNode('MergeGhost', geistOben, unterlage, [200,200]));
+      unterlage='MergeGhost';
+    }
   }
-  L.push(buildMergeNode('Merge1', unterlage, 'BackgroundMain', [200,100]));
+  L.push(buildMergeNode('Merge1', unterlage, haupt[0], [200,100]));
+  var hauptOben=haupt.length>1
+    ? stapleEbenen(L, ['Merge1'].concat(haupt.slice(1)), 'MergeMain', [240,100])
+    : 'Merge1';
   L.push(buildDotMaskNode('OutlineDotMask', 'Input { Value = { '+dotCenter01[0].x.toFixed(6)+', '+dotCenter01[0].y.toFixed(6)+' }, Expression = "MainDotMask.Center", }', shadowDotDiaPx, [300,150], W, H));
   L.push(buildBackgroundNode('BackgroundOutlineDot', 'OutlineDotMask', sc, [400,150], undefined, W, H));
-  L.push(buildMergeNode('Merge2', 'Merge1', 'BackgroundOutlineDot', [500,100]));
+  L.push(buildMergeNode('Merge2', hauptOben, 'BackgroundOutlineDot', [500,100]));
   L.push(buildDotMaskNode('MainDotMask', polyPathPositionInput('Path1'), dotDiaPx, [300,50], W, H));
   L.push(buildBackgroundNode('BackgroundMainDot', 'MainDotMask', dc, [400,50], undefined, W, H));
   L.push(buildMergeNode('Merge3', 'Merge2', 'BackgroundMainDot', [600,100]));
@@ -767,11 +815,6 @@ function buildRouteDiscSetting(){
     : null;
   if(!fortschrittKF||!fortschrittKF.length) fortschrittAn=false;
 
-  var geistShape=geistPts.length>1
-    ? buildPolylineShapeNodes('GhostPath','GhostPathPolyline',geistPts,false,false,(gW*k)/H,false,[0,300],W,H)
-    : null;
-  var mainShape=buildPolylineShapeNodes('MainPath','MainPathPolyline',maskPts,false,false,(tW*k)/H,false,[0,50],W,H,'Publish1');
-  var shadowShape=buildPolylineShapeNodes('ShadowPath','ShadowPathPolyline',shadowMaskPts,false,false,(sW*k)/H,false,[0,150],W,H,undefined,'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
 
   function ellipse(name, durchmesser, solide, randbreite, pos, treiber){
     var L=[];
@@ -837,22 +880,23 @@ function buildRouteDiscSetting(){
     L.push(buildBackgroundNode('BackgroundRing', 'RingMask', rc, [100,-150], undefined, W, H));
     chain('BackgroundRing');
   }
-  if(geistShape){
-    L.push(geistShape.node);
-    L.push(buildBackgroundNode('BackgroundGhost', 'GhostPath', gc, [100,300], gAlpha, W, H));
-    chain('BackgroundGhost');
+  if(geistPts.length>1){
+    var geist=buildSpurMasken(L, ghostPoints, geistPts, 'GhostPath', 'BackgroundGhost',
+      gc, (gW*k)/H, gAlpha, [0,300], W, H);
+    for(var gi=0;gi<geist.length;gi++) chain(geist[gi]);
   }
   if(fortschrittAn){
     L.push(ellipse('ProgressMask', D, false, pW*k, [0,-250], 'ProgressDrive'));
     L.push(buildBackgroundNode('BackgroundProgress', 'ProgressMask', pc, [100,-250], undefined, W, H));
     chain('BackgroundProgress');
   }
-  L.push(shadowShape.node);
-  L.push(buildBackgroundNode('BackgroundShadow', 'ShadowPath', sc, [100,150], undefined, W, H));
-  chain('BackgroundShadow');
-  L.push(mainShape.node);
-  L.push(buildBackgroundNode('BackgroundMain', 'MainPath', tc, [100,50], undefined, W, H));
-  chain('BackgroundMain');
+  var schatten=buildSpurMasken(L, rawPoints, shadowMaskPts, 'ShadowPath', 'BackgroundShadow',
+    sc, (sW*k)/H, undefined, [0,150], W, H, undefined,
+    'MainPath.BorderWidth*'+SHADOW_WIDTH_RATIO.toFixed(6));
+  for(var si=0;si<schatten.length;si++) chain(schatten[si]);
+  var haupt=buildSpurMasken(L, rawPoints, maskPts, 'MainPath', 'BackgroundMain',
+    tc, (tW*k)/H, undefined, [0,50], W, H, 'Publish1');
+  for(var hi=0;hi<haupt.length;hi++) chain(haupt[hi]);
   L.push(buildDotMaskNode('OutlineDotMask', 'Input { Value = { '+dotCenter01[0].x.toFixed(6)+', '+dotCenter01[0].y.toFixed(6)+' }, Expression = "MainDotMask.Center", }', dR*2*1.15*k, [400,150], W, H));
   L.push(buildBackgroundNode('BackgroundOutlineDot', 'OutlineDotMask', sc, [500,150], undefined, W, H));
   chain('BackgroundOutlineDot');

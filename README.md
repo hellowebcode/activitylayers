@@ -66,9 +66,9 @@ Repositorys gehört unverändert nach `/activitylayers.com/httpdocs`.
 
 ## Beispieldateien und Prüflauf
 
-`examples/` enthält drei erzeugte Aufzeichnungen – keine echten Touren, damit
-keine Bewegungsdaten im Repository landen. Sie decken die drei Fälle ab, die
-sich im Verhalten unterscheiden:
+`examples/` enthält vier erzeugte Aufzeichnungen – keine echten Touren, damit
+keine Bewegungsdaten im Repository landen. Sie decken die Fälle ab, die sich im
+Verhalten unterscheiden:
 
 | Datei | Ergibt |
 |---|---|
@@ -80,12 +80,17 @@ sich im Verhalten unterscheiden:
 Neu erzeugen mit `python3 tools/make-examples.py`. Die Dateien sind
 deterministisch, derselbe Lauf liefert dieselben Bytes.
 
-`tools/golden-test.mjs` schickt `demo-ride.fit` durch alle sechsundzwanzig
-Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — siebenundzwanzig Einträge:
+`tools/golden-test.mjs` schickt elf Fälle durch alle sechsundzwanzig Generatoren
+und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit den
+Prüfsummen in `tools/golden.json` — 297 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
+
+Die Fälle sind die vier Beispieldateien und sieben gebaute Grenzfälle: mehrere
+Aufnahmeabschnitte mit eigener Fahrtrichtung, Gerätestrecken mit Lücken und
+ohne Nullpunkt, negativer Versatz mit Abweichungsfaktor, die Datumsgrenze,
+vertauschte Zonengrenzen, eine Geisterspur und ein Hochformat.
 
 Der Test braucht keine Abhängigkeiten. Er bewertet nicht, ob ein Overlay gut
 aussieht – er findet Änderungen an gemeinsam genutztem Code, die unbemerkt

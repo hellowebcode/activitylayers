@@ -11,12 +11,51 @@ function haversine(la1,lo1,la2,lo2){
 // nicht zurueckzulegen waere. Das Zweite faengt auch FIT-Dateien ab, die keine
 // Abschnitte kennen, sowie zusammenkopierte Aufzeichnungen.
 var MAX_TEMPO_MS=150;                       // 540 km/h, fuer kein Fahrzeug erreichbar
+// Eine Aufnahmegrenze liegt vor, wenn die Aufzeichnung wirklich unterbrochen
+// war. Ein erklaerter Abschnittswechsel allein genuegt nicht: In TCX steckt
+// jede Runde in einem eigenen <Track>, obwohl durchgehend gefahren wurde -
+// zaehlte das als Grenze, zerfiele eine Runde in Einzelstuecke.
+var PAUSE_SEK=10;
 function istGrenze(a,b){
   if(!a||!b) return true;
-  if(a.seg!==undefined&&b.seg!==undefined&&a.seg!==b.seg) return true;
   var dt=(b.time-a.time)/1000;
   if(!(dt>0)) return true;
-  return haversine(a.lat,a.lon,b.lat,b.lon)/dt > MAX_TEMPO_MS;
+  if(haversine(a.lat,a.lon,b.lat,b.lon)/dt > MAX_TEMPO_MS) return true;
+  return a.seg!==undefined && b.seg!==undefined && a.seg!==b.seg && dt>PAUSE_SEK;
+}
+
+// Indexbereiche der zusammenhaengenden Abschnitte. Jeder Bereich ist [von,bis)
+// und enthaelt nur Punkte, zwischen denen keine Aufnahmegrenze liegt.
+function segmentLaeufe(pts){
+  var laeufe=[];
+  if(!pts||!pts.length) return laeufe;
+  var start=0;
+  for(var i=1;i<pts.length;i++){
+    if(istGrenze(pts[i-1],pts[i])){ laeufe.push([start,i]); start=i; }
+  }
+  laeufe.push([start,pts.length]);
+  return laeufe;
+}
+
+// Laufnummer des Abschnitts je Punkt.
+function laufNummern(pts){
+  var n=new Array(pts?pts.length:0), l=0;
+  for(var i=0;i<n.length;i++){
+    if(i>0&&istGrenze(pts[i-1],pts[i])) l++;
+    n[i]=l;
+  }
+  return n;
+}
+
+// Aufsummierte Strecke in Metern. Der Sprung ueber eine Aufnahmegrenze zaehlt
+// nicht mit, sonst verschluckt er das ganze Profil.
+function kumulierteStrecke(pts){
+  var cum=[0];
+  for(var i=1;i<pts.length;i++){
+    cum.push(cum[i-1]+(istGrenze(pts[i-1],pts[i])
+      ?0:haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon)));
+  }
+  return cum;
 }
 
 function computeSpeeds(pts,unit){
@@ -129,22 +168,28 @@ function smooth(data, win) {
   return smoothSG(data, win);
 }
 
-// Geraetewerte haben Vorrang, aber nur dort, wo es sie gibt. In Luecken zaehlt
-// die aus GPS gerechnete Strecke weiter, Ruecksprunge bleiben unbeachtet.
+// Geraetewerte haben Vorrang, aber nur dort, wo es sie gibt. Gezaehlt wird immer
+// ab null: Ein zugeschnittener Track beginnt oft bei einem hohen Geraetestand,
+// der nicht zur Aktivitaet gehoert. Wo Werte fehlen, uebernimmt GPS; der danach
+// wieder gemeldete Geraetestand setzt die Kette nur neu, ohne die eben schon
+// ueberbrueckte Luecke ein zweites Mal zu addieren.
 function buildDistData(pts){
   function geraet(i){
     var v=pts[i].dist;
     return (v!==null&&v!==undefined&&isFinite(v)&&v>=0)?v:null;
   }
-  var out=[], cum=0, letzterGeraetewert=null;
+  var out=[], cum=0, letzterGeraetewert=null, ketteHaelt=false;
   for(var i=0;i<pts.length;i++){
     var g=geraet(i);
     if(i===0){
-      cum=(g!==null)?g:0;
-    } else if(g!==null&&letzterGeraetewert!==null&&g>=letzterGeraetewert){
-      cum+=g-letzterGeraetewert;                  // gewoehnlicher Fall
-    } else if(!istGrenze(pts[i-1],pts[i])){
-      cum+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
+      cum=0;
+      ketteHaelt=(g!==null);
+    } else if(g!==null&&ketteHaelt&&letzterGeraetewert!==null&&g>=letzterGeraetewert){
+      cum+=g-letzterGeraetewert;
+    } else {
+      if(!istGrenze(pts[i-1],pts[i]))
+        cum+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
+      ketteHaelt=(g!==null);
     }
     if(g!==null) letzterGeraetewert=g;
     out.push({time:pts[i].time, distM:cum});
@@ -342,32 +387,35 @@ function buildHeadingData(pts, fenster, mindestMeter, maxFehler){
     }
     vekt.push(v);
   }
-  var out=[], letzte=null;
-  for(var j=0;j<pts.length;j++){
+  // Geglaettet wird nur innerhalb eines Abschnitts. Ueber eine Aufnahmegrenze
+  // hinweg gemittelt zeigt der Pfeil schon vor der Pause in die Richtung nach
+  // der Pause.
+  var lauf=laufNummern(pts);
+  function mittel(j){
     var sx=0, sy=0, n=0;
     for(var k=Math.max(0,j-f); k<=Math.min(vekt.length-1, j+f); k++){
-      if(vekt[k]){ sx+=vekt[k].x; sy+=vekt[k].y; n++; }
+      if(vekt[k]&&lauf[k]===lauf[j]){ sx+=vekt[k].x; sy+=vekt[k].y; n++; }
     }
-    var grad;
-    if(n>0 && (sx*sx+sy*sy)>1e-6){
-      grad=(Math.atan2(sx,sy)*180/Math.PI+360)%360;
-      letzte=grad;
-    } else {
-      grad=(letzte===null)?0:letzte;
-    }
+    if(n>0 && (sx*sx+sy*sy)>1e-6) return (Math.atan2(sx,sy)*180/Math.PI+360)%360;
+    return null;
+  }
+  var out=[], letzte=null, vorigerLauf=lauf.length?lauf[0]:0;
+  for(var j=0;j<pts.length;j++){
+    if(lauf[j]!==vorigerLauf){ letzte=null; vorigerLauf=lauf[j]; }
+    var grad=mittel(j);
+    if(grad===null) grad=(letzte===null)?0:letzte; else letzte=grad;
     out.push({time:pts[j].time, deg:grad});
   }
-  // Das erste Stueck bekommt die erste brauchbare Richtung, damit der Pfeil
-  // nicht bei Norden losgeht und dann wegschnellt. Rueckwaerts gefuellt, sonst
-  // kopiert man den Vorgabewert weiter, statt ihn zu ersetzen.
-  var ersteGute=-1;
-  for(var m=0;m<out.length;m++){
-    var sx2=0, sy2=0, n2=0;
-    for(var k2=Math.max(0,m-f); k2<=Math.min(vekt.length-1,m+f); k2++)
-      if(vekt[k2]){ sx2+=vekt[k2].x; sy2+=vekt[k2].y; n2++; }
-    if(n2>0 && (sx2*sx2+sy2*sy2)>1e-6){ ersteGute=m; break; }
+  // Der Anfang jedes Abschnitts bekommt die erste brauchbare Richtung, damit der
+  // Pfeil nicht bei Norden losgeht und dann wegschnellt. Rueckwaerts gefuellt,
+  // sonst kopiert man den Vorgabewert weiter, statt ihn zu ersetzen.
+  var laeufe=segmentLaeufe(pts);
+  for(var l=0;l<laeufe.length;l++){
+    var von=laeufe[l][0], bis=laeufe[l][1], gut=-1;
+    for(var m=von;m<bis;m++){ if(mittel(m)!==null){ gut=m; break; } }
+    if(gut<0) continue;
+    for(var q=gut-1;q>=von;q--) out[q].deg=out[q+1].deg;
   }
-  for(var q=ersteGute-1;q>=0;q--) out[q].deg=out[q+1].deg;
   return out;
 }
 

@@ -221,6 +221,28 @@ function buildSpeedJsx(){
   return L.join('\n');
 }
 
+// Eine Pause in der Aufnahme darf keine gerade Verbindungslinie ergeben: Jeder
+// Abschnitt bekommt eine eigene Pfadgruppe. Bei nur einem Abschnitt bleibt es
+// beim einen Pfad wie bisher.
+function aeSpurPfade(L, ebene, gruppe, quelle, pts, ptsAusdruck, farbe, breite){
+  var laeufe=segmentLaeufe(quelle);
+  if(laeufe.length<=1){
+    L.push('  addPath('+gruppe+','+ptsAusdruck+',false);');
+    L.push('  addStroke('+gruppe+','+farbe+','+breite+');');
+    return;
+  }
+  var n=0;
+  for(var r=0;r<laeufe.length;r++){
+    var von=laeufe[r][0], bis=Math.min(laeufe[r][1], pts.length);
+    if(bis-von<2) continue;
+    n++;
+    var g=(n===1)?gruppe:gruppe+n;
+    if(n>1) L.push('  var '+g+'=grpOf('+ebene+',"Path '+n+'");');
+    L.push('  addPath('+g+','+aePts(pts.slice(von,bis))+',false);');
+    L.push('  addStroke('+g+','+farbe+','+breite+');');
+  }
+}
+
 function buildRouteJsx(){
   var c=cfg();
   if(rawPoints.length<2) return null;
@@ -234,18 +256,16 @@ function buildRouteJsx(){
   if(spuren.ghost.length>1){
     var gAlpha=Math.max(0.05,Math.min(1,zahlOderVorgabe(c.ghostAlpha,0.55)));
     L.push('  var gh=shapeLayer("Ghost Track"), gg=grpOf(gh,"Path");');
-    L.push('  addPath(gg,'+aePts(spuren.ghost)+',false);');
-    L.push('  addStroke(gg,'+aeCol(c.ghostColor||'#8892a4')+','+aeNum(parseFloat(c.ghostW)||4)+');');
+    aeSpurPfade(L,'gh','gg',ghostPoints,spuren.ghost,aePts(spuren.ghost),
+      aeCol(c.ghostColor||'#8892a4'),aeNum(parseFloat(c.ghostW)||4));
     L.push('  tf(gh,"ADBE Opacity").setValue('+aeNum(gAlpha*100)+');');
   }
   L.push('  var PTS='+aePts(pts)+';');
   L.push('  var sh=shapeLayer("Route Shadow"), sg=grpOf(sh,"Path");');
-  L.push('  addPath(sg,PTS,false);');
-  L.push('  addStroke(sg,'+aeCol(c.shadowColor)+','+aeNum(tw*SHADOW_WIDTH_RATIO)+');');
+  aeSpurPfade(L,'sh','sg',rawPoints,pts,'PTS',aeCol(c.shadowColor),aeNum(tw*SHADOW_WIDTH_RATIO));
   L.push('  tf(sh,"ADBE Position").setValue(['+aeNum(so)+','+aeNum(so)+']);');
   L.push('  var tr=shapeLayer("Route Track"), tg=grpOf(tr,"Path");');
-  L.push('  addPath(tg,PTS,false);');
-  L.push('  addStroke(tg,'+aeCol(c.trackColor)+','+aeNum(tw)+');');
+  aeSpurPfade(L,'tr','tg',rawPoints,pts,'PTS',aeCol(c.trackColor),aeNum(tw));
   L.push('  var dot=shapeLayer("Route Dot"), dg=grpOf(dot,"Dot");');
   L.push('  addEllipse(dg,['+aeNum(dr*2)+','+aeNum(dr*2)+'],[0,0]);');
   L.push('  addFill(dg,'+aeCol(c.dotColor)+');');
@@ -313,18 +333,18 @@ function buildRouteDiscJsx(){
   }
   if(geist.length>1){
     L.push('  var gh=shapeLayer("Route Disc Ghost"), gg=grpOf(gh,"Path");');
-    L.push('  addPath(gg,'+aePts(geist)+',false);');
-    L.push('  addStroke(gg,'+aeCol(c.ghostColor||'#8892a4')+','+aeNum(gW)+');');
+    aeSpurPfade(L,'gh','gg',ghostPoints,geist,aePts(geist),
+      aeCol(c.ghostColor||'#8892a4'),aeNum(gW));
     L.push('  tf(gh,"ADBE Opacity").setValue('+aeNum(gAlpha*100)+');');
   }
   L.push('  var PTS='+aePts(pts)+';');
   L.push('  var sh=shapeLayer("Route Disc Shadow"), sg=grpOf(sh,"Path");');
-  L.push('  addPath(sg,PTS,false);');
-  L.push('  addStroke(sg,'+aeCol(c.discShadowColor||'#000000')+','+aeNum(tW*SHADOW_WIDTH_RATIO)+');');
+  aeSpurPfade(L,'sh','sg',rawPoints,pts,'PTS',
+    aeCol(c.discShadowColor||'#000000'),aeNum(tW*SHADOW_WIDTH_RATIO));
   L.push('  tf(sh,"ADBE Position").setValue(['+aeNum(sOf)+','+aeNum(sOf)+']);');
   L.push('  var tr=shapeLayer("Route Disc Track"), tg=grpOf(tr,"Path");');
-  L.push('  addPath(tg,PTS,false);');
-  L.push('  addStroke(tg,'+aeCol(c.discTrackColor||'#ff6600')+','+aeNum(tW)+');');
+  aeSpurPfade(L,'tr','tg',rawPoints,pts,'PTS',
+    aeCol(c.discTrackColor||'#ff6600'),aeNum(tW));
   L.push('  var dot=shapeLayer("Route Disc Dot"), dg=grpOf(dot,"Dot");');
   L.push('  addEllipse(dg,['+aeNum(dR*2)+','+aeNum(dR*2)+'],[0,0]);');
   L.push('  addFill(dg,'+aeCol(c.discDotColor||'#fca300')+');');

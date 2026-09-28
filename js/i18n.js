@@ -235,17 +235,24 @@ var lastMaxSpeedValue=null;
 function unitDisplay(u){ return (uiLanguage==='de' && u==='kph') ? 'km/h' : u.toUpperCase(); }
 
 var mphOption=null;
+// Die deutsche Oberflaeche bietet nur km/h an. Damit die Umschaltung nichts
+// verschluckt, wird eine vorher gewaehlte andere Einheit gemerkt und beim
+// Zurueckschalten wiederhergestellt.
+var gemerkteEinheit=null;
+
 function syncUnitOptions(){
   var sel=document.getElementById('unit');
   if(!sel) return;
   var before=sel.value;
   var existing=sel.querySelector('option[value="mph"]');
   if(uiLanguage==='de'){
+    if(sel.value!=='kph') gemerkteEinheit=sel.value;
     if(existing){ mphOption=existing; existing.remove(); }
     if(sel.value!=='kph') sel.value='kph';
   } else if(mphOption && !existing){
     sel.insertBefore(mphOption, sel.firstChild);
-    sel.value=before;
+    sel.value=gemerkteEinheit||before;
+    gemerkteEinheit=null;
   }
   // Die Umschaltung kann die Einheit aendern; ohne Sichern liefe der gemerkte
   // Zustand vom sichtbaren auseinander.
@@ -371,8 +378,8 @@ function localizeRuntimeText(message){
   if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
-  if(message.indexOf('Sync applied — drift limited to ')===0)
-    return 'Synchronisierung übernommen — Abweichung auf '+message.slice(32)+' begrenzt';
+  if(message==='Recalculate after changing a timecode')
+    return 'Nach einer Änderung am Zeitcode bitte neu berechnen';
   if(message.indexOf('Sync applied — offset: ')===0) return message.replace('Sync applied — offset: ','Synchronisierung übernommen — Versatz: ').replace(', drift: ',', Abweichung: ');
   return message;
 }

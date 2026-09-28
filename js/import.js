@@ -179,7 +179,11 @@ function zeigeGeisterspur(){
 // Geisterspur eingelesen wurde - dann bleibt die Oberflaeche unberuehrt.
 function uebernehmeTrack(name){
   if(importZiel==='geist'){
-    geistKandidat=rawPoints.map(function(p){ return {lat:p.lat, lon:p.lon}; });
+    // Abschnittsnummer und Zeit muessen mit: ohne sie gilt jeder Schritt der
+    // Geisterspur als Aufnahmegrenze und die Linie zerfaellt in Einzelpunkte.
+    geistKandidat=rawPoints.map(function(p){
+      return {lat:p.lat, lon:p.lon, time:p.time, seg:p.seg};
+    });
     return false;
   }
   totalDistM=0;
