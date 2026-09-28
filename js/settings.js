@@ -295,6 +295,8 @@ function vorlageAusgeben(){
 
 function vorlageEinlesen(datei){
   var leser=new FileReader();
+  leser.onerror=function(){ setStatus('Could not read '+datei.name,'err'); };
+  leser.onabort=function(){ setStatus('Cancelled reading '+datei.name,'err'); };
   leser.onload=function(e){
     var d=null;
     try{ d=JSON.parse(e.target.result); }catch(err){}

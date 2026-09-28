@@ -376,6 +376,10 @@ function localizeRuntimeText(message){
   if(message==='That is not an Activity Layers preset') return 'Das ist keine Vorlage von Activity Layers';
   if(message==='Nothing to export') return 'Nichts auszugeben';
   if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
+  if(message.indexOf('Could not read ')===0)
+    return message.slice(15)+' konnte nicht gelesen werden';
+  if(message.indexOf('Cancelled reading ')===0)
+    return 'Das Lesen von '+message.slice(18)+' wurde abgebrochen';
   if(message.indexOf('Error: ')===0) return 'Fehler: '+message.slice(7);
   if(message.indexOf('Compressing… ')===0) return 'Wird komprimiert … '+message.slice(13);
   if(message==='Recalculate after changing a timecode')

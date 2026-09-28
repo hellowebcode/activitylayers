@@ -184,9 +184,12 @@ function aeRoutePoints(c,pad){
 
 function aePathKeys(dataArr, pts){
   var idx=buildKeyframeList(dataArr,function(p,i){return i;});
-  var out=[];
-  for(var i=0;i<idx.length;i++){ var p=pts[idx[i][1]]; if(p) out.push([idx[i][0],p]); }
-  return out;
+  var out=[], benutzt=[];
+  for(var i=0;i<idx.length;i++){
+    var j=idx[i][1], p=pts[j];
+    if(p){ out.push([idx[i][0],p]); benutzt.push(j); }
+  }
+  return haltAnGrenzen(out, benutzt, dataArr);
 }
 
 function buildSpeedJsx(){
@@ -194,7 +197,7 @@ function buildSpeedJsx(){
   if(!speedData.length) return null;
   var maxSpd=parseFloat(c.maxSpeed)||9;
   var unit=unitDisplay(c.unit);
-  var kf=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);});
+  var kf=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);}, {aufNull:true});
   var CX=320, CY=760, DISC=200, R=148, SPAN=86.111, OFF=205;
   var vs=ankerVersatz(c,'speed',OVERLAY_MASSE.speed,CX,CY); CX+=vs.dx; CY+=vs.dy;
   var L=[aeHead('Speed Overlay')];
@@ -245,7 +248,7 @@ function aeSpurPfade(L, ebene, gruppe, quelle, pts, ptsAusdruck, farbe, breite){
 
 function buildRouteJsx(){
   var c=cfg();
-  if(rawPoints.length<2) return null;
+  if(!hatZeichenbarenLauf(rawPoints)) return null;
   var spuren=aeRoutePoints(c,90);
   var pts=spuren.track;
   var tw=parseFloat(c.trackW)||6;
@@ -278,7 +281,7 @@ function buildRouteJsx(){
 // Anker, alles andere liegt relativ dazu.
 function buildRouteDiscJsx(){
   var c=cfg();
-  if(rawPoints.length<2) return null;
+  if(!hatZeichenbarenLauf(rawPoints)) return null;
   var k=aeFaktor(c);
   var dEntwurf=Math.max(0.08, Math.min(1, zahlOderVorgabe(c.discSize,0.34)))*AE_H;
   var D=dEntwurf*k;
@@ -321,7 +324,7 @@ function buildRouteDiscJsx(){
   // einer Ellipse oben und laeuft im Uhrzeigersinn.
   var fortschrittAn=(c.discProgress!=='0');
   var fortschrittKF=(fortschrittAn&&distData.length&&totalDistM>0)
-    ? buildKeyframeList(distData,function(p){ return Math.max(0,Math.min(100,p.distM/totalDistM*100)); })
+    ? buildKeyframeList(distData,function(p){ return Math.max(0,Math.min(100,p.distM/totalDistM*100)); }, {aufNull:true})
     : null;
   if(fortschrittAn&&fortschrittKF&&fortschrittKF.length){
     var pW=(parseFloat(c.discProgressW)||5)*k;
@@ -374,8 +377,8 @@ function buildCompassJsx(){
 
   var richtung=stetigerWinkel(headingData);
   var winkelKF=buildKeyframeList(richtung,function(p){ return p.deg; });
-  var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); });
-  var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); });
+  var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); }, {aufNull:true});
+  var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); }, {aufNull:true});
   if(!winkelKF.length||!tempoKF.length) return null;
 
   function aufKreis(grad, radius){
@@ -491,7 +494,7 @@ function buildHRJsx(){
   if(!hrData.length) return null;
   var sizeEntwurf=(parseFloat(c.hrSize)||0.07)*AE_H;
   var size=sizeEntwurf*aeFaktor(c);
-  var kf=buildKeyframeList(hrData,function(p){return p.hr;});
+  var kf=buildKeyframeList(hrData,function(p){return p.hr;}, {aufNull:true});
   var HX=250, HY=880;
   var vs=ankerVersatz(c,'hr',OVERLAY_MASSE.hr,HX,HY); HX+=vs.dx; HY+=vs.dy;
   var ort=aeOrt(c,HX+sizeEntwurf*1.2,HY+sizeEntwurf*0.4);
@@ -528,7 +531,7 @@ function buildInclineJsx(){
   var c=cfg();
   if(!gradeData.length) return null;
   var unit=c.inclineUnit;
-  var kf=buildKeyframeList(gradeData,function(p){return p.pct;});
+  var kf=buildKeyframeList(gradeData,function(p){return p.pct;}, {aufNull:true});
   var rot=[],i;
   for(i=0;i<kf.length;i++) rot.push([kf[i][0], -Math.atan(kf[i][1]/100)*180/Math.PI]);
   var BX=260, BY=880;
@@ -555,7 +558,7 @@ function buildMileJsx(){
   var dec=parseInt(c.mileDecimals,10)||1;
   var div=unit==='mph'?1609.344:1000;
   var label=unit==='mph'?'mi':'km';
-  var kf=buildKeyframeList(distData,function(p){return p.distM/div;});
+  var kf=buildKeyframeList(distData,function(p){return p.distM/div;}, {aufNull:true});
   var MX=260, MY=880;
   var vs=ankerVersatz(c,'mile',OVERLAY_MASSE.mile,MX,MY); MX+=vs.dx; MY+=vs.dy;
   var L=[aeHead('Mile Marker Overlay')];

@@ -89,17 +89,38 @@ function zonenDeckkraft(daten, wertFn, grenze2, grenze3){
   return aus;
 }
 
-function buildKeyframeList(dataArr, valueFn){
+// optionen.indizes: Array, in das die verwendeten Quellindizes geschrieben werden.
+// optionen.aufNull: Faengt die Aufzeichnung vor dem Video an, liegt der erste
+//   Keyframe hinter Bild 0 und das Overlay zeigt bis dahin einen spaeteren
+//   Messwert. Mit dieser Angabe wird der Wert fuer Bild 0 aus den beiden
+//   umgebenden Messwerten gemittelt. Nur fuer stetige Groessen setzen - ein
+//   Zonenindex oder ein Winkel in Grad vertraegt das nicht.
+function buildKeyframeList(dataArr, valueFn, optionen){
   var c=cfg();
   if(!dataArr || !dataArr.length) return [];
+  var o=optionen||{};
   var fps=parseFloat(c.fps);
   var offset=parseFloat(c.offset)||0;
   var drift=parseFloat(c.driftFactor)||1.0;
   var t0=(typeof rawPoints!=='undefined'&&rawPoints.length)?rawPoints[0].time:dataArr[0].time;
-  var out=[],lf=-1;
+  function bild(i){ return Math.round(((dataArr[i].time-t0)/1000*drift+offset)*fps); }
+  var out=[],lf=-1,letzterVor=-1;
   for(var i=0;i<dataArr.length;i++){
-    var fr=Math.round(((dataArr[i].time-t0)/1000*drift+offset)*fps);
-    if(fr>=0&&fr!==lf){ out.push([fr, valueFn(dataArr[i], i)]); lf=fr; }
+    var fr=bild(i);
+    if(fr<0){ letzterVor=i; continue; }
+    if(fr===lf) continue;
+    if(o.aufNull && !out.length && fr>0 && letzterVor>=0){
+      var fv=bild(letzterVor), vv=valueFn(dataArr[letzterVor], letzterVor);
+      var nv=valueFn(dataArr[i], i);
+      if(typeof vv==='number' && typeof nv==='number' && isFinite(vv) && isFinite(nv) && fr>fv){
+        out.push([0, vv+(nv-vv)*((0-fv)/(fr-fv))]);
+        if(o.indizes) o.indizes.push(letzterVor);
+        lf=0;
+      }
+    }
+    out.push([fr, valueFn(dataArr[i], i)]);
+    if(o.indizes) o.indizes.push(i);
+    lf=fr;
   }
   return out;
 }
@@ -202,7 +223,10 @@ function buildDisplacementKeyframes(ptsArr){
   }
   var total=cum[cum.length-1];
   var frac=cum.map(function(c){return total>0?c/total:0;});
-  return buildKeyframeList(ptsArr, function(p,i){return frac[i];});
+  var idx=[];
+  var kf=buildKeyframeList(ptsArr, function(p,i){return frac[i];},
+                           {aufNull:true, indizes:idx});
+  return haltAnGrenzen(kf, idx, ptsArr);
 }
 
 function buildSetting(){
@@ -211,7 +235,7 @@ function buildSetting(){
   var W=c.W, H=c.H;
   var maxSpd=parseFloat(c.maxSpeed)||9;
   var unit=c.unit,u=unitDisplay(unit),ms=maxSpd.toFixed(2);
-  var speedKF=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);});
+  var speedKF=buildKeyframeList(speedData,function(p){return Math.min(p.spd,maxSpd);}, {aufNull:true});
   var bgRgb=hexToRgb(c.gaugeBgColor);
   var ringRgb=hexToRgb(c.gaugeRingColor);
   var arcRgb=hexToRgb(c.gaugeArcColor);
@@ -661,7 +685,7 @@ function buildPolylineShapeNodes(maskName, splineToolName, pts, closed, solid, b
 }
 
 function buildRouteSetting(){
-  if(rawPoints.length<2) return null;
+  if(!hatZeichenbarenLauf(rawPoints)) return null;
   var c=cfg();
   var W=c.W, H=c.H;
   var tW=parseFloat(c.trackW)||4;
@@ -769,7 +793,7 @@ function buildRouteSetting(){
 function buildRouteDiscSetting(){
   var c=cfg();
   var W=c.W, H=c.H;
-  if(rawPoints.length<2) return null;
+  if(!hatZeichenbarenLauf(rawPoints)) return null;
   var k=Math.min(W/ENTWURF_W, H/ENTWURF_H);
   var dEntwurf=Math.max(0.08, Math.min(1, zahlOderVorgabe(c.discSize,0.34)))*ENTWURF_H;
   var D=dEntwurf*k;
@@ -812,7 +836,7 @@ function buildRouteDiscSetting(){
   var pW=parseFloat(c.discProgressW)||5;
   var pc=hexToRgb(c.discProgressColor||'#ff6600');
   var fortschrittKF=(fortschrittAn&&distData.length&&totalDistM>0)
-    ? buildKeyframeList(distData,function(p){ return Math.max(0,Math.min(100,p.distM/totalDistM*100)); })
+    ? buildKeyframeList(distData,function(p){ return Math.max(0,Math.min(100,p.distM/totalDistM*100)); }, {aufNull:true})
     : null;
   if(!fortschrittKF||!fortschrittKF.length) fortschrittAn=false;
 
@@ -942,8 +966,8 @@ function buildCompassSetting(){
   var einheit=unitDisplay(c.unit);
   var richtung=stetigerWinkel(headingData);
   var winkelKF=buildKeyframeList(richtung,function(p){ return -p.deg; });
-  var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); });
-  var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); });
+  var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); }, {aufNull:true});
+  var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); }, {aufNull:true});
   if(!winkelKF.length||!tempoKF.length) return null;
 
   function aufKreis(gradVonNorden, radius){
@@ -1180,7 +1204,7 @@ function buildHRSetting(){
   if(!hrData.length) return null;
   var c=cfg();
   var W=c.W, H=c.H;
-  var hrKF=buildKeyframeList(hrData,function(p){return Math.round(p.hr);});
+  var hrKF=buildKeyframeList(hrData,function(p){return Math.round(p.hr);}, {aufNull:true});
   var textRgb=hexToRgb(c.hrColor);
   var textSize=parseFloat(c.hrSize)||0.07;
 
@@ -1348,7 +1372,7 @@ function buildInclineSetting(){
   var exprStr = (unit==='deg')
     ? "string.format('%.1f°', math.atan(NumberDrive/100) * (180/math.pi))"
     : "string.format('%.1f%%', NumberDrive)";
-  var inclineKF=buildKeyframeList(gradeData,function(p){return p.pct;});
+  var inclineKF=buildKeyframeList(gradeData,function(p){return p.pct;}, {aufNull:true});
   var numRgb=hexToRgb(c.inclineNumberColor);
   var rF=(numRgb[0]/255).toFixed(6), gF=(numRgb[1]/255).toFixed(6), bF=(numRgb[2]/255).toFixed(6);
   var wedgeRgb=hexToRgb(c.inclineWedgeColor);
@@ -1521,7 +1545,7 @@ function buildMileSetting(){
 
   var totalDispDist = unit==='mph' ? totalDistM/1609.344 : totalDistM/1000;
   if(!isFinite(totalDispDist) || totalDispDist<=0) totalDispDist = 1;
-  var mileKF=buildKeyframeList(distData,function(p){return unit==='mph' ? p.distM/1609.344 : p.distM/1000;});
+  var mileKF=buildKeyframeList(distData,function(p){return unit==='mph' ? p.distM/1609.344 : p.distM/1000;}, {aufNull:true});
   var mileDec=parseInt(c.mileDecimals,10)||1;
   var lineDistRgb=hexToRgb(c.mileLineDistColor);
   var mileTextRgb=hexToRgb(c.mileColor);

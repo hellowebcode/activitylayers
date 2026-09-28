@@ -85,6 +85,13 @@ function resetTrackState(){
   if(gc){ var gx=gc.getContext('2d'); if(gx) gx.clearRect(0,0,gc.width,gc.height); }
 }
 
+// Ein FileReader kann abbrechen - ein entzogener Datentraeger, eine seit dem
+// Auswaehlen geloeschte Datei. Ohne Behandlung bliebe "Reading ..." stehen.
+function leseFehler(reader, file){
+  reader.onerror=function(){ setStatus('Could not read '+file.name,'err'); };
+  reader.onabort=function(){ setStatus('Cancelled reading '+file.name,'err'); };
+}
+
 function handleFile(file){
   var name=file.name.toLowerCase();
   if(!name.endsWith('.gpx')&&!name.endsWith('.fit')&&!name.endsWith('.tcx')){setStatus('Please upload a .gpx, .fit or .tcx file','err');return;}
@@ -99,6 +106,7 @@ function handleFile(file){
   // jeweils letzte Anforderung darf noch etwas uebernehmen.
   var meine=++ladeLauf;
   var reader=new FileReader();
+  leseFehler(reader, file);
   function fertig(verarbeite){
     return function(e){
       if(meine!==ladeLauf) return;
@@ -135,6 +143,7 @@ function handleGhostFile(file){
   }
   setStatus('Reading '+file.name+'...');
   var reader=new FileReader();
+  leseFehler(reader, file);
   function lies(inhalt){
     var merk={rawPoints:rawPoints, lapData:lapData, totalDistM:totalDistM, currentFilename:currentFilename};
     importZiel='geist'; geistKandidat=null;
@@ -182,7 +191,7 @@ function uebernehmeTrack(name){
     // Abschnittsnummer und Zeit muessen mit: ohne sie gilt jeder Schritt der
     // Geisterspur als Aufnahmegrenze und die Linie zerfaellt in Einzelpunkte.
     geistKandidat=rawPoints.map(function(p){
-      return {lat:p.lat, lon:p.lon, time:p.time, seg:p.seg};
+      return {lat:p.lat, lon:p.lon, time:p.time, seg:p.seg, segHart:p.segHart};
     });
     return false;
   }
@@ -443,7 +452,7 @@ function parseTCX(text,name){
         cad:tcxZahl(pt,'Cadence',0,254),
         power:tcxZahl(pt,'Watts',0,3000),
         dist:tcxZahl(pt,'DistanceMeters',0,1e7),
-        temp:null, genau:null, seg:segVon[i]});
+        temp:null, genau:null, seg:segVon[i], segHart:false});
     }
     rawPoints.sort(function(a,b){return (a.seg-b.seg)||(a.time-b.time);});
     if(rawPoints.length<2){setStatus('Not enough valid points','err');return;}
@@ -492,7 +501,7 @@ function parseGPX(text,name){
           cad:getExtNumber(pt,['cad','cadence'],0,254),
           power:getExtNumber(pt,['power','pwr'],0,3000),
           temp:getExtNumber(pt,['atemp','temperature'],-100,100),
-          dist:null, genau:null, seg:segVon[i]});
+          dist:null, genau:null, seg:segVon[i], segHart:true});
       } else skipped++;
     }
     rawPoints.sort(function(a,b){return (a.seg-b.seg)||(a.time-b.time);});

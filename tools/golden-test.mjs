@@ -310,6 +310,24 @@ const FAELLE = [
   // Ohne Punkte muss jeder Generator null liefern statt zu stolpern.
   ['leer/', () => setzePunkte([])],
   ['einPunkt/', () => setzePunkte([{ lat: 50, lon: 7, ele: 100, time: new Date(T0), seg: 0, dist: null, genau: 3 }])],
+  // Lauter einzelne Punkte: kein Abschnitt hat zwei, also gibt es keine Maske,
+  // auf die sich ein Merge beziehen koennte.
+  ['einzelpunkte/', () => setzePunkte(kunstPunkte(3, i => ({
+    lat: 50 + i, lon: 7 + i * 2, ele: 100 + i * 10,
+    time: new Date(T0 + i * 600000), seg: i, segHart: true, dist: null, genau: 3,
+  })))],
+  // GPX trennt mit <trkseg> ausdruecklich - auch wenn nur fuenf Sekunden und
+  // sechzig Meter dazwischen liegen.
+  ['gpxKurz/', () => setzePunkte(kunstPunkte(40, i => {
+    const s = Math.floor(i / 20), k = i % 20;
+    return { lat: 50 + s * 0.0005 + k * 0.00045, lon: 7, ele: 100 + k,
+             time: new Date(T0 + (i + s * 5) * 1000), seg: s, segHart: true, dist: null, genau: 3 };
+  }))],
+  // Am Suedpol liefert Mercator ohne Klemme minus unendlich.
+  ['pol/', () => setzePunkte(kunstPunkte(20, i => ({
+    lat: -89.9 + i * 0.0004, lon: 30 + i * 0.001, ele: 2800 + i,
+    time: new Date(T0 + i * 1000), seg: 0, dist: null, genau: 3,
+  })))],
 ];
 
 function laufFall(praefix, vorbereiten) {

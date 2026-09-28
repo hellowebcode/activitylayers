@@ -188,7 +188,7 @@ function buildCadenceSetting(){
     size:parseFloat(c.cadSize)||0.07,
     expr:'string.format("%d '+overlayLabels().cad+'", floor(Cadence))',
     drives:[{name:'Cadence',label:'Cadence',min:0,max:200,
-             kf:buildKeyframeList(cadData,function(p){return Math.round(p.cad);})}]
+             kf:buildKeyframeList(cadData,function(p){return Math.round(p.cad);}, {aufNull:true})}]
   });
 }
 
@@ -205,7 +205,7 @@ function buildPaceSetting(){
     size:parseFloat(c.paceSize)||0.07,
     expr:'string.format("%d:%02d '+paceLabel(c)+'", floor(Pace/60), floor(Pace - floor(Pace/60)*60))',
     drives:[{name:'Pace',label:'Pace (s)',min:60,max:3600,
-             kf:buildKeyframeList(paceData,function(p){return Math.round(p.sec);})}]
+             kf:buildKeyframeList(paceData,function(p){return Math.round(p.sec);}, {aufNull:true})}]
   });
 }
 
@@ -219,7 +219,7 @@ function buildTempSetting(){
     size:parseFloat(c.tempSize)||0.07,
     expr:'string.format("%d '+overlayLabels().temp+'", floor(Temperature))',
     drives:[{name:'Temperature',label:'Temperature',min:-40,max:60,
-             kf:buildKeyframeList(tempData,function(p){return Math.round(p.temp);})}]
+             kf:buildKeyframeList(tempData,function(p){return Math.round(p.temp);}, {aufNull:true})}]
   });
 }
 
@@ -236,7 +236,7 @@ function buildPowerSetting(){
     size:parseFloat(c.powerSize)||0.07,
     expr:'string.format("%d '+overlayLabels().power+'", floor(Power))',
     drives:[{name:'Power',label:'Power',min:0,max:1500,
-             kf:buildKeyframeList(powerData,function(p){return Math.round(p.power);})}]
+             kf:buildKeyframeList(powerData,function(p){return Math.round(p.power);}, {aufNull:true})}]
   });
 }
 
@@ -261,7 +261,7 @@ function buildCadenceJsx(){
   var vs=ankerVersatz(c,'cad',OVERLAY_MASSE.text,250,880);
   if(!cadData.length) return null;
   var size=(parseFloat(c.cadSize)||0.07)*AE_H*aeFaktor(c);
-  var kf=buildKeyframeList(cadData,function(p){return p.cad;});
+  var kf=buildKeyframeList(cadData,function(p){return p.cad;}, {aufNull:true});
   var L=[aeHead('Cadence Overlay')];
   L.push('  var num=textLayer("Cadence","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.cadColor)+',false);');
   L.push('  driveText(num,"Cadence",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().cad+'";')+');');
@@ -274,7 +274,7 @@ function buildPaceJsx(){
   var vs=ankerVersatz(c,'pace',OVERLAY_MASSE.text,250,880);
   if(!paceData.length) return null;
   var size=(parseFloat(c.paceSize)||0.07)*AE_H*aeFaktor(c);
-  var kf=buildKeyframeList(paceData,function(p){return Math.round(p.sec);});
+  var kf=buildKeyframeList(paceData,function(p){return Math.round(p.sec);}, {aufNull:true});
   var ausdruck='var t=v; var m=Math.floor(t/60); var s=Math.floor(t-m*60); '+
                'm+":"+(s<10?"0":"")+s+" '+paceLabel(c)+'";';
   var L=[aeHead('Pace Overlay')];
@@ -289,7 +289,7 @@ function buildTempJsx(){
   var vs=ankerVersatz(c,'temp',OVERLAY_MASSE.text,250,880);
   if(!tempData.length) return null;
   var size=(parseFloat(c.tempSize)||0.07)*AE_H*aeFaktor(c);
-  var kf=buildKeyframeList(tempData,function(p){return p.temp;});
+  var kf=buildKeyframeList(tempData,function(p){return p.temp;}, {aufNull:true});
   var L=[aeHead('Temperature Overlay')];
   L.push('  var num=textLayer("Temperature","0",'+aeOrt(c,250+vs.dx,880+vs.dy)+','+aeNum(size)+','+aeCol(c.tempColor)+',false);');
   L.push('  driveText(num,"Temperature",'+aeKf(kf,0)+','+aeStr('Math.round(v)+" '+overlayLabels().temp+'";')+');');
@@ -302,7 +302,7 @@ function buildPowerJsx(){
   var vs=ankerVersatz(c,'power',OVERLAY_MASSE.text,250,880);
   if(!powerData.length) return null;
   var size=(parseFloat(c.powerSize)||0.07)*AE_H*aeFaktor(c);
-  var kf=buildKeyframeList(powerData,function(p){return p.power;});
+  var kf=buildKeyframeList(powerData,function(p){return p.power;}, {aufNull:true});
   var L=[aeHead('Power Overlay')];
   var zonen = c.powerZones ? zonenDeckkraft(powerData,function(p){return p.power;},
     zahlOderVorgabe(c.powerZone2,200), zahlOderVorgabe(c.powerZone3,280)) : null;

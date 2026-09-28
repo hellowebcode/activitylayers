@@ -11,17 +11,20 @@ function haversine(la1,lo1,la2,lo2){
 // nicht zurueckzulegen waere. Das Zweite faengt auch FIT-Dateien ab, die keine
 // Abschnitte kennen, sowie zusammenkopierte Aufzeichnungen.
 var MAX_TEMPO_MS=150;                       // 540 km/h, fuer kein Fahrzeug erreichbar
-// Eine Aufnahmegrenze liegt vor, wenn die Aufzeichnung wirklich unterbrochen
-// war. Ein erklaerter Abschnittswechsel allein genuegt nicht: In TCX steckt
-// jede Runde in einem eigenen <Track>, obwohl durchgehend gefahren wurde -
-// zaehlte das als Grenze, zerfiele eine Runde in Einzelstuecke.
+// Eine Aufnahmegrenze liegt vor, wenn die Aufzeichnung unterbrochen war. Wie
+// verlaesslich ein erklaerter Abschnittswechsel das anzeigt, haengt am Format:
+// Ein <trkseg> in GPX trennt ausdruecklich, ein <Track> in TCX steht schlicht
+// fuer eine Runde und bedeutet oft gar keine Pause. Deshalb traegt jeder Punkt
+// mit segHart, wie seine Abschnittsnummer zu lesen ist; ohne die Angabe
+// entscheidet die Zeit.
 var PAUSE_SEK=10;
 function istGrenze(a,b){
   if(!a||!b) return true;
   var dt=(b.time-a.time)/1000;
   if(!(dt>0)) return true;
   if(haversine(a.lat,a.lon,b.lat,b.lon)/dt > MAX_TEMPO_MS) return true;
-  return a.seg!==undefined && b.seg!==undefined && a.seg!==b.seg && dt>PAUSE_SEK;
+  if(a.seg===undefined||b.seg===undefined||a.seg===b.seg) return false;
+  return b.segHart===true || dt>PAUSE_SEK;
 }
 
 // Indexbereiche der zusammenhaengenden Abschnitte. Jeder Bereich ist [von,bis)
@@ -35,6 +38,31 @@ function segmentLaeufe(pts){
   }
   laeufe.push([start,pts.length]);
   return laeufe;
+}
+
+// An einer Aufnahmegrenze haelt der Punkt an der letzten aufgezeichneten Stelle
+// und springt erst im naechsten Bild weiter. Ohne diesen Halt faehrt er die
+// ganze Pause ueber die unsichtbare Verbindung - bei fuenf Minuten Pause
+// minutenlang durch leeres Bild. kf sind [Bild, Wert]-Paare, idx die
+// dazugehoerigen Indizes in pts.
+function haltAnGrenzen(kf, idx, pts){
+  if(!kf || kf.length<2) return kf||[];
+  var lauf=laufNummern(pts), raus=[];
+  for(var k=0;k<kf.length;k++){
+    if(k>0 && lauf[idx[k]]!==lauf[idx[k-1]] && kf[k][0]-1>kf[k-1][0])
+      raus.push([kf[k][0]-1, kf[k-1][1]]);
+    raus.push(kf[k]);
+  }
+  return raus;
+}
+
+// Zeichenbar ist eine Spur erst, wenn mindestens ein Abschnitt zwei Punkte hat.
+// Lauter einzelne Punkte ergeben keine Linie - und keine Maske, auf die sich
+// ein Merge beziehen koennte.
+function hatZeichenbarenLauf(pts){
+  var l=segmentLaeufe(pts);
+  for(var i=0;i<l.length;i++) if(l[i][1]-l[i][0]>=2) return true;
+  return false;
 }
 
 // Laufnummer des Abschnitts je Punkt.
@@ -139,11 +167,11 @@ function smoothSG(data, win) {
   var m = Math.floor(win / 2);
   var weights = getSGCoeffs(m);
   if (!weights) return smoothRolling(data, win);
-  var out = [];
+  var out = [], f = laufFelder(data);
   for (var i = 0; i < data.length; i++) {
-    var sum = 0, wSum = 0, g = laufGrenzen(data, i);
+    var sum = 0, wSum = 0;
     for (var k = -m; k <= m; k++) {
-      var idx = Math.min(Math.max(i + k, g[0]), g[1]);
+      var idx = Math.min(Math.max(i + k, f.von[i]), f.bis[i]);
       var w = weights[k + m];
       sum += w * data[idx].spd;
       wSum += w;
@@ -157,19 +185,26 @@ function smoothSG(data, win) {
 
 // Geglaettet wird nur innerhalb eines Aufnahmeabschnitts: ueber eine Pause
 // hinweg gemittelt zoege die Geschwindigkeit von davor in die Zeit danach.
-function laufGrenzen(data, i) {
-  var l = data[i].lauf, von = i, bis = i;
-  while (von > 0 && data[von-1].lauf === l) von--;
-  while (bis < data.length-1 && data[bis+1].lauf === l) bis++;
-  return [von, bis];
+// Anfang und Ende jedes Laufs werden einmal bestimmt, nicht je Punkt gesucht -
+// sonst waere die Glaettung quadratisch und blockierte bei langen Tracks.
+function laufFelder(data) {
+  var n = data.length, von = new Int32Array(n), bis = new Int32Array(n);
+  var start = 0;
+  for (var i = 1; i <= n; i++) {
+    if (i === n || data[i].lauf !== data[start].lauf) {
+      for (var j = start; j < i; j++) { von[j] = start; bis[j] = i - 1; }
+      start = i;
+    }
+  }
+  return { von: von, bis: bis };
 }
 
 function smoothRolling(data, win) {
   if (win <= 1) return data.slice();
-  var out = [];
+  var out = [], f = laufFelder(data);
   for (var i = 0; i < data.length; i++) {
-    var g = laufGrenzen(data, i), h = Math.floor(win/2);
-    var s = Math.max(g[0],i-h), e = Math.min(g[1],i+h), sum = 0, n = 0;
+    var h = Math.floor(win/2);
+    var s = Math.max(f.von[i],i-h), e = Math.min(f.bis[i],i+h), sum = 0, n = 0;
     for (var j = s; j <= e; j++) { sum += data[j].spd; n++; }
     out.push({ time: data[i].time, lauf: data[i].lauf, spd: sum / n });
   }
@@ -451,7 +486,14 @@ function stetigerWinkel(daten){
 // Eine gemeinsame Rechnung fuer die Vorschau und beide Ausgabeformate.
 // Mit rohen Gradzahlen waere eine Strecke bei 50 Grad Nord um gut die Haelfte
 // zu breit, weil ein Laengengrad dort nur 64 Prozent eines Breitengrads misst.
-function mercatorY(lat){ return Math.log(Math.tan(Math.PI/4+lat*Math.PI/360)); }
+// Mercator geht an den Polen gegen unendlich. Web Mercator schneidet deshalb
+// bei 85,05112878 Grad ab; ohne diese Klemme lieferte eine Koordinate am
+// Suedpol -Infinity und riss die ganze Projektion mit.
+var MERCATOR_MAX_LAT=85.05112878;
+function mercatorY(lat){
+  var b=Math.max(-MERCATOR_MAX_LAT, Math.min(MERCATOR_MAX_LAT, lat));
+  return Math.log(Math.tan(Math.PI/4+b*Math.PI/360));
+}
 
 // Laengengrade fortlaufend machen. Ein Track ueber die Datumsgrenze springt
 // sonst von 179,9 auf -179,9 und spannt scheinbar die halbe Erde.
