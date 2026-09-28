@@ -89,7 +89,7 @@ deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt neunzehn Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 602 Einträge:
+den Prüfsummen in `tools/golden.json` — 634 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
@@ -103,10 +103,12 @@ eine Pause mit Sensorwerten mitten im Video, ein Versatz ohne jede zeitliche
 vertauschte Zonengrenzen, eine Geisterspur, ein Hochformat sowie ein leerer,
 ein einpunktiger und ein aus lauter Einzelpunkten bestehender Track.
 
-Zwei Einträge prüfen keine Ausgabe, sondern Angaben, die an zwei Stellen stehen:
-die Dateigrenze aus `js/import.js` gegen die Zahl im Blog und die Overlayzahlen
-der Beispieldateien gegen die Tabelle oben. Beides war schon einmal
-auseinandergelaufen.
+Einige Einträge prüfen keine Ausgabe, sondern Angaben, die an zwei Stellen
+stehen: die Dateigrenze aus `js/import.js` gegen die Zahl im Blog und die
+Overlayzahlen der Beispieldateien gegen die Tabelle oben — beides war schon
+einmal auseinandergelaufen. Dazu der Abweichungsfaktor für acht Eingaben und
+die angezeigte Dauer bei Bildraten, bei denen das Aufrunden eine Bildnummer
+ergab, die es nicht gibt.
 
 Dazu kommen drei Fälle, die nicht die Generatoren prüfen, sondern die
 Oberfläche: Sie lösen die echten Klickbehandler aller sechsundzwanzig

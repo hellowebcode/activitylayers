@@ -53,6 +53,16 @@ function grenzeZwischen(vonZeit, bisZeit, pts){
   return false;
 }
 
+// Der Abweichungsfaktor kommt aus einem Feld, das 0,9 bis 1,1 zulaesst. Ein
+// gespeicherter, getippter oder aus einer Vorlage geladener Wert kann daran
+// vorbeikommen - null liesse die Zeit stehen, ein negativer sie rueckwaerts
+// laufen. Gelesen wird er deshalb nur hier.
+function driftWert(roh){
+  var d=parseFloat(roh);
+  if(!isFinite(d)||d<=0) return 1.0;
+  return Math.max(DRIFT_MIN, Math.min(DRIFT_MAX, d));
+}
+
 // Zeitpunkte, an denen die Aufzeichnung nach einer Pause wieder einsetzt.
 // Die Antwort haengt nur an den Punkten, wird aber von jedem Generator
 // gebraucht - deshalb einmal gerechnet und gemerkt.
@@ -326,7 +336,10 @@ function reprocess(){
   var durSec=(speedData[speedData.length-1].time-speedData[0].time)/1000;
   var maxSpd=0;
   for(var i=0;i<speedData.length;i++)if(speedData[i].spd>maxSpd)maxSpd=speedData[i].spd;
-  var h=Math.floor(durSec/3600),m=Math.floor((durSec%3600)/60),s=Math.floor(durSec%60),f=Math.round((durSec%1)*fps);
+  // Abgerundet, nicht gerundet: Bei 719,999 s und 29,97 Bildern ergab das
+  // Aufrunden Bild 30 - eine Nummer, die es bei 29,97 nicht gibt.
+  var h=Math.floor(durSec/3600),m=Math.floor((durSec%3600)/60),s=Math.floor(durSec%60);
+  var f=Math.max(0, Math.floor((durSec%1)*fps));
   function p2(n){return n<10?'0'+n:''+n;}
   var tc=p2(h)+':'+p2(m)+':'+p2(s)+':'+p2(f);
   var distDisplay=unit==='mph'?(totalDistM/1609.344).toFixed(2)+' mi':(totalDistM/1000).toFixed(2)+' km';

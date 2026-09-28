@@ -35,7 +35,7 @@ function aeDuration(){
   var c=cfg();
   var fps=parseFloat(c.fps)||30;
   if(!speedData.length) return 10;
-  var drift=parseFloat(c.driftFactor)||1.0;
+  var drift=driftWert(c.driftFactor);
   var offset=parseFloat(c.offset)||0;
   var span=(speedData[speedData.length-1].time-speedData[0].time)/1000*drift+offset;
   return Math.max(1, Math.ceil((span+1)*fps)/fps);

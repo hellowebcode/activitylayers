@@ -10,7 +10,7 @@ function timeToFrame(tMs,t0){
   var c=cfg();
   var fps=parseFloat(c.fps)||30;
   var offset=parseFloat(c.offset)||0;
-  var drift=parseFloat(c.driftFactor)||1.0;
+  var drift=driftWert(c.driftFactor);
   return Math.round(((tMs-t0)/1000*drift+offset)*fps);
 }
 
@@ -18,8 +18,7 @@ function buildLapKeyframes(){
   var c=cfg();
   if(!lapData.length||!rawPoints.length) return null;
   var fps=parseFloat(c.fps)||30;
-  var drift=parseFloat(c.driftFactor)||1.0;
-  if(!isFinite(drift)||drift<=0) drift=1.0;
+  var drift=driftWert(c.driftFactor);
   var t0=rawPoints[0].time, num=[], sec=[], last=-1;
   for(var i=0;i<lapData.length;i++){
     var a=timeToFrame(lapData[i].start,t0), b=timeToFrame(lapData[i].end,t0);

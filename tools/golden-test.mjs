@@ -365,6 +365,9 @@ const FAELLE = [
   // Die ganze Aufzeichnung liegt vor Bild 0: Jede Keyframeliste bleibt leer,
   // eine Datei mit leerer Kurve waere ein Erfolg ohne Inhalt.
   ['keineUeberlappung/', () => { fitLesen('demo-ride.fit'); setzeFeld('offset', -5000); }],
+  // Ein Abweichungsfaktor jenseits von 0,9 bis 1,1 - so einer kann aus einer
+  // Vorlage oder aus dem Speicher kommen und muss geklemmt werden.
+  ['driftAusserhalb/', () => { fitLesen('demo-ride.fit'); setzeFeld('driftFactor', 2.5); }],
   // Am Suedpol liefert Mercator ohne Klemme minus unendlich.
   ['pol/', () => setzePunkte(kunstPunkte(20, i => ({
     lat: -89.9 + i * 0.0004, lon: 30 + i * 0.001, ele: 2800 + i,
@@ -481,16 +484,72 @@ function abgleich() {
   return raus;
 }
 
-// Wieviele Overlays jede Beispieldatei ergibt, steht auch im README.
+// Wieviele Overlays jede Beispieldatei ergibt, steht auch in der Tabelle im
+// README - dort als Zahlwort. Gezaehlt wird hier, verglichen wird mit dem Text.
+const ZAHLWORT = {
+  keine: 0, ein: 1, zwei: 2, drei: 3, vier: 4, 'f\u00fcnf': 5, sechs: 6, sieben: 7,
+  acht: 8, neun: 9, zehn: 10, elf: 11, 'zw\u00f6lf': 12, dreizehn: 13, vierzehn: 14,
+  'f\u00fcnfzehn': 15, sechzehn: 16, siebzehn: 17, achtzehn: 18, neunzehn: 19, zwanzig: 20,
+};
+
 function beispielZahlen(alles) {
   const zaehle = (pre) => GENERATOREN.filter(([n]) => n.endsWith('.setting'))
     .filter(([n]) => alles[pre + n] && alles[pre + n] !== 'null').length;
-  return { '__beispiele__': 'fit=' + zaehle('') + ' tcx=' + zaehle('tcx/')
-           + ' gpx=' + zaehle('gpx/') + ' minimal=' + zaehle('minimal/') };
+  const gemessen = { 'demo-ride.fit': zaehle(''), 'demo-ride.tcx': zaehle('tcx/'),
+                     'demo-ride.gpx': zaehle('gpx/'), 'demo-minimal.gpx': zaehle('minimal/') };
+  const readme = fs.readFileSync(path.join(WURZEL, 'README.md'), 'utf8');
+  const imText = {};
+  for (const m of readme.matchAll(/\|\s*`([\w.-]+)`\s*\|\s*(?:alle\s+)?([A-Za-z\u00e4\u00f6\u00fc\u00df]+)\s+Overlays/g)) {
+    imText[m[1]] = m[2] in ZAHLWORT ? ZAHLWORT[m[2]] : 'unbekannt(' + m[2] + ')';
+  }
+  const streit = [];
+  for (const datei of Object.keys(gemessen)) {
+    if (imText[datei] !== gemessen[datei]) {
+      streit.push(datei + ': gemessen ' + gemessen[datei] + ', README '
+                  + (datei in imText ? imText[datei] : 'nicht genannt'));
+    }
+  }
+  return { '__beispiele__': streit.length
+    ? 'WIDERSPRUCH \u2014 ' + streit.join('; ')
+    : Object.keys(gemessen).map((d) => d + '=' + gemessen[d]).join(' ') + ', README stimmt \u00fcberein' };
+}
+
+// Der Abweichungsfaktor wird an vier Stellen gelesen, aber nur an einer
+// gepruefte. Diese eine wird hier direkt festgehalten.
+function driftWerte() {
+  const eingaben = ['1.0', '0.94', '1.1', '2.5', '-1', '0', '', 'abc'];
+  const raus = eingaben.map((e) => JSON.stringify(e) + '\u2192' + ctx.driftWert(e));
+  return { '__drift__': raus.join(' ') };
+}
+
+// Die angezeigte Dauer als Timecode. Endet sie kurz vor einer vollen Sekunde,
+// ergab das Aufrunden eine Bildnummer, die es bei der Bildrate nicht gibt.
+function dauerAnzeige() {
+  const raus = {};
+  for (const [fps, restMs] of [['29.97', 999], ['30', 990], ['25', 999], ['29.97', 0]]) {
+    feldZurueck();
+    ctx.resetTrackState();
+    ctx.ghostPoints = [];
+    setzeFeld('fps', fps);
+    const pts = kunstPunkte(30, (i) => ({
+      lat: 50 + i * 0.00045, lon: 7, ele: 100, time: new Date(T0 + i * 1000),
+      seg: 0, segHart: true, dist: null, genau: 3,
+    }));
+    pts[pts.length - 1].time = new Date(T0 + 29000 - (1000 - restMs) % 1000);
+    ctx.rawPoints = pts;
+    let tc;
+    try { ctx.reprocess(); tc = ctx.document.getElementById('statDur').textContent; }
+    catch (e) { tc = 'FEHLER: ' + e.message; }
+    const bild = Number(String(tc).split(':')[3]);
+    const grenze = Math.ceil(Number(fps)) - 1;
+    raus['__dauer_' + fps + '_' + restMs + '__'] =
+      tc + (Number.isFinite(bild) && bild > grenze ? '  UNGUELTIGE BILDNUMMER (max ' + grenze + ')' : '');
+  }
+  return raus;
 }
 
 async function lauf() {
-  let alles = abgleich();
+  let alles = Object.assign(abgleich(), driftWerte(), dauerAnzeige());
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }

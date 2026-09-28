@@ -104,7 +104,7 @@ function buildKeyframeList(dataArr, valueFn, optionen){
   var o=optionen||{};
   var fps=parseFloat(c.fps);
   var offset=parseFloat(c.offset)||0;
-  var drift=parseFloat(c.driftFactor)||1.0;
+  var drift=driftWert(c.driftFactor);
   var t0=(typeof rawPoints!=='undefined'&&rawPoints.length)?rawPoints[0].time:dataArr[0].time;
   function bild(i){ return Math.round(((dataArr[i].time-t0)/1000*drift+offset)*fps); }
   var quelle=(typeof rawPoints!=='undefined')?rawPoints:null;
