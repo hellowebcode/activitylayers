@@ -1,6 +1,9 @@
 {
   "__dateigrenze__": "32 MB, im Blog 2x genannt",
   "__drift__": "\"1.0\"→1 \"0.94\"→0.94 \"1.1\"→1.1 \"2.5\"→1.1 \"-1\"→1 \"0\"→1 \"\"→1 \"abc\"→1",
+  "__driftfeld__": "\"1.0\"→1.0 \"0.94\"→0.94 \"2.5\"→1.1* \"-1\"→1* \"\"→1* \"abc\"→1*",
+  "__vorlagennamen__": "Normal=ok __proto__=ok constructor=ok toString=ok hasOwnProperty=ok | aufgelistet: 5 | nicht gespeicherte: alle undefined",
+  "__resetvorschau__": "alle fünf zeichnen neu",
   "__dauer_29.97_999__": "00:00:28:29",
   "__dauer_30_990__": "00:00:28:29",
   "__dauer_25_999__": "00:00:28:24",

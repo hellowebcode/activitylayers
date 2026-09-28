@@ -509,6 +509,15 @@ function beispielZahlen(alles) {
                   + (datei in imText ? imText[datei] : 'nicht genannt'));
     }
   }
+  // Auch die Zahl der Faelle selbst steht im README.
+  const wort = (w) => (w in ZAHLWORT ? ZAHLWORT[w] : 'unbekannt(' + w + ')');
+  const mGes = /schickt ([A-Za-z\u00e4\u00f6\u00fc\u00df]+) F\u00e4lle/.exec(readme);
+  const mGrenz = /vier Beispieldateien und ([A-Za-z\u00e4\u00f6\u00fc\u00df]+) gebaute Grenzf\u00e4lle/.exec(readme);
+  const gesamt = mGes ? wort(mGes[1]) : 'nicht genannt';
+  const grenz = mGrenz ? wort(mGrenz[1]) : 'nicht genannt';
+  if (gesamt !== FAELLE.length) streit.push('Fallzahl: gemessen ' + FAELLE.length + ', README ' + gesamt);
+  if (grenz !== FAELLE.length - 4) streit.push('Grenzfaelle: gemessen ' + (FAELLE.length - 4) + ', README ' + grenz);
+
   return { '__beispiele__': streit.length
     ? 'WIDERSPRUCH \u2014 ' + streit.join('; ')
     : Object.keys(gemessen).map((d) => d + '=' + gemessen[d]).join(' ') + ', README stimmt \u00fcberein' };
@@ -520,6 +529,61 @@ function driftWerte() {
   const eingaben = ['1.0', '0.94', '1.1', '2.5', '-1', '0', '', 'abc'];
   const raus = eingaben.map((e) => JSON.stringify(e) + '\u2192' + ctx.driftWert(e));
   return { '__drift__': raus.join(' ') };
+}
+
+// Vorlagennamen sind freier Text. "__proto__" und Verwandte duerfen nicht
+// lautlos verschwinden.
+function vorlagenNamen() {
+  const namen = ['Normal', '__proto__', 'constructor', 'toString', 'hasOwnProperty'];
+  const o = {};
+  for (const n of namen) ctx.vorlageSetzen(o, n, { fps: '25', name: n });
+  const wieder = JSON.parse(JSON.stringify(o));
+  const raus = namen.map((n) => {
+    const geholt = ctx.vorlageHolen(wieder, n);
+    return n + '=' + (geholt && geholt.name === n ? 'ok' : 'VERLOREN');
+  });
+  // Und der andere Weg: Namen, die nie gespeichert wurden, duerfen nicht aus
+  // dem Prototyp zurueckkommen - sonst gilt eine Vorlage als vorhanden.
+  const leer = {};
+  const erfunden = ['toString', 'constructor', 'valueOf', 'Gibtsnicht'];
+  const falsch = erfunden.filter((n) => ctx.vorlageHolen(leer, n) !== undefined);
+  return { '__vorlagennamen__': raus.join(' ') + ' | aufgelistet: ' + Object.keys(wieder).length
+    + ' | nicht gespeicherte: ' + (falsch.length ? 'AUS DEM PROTOTYP: ' + falsch.join(',') : 'alle undefined') };
+}
+
+// Steht im Feld ein Faktor ausserhalb des Bereichs, soll er dort auch
+// berichtigt werden - nicht nur beim Rechnen.
+function driftFeld() {
+  const el = ctx.document.getElementById('driftFactor');
+  const raus = [];
+  for (const e of ['1.0', '0.94', '2.5', '-1', '', 'abc']) {
+    el.value = e;
+    const geaendert = ctx.driftFeldAngleichen(false);
+    raus.push(JSON.stringify(e) + '\u2192' + el.value + (geaendert ? '*' : ''));
+  }
+  el.value = vorgaben['driftFactor'];
+  return { '__driftfeld__': raus.join(' ') };
+}
+
+// Ein Zuruecksetzen setzt .value und loest damit kein Ereignis aus. Wo eine
+// Vorschau am Zug haengt, muss der Knopf sie selbst neu zeichnen.
+function resetVorschau() {
+  const quelle = fs.readFileSync(path.join(WURZEL, 'js', 'settings.js'), 'utf8');
+  const noetig = { resetVideo: 'reprocess', resetRoute: 'drawRoute', resetGauge: 'drawGauge',
+                   resetHR: 'drawHR', resetElev: 'drawElev' };
+  const fehlt = [];
+  for (const knopf of Object.keys(noetig)) {
+    const m = new RegExp("getElementById\\('" + knopf + "'\\)\\.addEventListener\\('click',function\\(\\)\\{").exec(quelle);
+    if (!m) { fehlt.push(knopf + ': Knopf fehlt'); continue; }
+    let i = m.index + m[0].length - 1, t = 0, j = i;
+    while (j < quelle.length) {
+      if (quelle[j] === '{') t++;
+      else if (quelle[j] === '}') { t--; if (!t) break; }
+      j++;
+    }
+    if (quelle.slice(i, j).indexOf(noetig[knopf]) < 0) fehlt.push(knopf + ' ruft ' + noetig[knopf] + ' nicht');
+  }
+  return { '__resetvorschau__': fehlt.length ? 'FEHLT \u2014 ' + fehlt.join('; ') : 'alle f\u00fcnf zeichnen neu' };
 }
 
 // Die angezeigte Dauer als Timecode. Endet sie kurz vor einer vollen Sekunde,
@@ -549,7 +613,8 @@ function dauerAnzeige() {
 }
 
 async function lauf() {
-  let alles = Object.assign(abgleich(), driftWerte(), dauerAnzeige());
+  let alles = Object.assign(abgleich(), driftWerte(), driftFeld(),
+                            vorlagenNamen(), resetVorschau(), dauerAnzeige());
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }

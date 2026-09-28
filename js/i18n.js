@@ -377,6 +377,8 @@ function localizeRuntimeText(message){
   if(message==='That is not an Activity Layers preset') return 'Das ist keine Vorlage von Activity Layers';
   if(message==='Nothing to export') return 'Nichts auszugeben';
   if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
+  if(message.indexOf('Drift factor adjusted to ')===0)
+    return 'Abweichungsfaktor auf '+message.slice(25)+' angepasst — erlaubt sind 0,9 bis 1,1';
   if(message.indexOf('Could not read ')===0)
     return message.slice(15)+' konnte nicht gelesen werden';
   if(message.indexOf('Cancelled reading ')===0)

@@ -206,7 +206,22 @@ function wendeEinstellungenAn(werte){
     } else el.value=String(werte[id]);
     uebernommen++;
   }
+  driftFeldAngleichen(true);
   return uebernommen;
+}
+
+// Gerechnet wird ohnehin mit dem geklemmten Faktor. Dann soll im Feld auch
+// stehen, was tatsaechlich gilt - sonst exportiert das Werkzeug mit 1,1,
+// waehrend dort 2,5 steht.
+function driftFeldAngleichen(melden){
+  var el=document.getElementById('driftFactor');
+  if(!el) return false;
+  var roh=el.value, d=driftWert(roh);
+  if(parseFloat(roh)===d) return false;
+  el.value=d;
+  if(melden && typeof setStatus==='function')
+    setStatus('Drift factor adjusted to '+d,'err');
+  return true;
 }
 
 // ---- Benannte Vorlagen --------------------------------------------------
@@ -220,6 +235,17 @@ function vorlagenLesen(){
     return (o&&typeof o==='object'&&!Array.isArray(o))?o:{};
   }catch(e){ return {}; }
 }
+// Ein Vorlagenname ist freier Text. Bei "__proto__" setzt eine gewoehnliche
+// Zuweisung den Prototyp statt einer Eigenschaft: Object.keys bleibt leer, das
+// Sichern meldet Erfolg und die Vorlage ist weg. Deshalb laufen Lesen und
+// Schreiben nur ueber diese beiden Helfer.
+function vorlageHolen(o, name){
+  return Object.prototype.hasOwnProperty.call(o, name) ? o[name] : undefined;
+}
+function vorlageSetzen(o, name, wert){
+  Object.defineProperty(o, name, {value:wert, enumerable:true, writable:true, configurable:true});
+}
+
 function vorlagenSchreiben(o){
   try{ localStorage.setItem(VORLAGEN_SCHLUESSEL, JSON.stringify(o)); return true; }
   catch(e){ setStatus('Presets could not be saved — this browser is out of storage','err'); return false; }
@@ -256,7 +282,7 @@ function vorlageSpeichern(){
   var name=(feld.value||'').replace(/\s+/g,' ').trim();
   if(!name){ setStatus('Give the preset a name first','err'); feld.focus(); return; }
   var o=vorlagenLesen();
-  o[name]=sammleEinstellungen();
+  vorlageSetzen(o, name, sammleEinstellungen());
   if(!vorlagenSchreiben(o)) return;
   vorlagenListeFuellen(name);
   setStatus('Preset saved: '+name,'ok');
@@ -265,8 +291,9 @@ function vorlageSpeichern(){
 function vorlageLaden(name){
   if(!name) return;
   var o=vorlagenLesen();
-  if(!o[name]){ setStatus('That preset is gone','err'); vorlagenListeFuellen(); return; }
-  var n=wendeEinstellungenAn(o[name]);
+  var werte=vorlageHolen(o, name);
+  if(!werte){ setStatus('That preset is gone','err'); vorlagenListeFuellen(); return; }
+  var n=wendeEinstellungenAn(werte);
   document.getElementById('presetName').value=name;
   vorlageNachziehen();
   setStatus('Preset loaded: '+name,'ok');
@@ -276,7 +303,7 @@ function vorlageLoeschen(){
   var sel=document.getElementById('presetList'), name=sel.value;
   if(!name){ setStatus('Choose a preset to delete','err'); return; }
   var o=vorlagenLesen();
-  delete o[name];
+  if(Object.prototype.hasOwnProperty.call(o,name)) delete o[name];
   if(!vorlagenSchreiben(o)) return;
   vorlagenListeFuellen();
   document.getElementById('presetName').value='';
@@ -286,7 +313,7 @@ function vorlageLoeschen(){
 function vorlageAusgeben(){
   var sel=document.getElementById('presetList'), name=sel.value;
   var werte, titel;
-  if(name){ werte=vorlagenLesen()[name]; titel=name; }
+  if(name){ werte=vorlageHolen(vorlagenLesen(), name); titel=name; }
   else { werte=sammleEinstellungen(); titel=(document.getElementById('presetName').value||'preset').trim(); }
   if(!werte){ setStatus('Nothing to export','err'); return; }
   var inhalt=JSON.stringify({activitylayersPreset:1, name:titel, values:werte}, null, 2);
@@ -310,7 +337,7 @@ function vorlageEinlesen(datei){
     }
     var name=(String(d.name||datei.name.replace(/\.[^.]+$/,''))).replace(/\s+/g,' ').trim() || 'Imported preset';
     var o=vorlagenLesen();
-    o[name]=d.values;
+    vorlageSetzen(o, name, d.values);
     if(!vorlagenSchreiben(o)) return;
     vorlagenListeFuellen(name);
     vorlageLaden(name);
@@ -559,7 +586,20 @@ function leinwandAuswahlAngleichen(){
 })();
 
 document.getElementById('resetVideo').addEventListener('click',function(){applyDefaults(DEF_VIDEO);syncUnitOptions();if(rawPoints.length)reprocess();});
-document.getElementById('resetRoute').addEventListener('click',function(){applyDefaults(DEF_ROUTE);});
+// applyDefaults setzt .value und loest damit kein Ereignis aus - die
+// Vorschau zeichnet sonst weiter in den alten Farben. Die Geisterfarbe
+// steckt auch in der Karte, deshalb beide.
+document.getElementById('driftFactor').addEventListener('change',function(){
+  if(driftFeldAngleichen(true)){
+    speichereEinstellungen();
+    if(rawPoints.length) reprocess();
+  }
+});
+
+document.getElementById('resetRoute').addEventListener('click',function(){
+  applyDefaults(DEF_ROUTE);
+  if(rawPoints.length){ drawRoute(); resetMapPreview(); }
+});
 document.getElementById('resetGauge').addEventListener('click',function(){applyDefaults(DEF_GAUGE);positionZuruecksetzen('speed');if(speedData.length)drawGauge();});
 document.getElementById('resetHR').addEventListener('click',function(){
   positionZuruecksetzen('hr');

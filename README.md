@@ -87,19 +87,20 @@ Verhalten unterscheiden:
 Neu erzeugen mit `python3 tools/make-examples.py`. Die Dateien sind
 deterministisch, derselbe Lauf liefert dieselben Bytes.
 
-`tools/golden-test.mjs` schickt neunzehn Fälle durch alle sechsundzwanzig
+`tools/golden-test.mjs` schickt zwanzig Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 634 Einträge:
+den Prüfsummen in `tools/golden.json` — 637 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
 
-Die Fälle sind die vier Beispieldateien und fünfzehn gebaute Grenzfälle: mehrere
+Die Fälle sind die vier Beispieldateien und sechzehn gebaute Grenzfälle: mehrere
 Aufnahmeabschnitte mit eigener Fahrtrichtung und eigenem Tempo, eine kurze
 GPX-Trennung über `<trkseg>`, Gerätestrecken mit Lücken und ohne Nullpunkt,
 negativer Versatz mit Abweichungsfaktor, Bild 0 mitten in einer Aufnahmepause,
 eine Pause mit Sensorwerten mitten im Video, ein Versatz ohne jede zeitliche
-Überlappung, die Datumsgrenze, der Südpol,
+Überlappung, ein Abweichungsfaktor jenseits des zulässigen Bereichs,
+die Datumsgrenze, der Südpol,
 vertauschte Zonengrenzen, eine Geisterspur, ein Hochformat sowie ein leerer,
 ein einpunktiger und ein aus lauter Einzelpunkten bestehender Track.
 
