@@ -88,10 +88,13 @@ function element(id) {
     hidden: false, offsetWidth: 800, offsetHeight: 300, width: 800, height: 300,
     style: {}, dataset: {}, childNodes: [], children: [], parentElement: null, options: [],
     classList: { add(){}, remove(){}, toggle(){}, contains(){ return false; } },
-    addEventListener(){}, removeEventListener(){}, appendChild(){}, removeChild(){},
+    __hoerer: {},
+    addEventListener(art, fn){ (this.__hoerer[art] = this.__hoerer[art] || []).push(fn); },
+    removeEventListener(){}, appendChild(){}, removeChild(){},
     insertBefore(){}, setAttribute(){}, removeAttribute(){}, getAttribute(){ return null; },
     querySelector(){ return element('?'); }, querySelectorAll(){ return []; },
-    getElementsByTagName(){ return []; }, scrollIntoView(){}, focus(){}, click(){},
+    getElementsByTagName(){ return []; }, scrollIntoView(){}, focus(){},
+    click(){ (this.__hoerer.click || []).forEach(fn => fn.call(this, { target: this, preventDefault(){} })); },
     getBoundingClientRect(){ return { top:0, left:0, right:0, bottom:0, width:800, height:300 }; },
     getContext(){ return kontext(); },
     toDataURL(){ return 'data:,'; }, toBlob(cb){ cb && cb({}); },
@@ -109,6 +112,7 @@ function kontext() {
   return c;
 }
 
+const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0 };
 const cacheEl = new Map();
 const document = {
   getElementById(id) { if (!cacheEl.has(id)) cacheEl.set(id, element(id)); return cacheEl.get(id); },
@@ -144,10 +148,14 @@ const sandbox = {
   requestAnimationFrame: window.requestAnimationFrame,
   matchMedia: window.matchMedia, alert(){},
   Blob: class { constructor(p){ this.parts = p; } },
-  URL: { createObjectURL(){ return 'blob:x'; }, revokeObjectURL(){} },
+  URL: { createObjectURL(b){ protokoll.dateien.push(b && b.parts ? String(b.parts[0]).length : -1); return 'blob:x'; },
+         revokeObjectURL(){} },
   FileReader: class { readAsText(){} readAsArrayBuffer(){} },
   DOMParser: class { parseFromString(t){ return xmlParsen(t); } },
-  JSZip: class { folder(){ return { file(){} }; } generateAsync(){ return Promise.resolve({}); } },
+  JSZip: class {
+    folder(){ return { file(){ protokoll.zipDateien++; } }; }
+    generateAsync(){ protokoll.zipErzeugt++; return Promise.resolve({ parts: [''] }); }
+  },
   L: { map(){ return { setView(){ return this; }, remove(){}, fitBounds(){}, addLayer(){}, removeLayer(){}, invalidateSize(){} }; },
        tileLayer(){ return { addTo(){} }; }, polyline(){ return { addTo(){} }; },
        circleMarker(){ return { addTo(){} }; }, latLngBounds(){ return {}; },
@@ -391,10 +399,65 @@ function laufFall(praefix, vorbereiten) {
   return ergebnis;
 }
 
+/* ---------- Knoepfe ----------
+   Der Pruefteil oben ruft die Generatoren auf. Was die Oberflaeche daraus macht,
+   steht woanders: Jeder Knopf muss das Ergebnis pruefen, bevor er es zum
+   Download gibt, und ein Archiv ohne eine einzige Datei darf kein Erfolg sein.
+   Deshalb werden hier die echten Klickbehandler ausgeloest. */
+const KNOEPFE = [
+  'btnSetting','btnRouteSetting','btnDiscSetting','btnCompassSetting','btnElevSetting',
+  'btnHRSetting','btnInclineSetting','btnMileSetting','btnCadSetting','btnPowerSetting',
+  'btnTempSetting','btnPaceSetting','btnLapSetting',
+  'btnSpeedJsx','btnRouteJsx','btnDiscJsx','btnCompassJsx','btnElevJsx','btnHRJsx',
+  'btnInclineJsx','btnMileJsx','btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx',
+];
+
+function laufKnoepfe(praefix, vorbereiten) {
+  feldZurueck();
+  ctx.resetTrackState();
+  ctx.ghostPoints = [];
+  vorbereiten();
+  const ergebnis = {};
+  const status = ctx.document.getElementById('status');
+  for (const id of KNOEPFE) {
+    protokoll.dateien = [];
+    status.textContent = '';
+    try { ctx.document.getElementById(id).click(); }
+    catch (e) { ergebnis[praefix + id] = 'AUSNAHME: ' + e.message; continue; }
+    const n = protokoll.dateien.length;
+    const leer = protokoll.dateien.some((g) => g <= 4);
+    ergebnis[praefix + id] = n === 0 ? 'kein Download: ' + status.textContent
+                          : leer     ? 'LEERE DATEI (' + protokoll.dateien.join(',') + ')'
+                                     : 'Download ' + protokoll.dateien.join(',');
+  }
+  for (const [id, name] of [['btnDownloadFusion','fusion'],['btnDownloadAe','ae'],['btnDownloadAll','alle']]) {
+    protokoll.zipDateien = 0; protokoll.zipErzeugt = 0; status.textContent = '';
+    try { ctx.document.getElementById(id).click(); }
+    catch (e) { ergebnis[praefix + name] = 'AUSNAHME: ' + e.message; continue; }
+    ergebnis[praefix + name] = protokoll.zipDateien
+      ? 'Archiv mit ' + protokoll.zipDateien + ' Dateien'
+      : (protokoll.zipErzeugt ? 'LEERES ARCHIV ERZEUGT' : 'kein Archiv: ' + status.textContent);
+  }
+  return ergebnis;
+}
+
+const KNOPFFAELLE = [
+  ['knopf/', () => fitLesen('demo-ride.fit')],
+  ['knopfOhneUeberlappung/', () => { fitLesen('demo-ride.fit'); setzeFeld('offset', -5000); }],
+  ['knopfEinzelpunkte/', () => setzePunkte(kunstPunkte(3, i => ({
+    lat: 50 + i, lon: 7 + i * 2, ele: 100, time: new Date(T0 + i * 600000),
+    seg: i, segHart: true, dist: null, genau: 3,
+  })))],
+];
+
 function lauf() {
   let alles = {};
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
+    catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }
+  }
+  for (const [praefix, vorbereiten] of KNOPFFAELLE) {
+    try { alles = Object.assign(alles, laufKnoepfe(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }
   }
   return alles;

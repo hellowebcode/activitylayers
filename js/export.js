@@ -16,105 +16,60 @@ function promptSupport(){
   },700);
 }
 
-[['btnSpeedJsx',buildSpeedJsx,'Speed_Overlay'],
- ['btnRouteJsx',buildRouteJsx,'Route_Overlay'],
- ['btnDiscJsx',buildRouteDiscJsx,'Route_Disc_Overlay'],
- ['btnCompassJsx',buildCompassJsx,'Compass_Overlay'],
- ['btnElevJsx',buildElevJsx,'Elevation_Overlay'],
- ['btnHRJsx',buildHRJsx,'HR_Overlay'],
- ['btnInclineJsx',buildInclineJsx,'Incline_Overlay'],
- ['btnMileJsx',buildMileJsx,'Mile_Marker_Overlay'],
- ['btnCadJsx',buildCadenceJsx,'Cadence_Overlay'],
- ['btnPowerJsx',buildPowerJsx,'Power_Overlay'],
- ['btnTempJsx',buildTempJsx,'Temperature_Overlay'],
- ['btnPaceJsx',buildPaceJsx,'Pace_Overlay'],
- ['btnLapJsx',buildLapJsx,'Lap_Marker_Overlay']
-].forEach(function(spec){
-  document.getElementById(spec[0]).addEventListener('click',function(){
-    var content=spec[1]();
-    if(!content){ setStatus('No data for this overlay in this file','err'); return; }
-    dl(content,makeFilename(spec[2]+'_AE','jsx'));
-    setStatus('Downloaded '+spec[2]+'_AE.jsx','ok');
+// Ein Download je Overlay. Die Pruefung des Ergebnisses steckt hier, damit sie
+// bei keinem Knopf fehlen kann. Fehlt schon die Quellreihe, sagt die Meldung
+// welche; liefert der Generator trotz vorhandener Reihe nichts - etwa weil der
+// Versatz die ganze Aufzeichnung aus dem Video schiebt - bleibt es allgemein.
+function einzelDownload(knopf, bauen, basis, endung, quelleFehlt, meldung){
+  var el=document.getElementById(knopf);
+  if(!el) return;
+  el.addEventListener('click',function(){
+    if(quelleFehlt && quelleFehlt()){ setStatus(meldung,'err'); return; }
+    var inhalt=bauen();
+    if(!inhalt){ setStatus('No data for this overlay in this file','err'); return; }
+    dl(inhalt, makeFilename(basis, endung));
+    setStatus('Downloaded '+basis+'.'+endung,'ok');
   });
-});
-document.getElementById('btnSetting').addEventListener('click',function(){
-  var t=buildSetting();
-  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
-  dl(t,makeFilename('Speed_Overlay','setting'));
-  setStatus('Downloaded Speed_Overlay.setting','ok');
-});
-document.getElementById('btnRouteSetting').addEventListener('click',function(){
-  var t=buildRouteSetting();
-  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
-  dl(t,makeFilename('Route_Overlay','setting'));
-  setStatus('Downloaded Route_Overlay.setting','ok');
-});
-document.getElementById('btnDiscSetting').addEventListener('click',function(){
-  var t=buildRouteDiscSetting();
-  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
-  dl(t,makeFilename('Route_Disc_Overlay','setting'));
-  setStatus('Downloaded Route_Disc_Overlay.setting','ok');
-});
-document.getElementById('btnCompassSetting').addEventListener('click',function(){
-  var t=buildCompassSetting();
-  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
-  dl(t,makeFilename('Compass_Overlay','setting'));
-  setStatus('Downloaded Compass_Overlay.setting','ok');
-});
-document.getElementById('btnElevSetting').addEventListener('click',function(){var s=buildElevSetting();if(!s){setStatus('No elevation data in this file','err');return;}dl(s,makeFilename('Elevation_Overlay','setting'));setStatus('Downloaded Elevation_Overlay.setting','ok');});
+}
 
-document.getElementById('btnHRSetting').addEventListener('click',function(){
-  if(!hrData.length){setStatus('No heart rate data in this file','err');return;}
-  dl(buildHRSetting(),makeFilename('HR_Overlay','setting'));
-  setStatus('Downloaded HR_Overlay.setting','ok');
-});
+function leer(reihe){ return function(){ return !reihe().length; }; }
 
-document.getElementById('btnInclineSetting').addEventListener('click',function(){
-  if(!gradeData.length){setStatus('No elevation data in this file (incline requires elevation)','err');return;}
-  dl(buildInclineSetting(),makeFilename('Incline_Overlay','setting'));
-  setStatus('Downloaded Incline_Overlay.setting','ok');
-});
+[['btnSetting',        function(){return buildSetting();},         'Speed_Overlay'],
+ ['btnRouteSetting',   function(){return buildRouteSetting();},    'Route_Overlay'],
+ ['btnDiscSetting',    function(){return buildRouteDiscSetting();},'Route_Disc_Overlay'],
+ ['btnCompassSetting', function(){return buildCompassSetting();},  'Compass_Overlay'],
+ ['btnElevSetting',    function(){return buildElevSetting();},     'Elevation_Overlay'],
+ ['btnHRSetting',      function(){return buildHRSetting();},       'HR_Overlay',
+  leer(function(){return hrData;}),   'No heart rate data in this file'],
+ ['btnInclineSetting', function(){return buildInclineSetting();},  'Incline_Overlay',
+  leer(function(){return gradeData;}),'No elevation data in this file (incline requires elevation)'],
+ ['btnMileSetting',    function(){return buildMileSetting();},     'Mile_Marker_Overlay',
+  leer(function(){return distData;}), 'No GPS data in this file'],
+ ['btnCadSetting',     function(){return buildCadenceSetting();},  'Cadence_Overlay',
+  leer(function(){return cadData;}),  'No cadence data in this file'],
+ ['btnPowerSetting',   function(){return buildPowerSetting();},    'Power_Overlay',
+  leer(function(){return powerData;}),'No power data in this file'],
+ ['btnTempSetting',    function(){return buildTempSetting();},     'Temperature_Overlay',
+  leer(function(){return tempData;}), 'No temperature data in this file'],
+ ['btnPaceSetting',    function(){return buildPaceSetting();},     'Pace_Overlay'],
+ ['btnLapSetting',     function(){return buildLapSetting();},      'Lap_Marker_Overlay',
+  leer(function(){return lapData;}),  'No lap data in this file (.fit and .tcx files only)']
+].forEach(function(a){ einzelDownload(a[0], a[1], a[2], 'setting', a[3], a[4]); });
 
-document.getElementById('btnMileSetting').addEventListener('click',function(){
-  if(!distData.length){setStatus('No GPS data in this file','err');return;}
-  dl(buildMileSetting(),makeFilename('Mile_Marker_Overlay','setting'));
-  setStatus('Downloaded Mile_Marker_Overlay.setting','ok');
-});
-
-document.getElementById('btnCadSetting').addEventListener('click',function(){
-  var c=buildCadenceSetting();
-  if(!c){setStatus('No cadence data in this file','err');return;}
-  dl(c,makeFilename('Cadence_Overlay','setting'));
-  setStatus('Downloaded Cadence_Overlay.setting','ok');
-});
-
-document.getElementById('btnPowerSetting').addEventListener('click',function(){
-  var c=buildPowerSetting();
-  if(!c){setStatus('No power data in this file','err');return;}
-  dl(c,makeFilename('Power_Overlay','setting'));
-  setStatus('Downloaded Power_Overlay.setting','ok');
-});
-
-document.getElementById('btnTempSetting').addEventListener('click',function(){
-  var t=buildTempSetting();
-  if(!t){setStatus('No temperature data in this file','err');return;}
-  dl(t,makeFilename('Temperature_Overlay','setting'));
-  setStatus('Downloaded Temperature_Overlay.setting','ok');
-});
-
-document.getElementById('btnPaceSetting').addEventListener('click',function(){
-  var t=buildPaceSetting();
-  if(!t){setStatus('No data for this overlay in this file','err');return;}
-  dl(t,makeFilename('Pace_Overlay','setting'));
-  setStatus('Downloaded Pace_Overlay.setting','ok');
-});
-
-document.getElementById('btnLapSetting').addEventListener('click',function(){
-  var c=buildLapSetting();
-  if(!c){setStatus('No lap data in this file (.fit and .tcx files only)','err');return;}
-  dl(c,makeFilename('Lap_Marker_Overlay','setting'));
-  setStatus('Downloaded Lap_Marker_Overlay.setting','ok');
-});
+[['btnSpeedJsx',   function(){return buildSpeedJsx();},     'Speed_Overlay'],
+ ['btnRouteJsx',   function(){return buildRouteJsx();},     'Route_Overlay'],
+ ['btnDiscJsx',    function(){return buildRouteDiscJsx();}, 'Route_Disc_Overlay'],
+ ['btnCompassJsx', function(){return buildCompassJsx();},   'Compass_Overlay'],
+ ['btnElevJsx',    function(){return buildElevJsx();},      'Elevation_Overlay'],
+ ['btnHRJsx',      function(){return buildHRJsx();},        'HR_Overlay'],
+ ['btnInclineJsx', function(){return buildInclineJsx();},   'Incline_Overlay'],
+ ['btnMileJsx',    function(){return buildMileJsx();},      'Mile_Marker_Overlay'],
+ ['btnCadJsx',     function(){return buildCadenceJsx();},   'Cadence_Overlay'],
+ ['btnPowerJsx',   function(){return buildPowerJsx();},     'Power_Overlay'],
+ ['btnTempJsx',    function(){return buildTempJsx();},      'Temperature_Overlay'],
+ ['btnPaceJsx',    function(){return buildPaceJsx();},      'Pace_Overlay'],
+ ['btnLapJsx',     function(){return buildLapJsx();},       'Lap_Marker_Overlay']
+].forEach(function(a){ einzelDownload(a[0], a[1], a[2]+'_AE', 'jsx'); });
 
 function showExportProgress(){
   document.getElementById('exportProgressWrap').style.display='block';
@@ -172,12 +127,19 @@ function runZipExport(kind, zipName){
     var steps=exportSteps().filter(function(s){ return !kind || s.kind===kind; });
     var zip=new JSZip();
     var folder=zip.folder('GPX Overlay');
-    var BUILD_SHARE=70;
+    var BUILD_SHARE=70, dabei=0;
     steps.forEach(function(step,i){
       updateExportProgress((i/steps.length)*BUILD_SHARE, step.label);
       var content=step.run();
-      if(content) folder.file(step.name(),content);
+      if(content){ folder.file(step.name(),content); dabei++; }
     });
+    // Ein ZIP ohne eine einzige Datei ist kein Erfolg. Das passiert, wenn der
+    // Versatz die ganze Aufzeichnung aus dem Video schiebt.
+    if(!dabei){
+      hideExportProgress();
+      setStatus('Nothing to export','err');
+      return;
+    }
     updateExportProgress(BUILD_SHARE,'Compressing…');
     zip.generateAsync({type:'blob'},function(meta){
       updateExportProgress(BUILD_SHARE+(meta.percent/100)*(100-BUILD_SHARE),'Compressing… '+Math.round(meta.percent)+'%');

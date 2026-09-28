@@ -82,7 +82,7 @@ deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt neunzehn Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 513 Einträge:
+den Prüfsummen in `tools/golden.json` — 600 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
@@ -95,6 +95,12 @@ eine Pause mit Sensorwerten mitten im Video, ein Versatz ohne jede zeitliche
 Überlappung, die Datumsgrenze, der Südpol,
 vertauschte Zonengrenzen, eine Geisterspur, ein Hochformat sowie ein leerer,
 ein einpunktiger und ein aus lauter Einzelpunkten bestehender Track.
+
+Dazu kommen drei Fälle, die nicht die Generatoren prüfen, sondern die
+Oberfläche: Sie lösen die echten Klickbehandler aller sechsundzwanzig
+Einzelknopfe und der drei Sammelknopfe aus und halten fest, ob eine Datei
+entstanden ist – und ob sie Inhalt hatte. Ein Knopf, der ein leeres Ergebnis
+zum Download gibt, und ein Archiv ohne eine einzige Datei fallen damit auf.
 
 Der Test braucht keine Abhängigkeiten. Er bewertet nicht, ob ein Overlay gut
 aussieht – er findet Änderungen an gemeinsam genutztem Code, die unbemerkt
