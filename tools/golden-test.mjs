@@ -300,10 +300,13 @@ const FAELLE = [
   }))],
   // Vertauschte Grenzen bei eingeschalteter Zonenfaerbung: Ohne Ordnen bliebe
   // die mittlere Zone unerreichbar, weil zuerst auf die obere geprueft wird.
+  // Der negative Versatz gehoert dazu: Ein Zonenindex fuer Bild 0 darf nicht
+  // zwischen zwei Zonen gemittelt werden.
   ['zonen/', () => { fitLesen('demo-ride.fit');
     setzeFeld('hrZones', 1); setzeFeld('powerZones', 1);
     setzeFeld('hrZone2', 160); setzeFeld('hrZone3', 130);
-    setzeFeld('powerZone2', 290); setzeFeld('powerZone3', 210); }],
+    setzeFeld('powerZone2', 290); setzeFeld('powerZone3', 210);
+    setzeFeld('offset', -0.7); }],
   ['geist/', () => { fitLesen('demo-ride.fit');
     ctx.ghostPoints = ctx.rawPoints.map(p => ({ lat: p.lat + 0.001, lon: p.lon + 0.001, time: p.time, seg: p.seg })); }],
   ['hochformat/', () => { fitLesen('demo-ride.fit'); setzeFeld('compW', 1080); setzeFeld('compH', 1920); }],
@@ -323,6 +326,18 @@ const FAELLE = [
     return { lat: 50 + s * 0.0005 + k * 0.00045, lon: 7, ele: 100 + k,
              time: new Date(T0 + (i + s * 5) * 1000), seg: s, segHart: true, dist: null, genau: 3 };
   }))],
+  // Bild 0 faellt mitten in eine Aufnahmepause: Der Wert dafuer darf nicht
+  // zwischen den beiden Punkten liegen, zwischen denen nie etwas aufgezeichnet
+  // wurde - er wird gehalten.
+  ['pauseBeiNull/', () => {
+    setzePunkte(kunstPunkte(20, i => {
+      const s = Math.floor(i / 10), k = i % 10;
+      return { lat: 50 + s * 1 + k * 0.00045, lon: 7 + s * 2, ele: 100 + k,
+               time: new Date(T0 + (i + s * 300) * 1000), seg: s, segHart: true,
+               dist: null, genau: 3 };
+    }));
+    setzeFeld('offset', -305);
+  }],
   // Am Suedpol liefert Mercator ohne Klemme minus unendlich.
   ['pol/', () => setzePunkte(kunstPunkte(20, i => ({
     lat: -89.9 + i * 0.0004, lon: 30 + i * 0.001, ele: 2800 + i,

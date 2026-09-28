@@ -50,7 +50,7 @@ function zonenFarbkanaele(daten, wertFn, grenze2, grenze3, farbe1, farbe2, farbe
   var kf=buildKeyframeList(daten,function(p,i){
     var v=wertFn(p,i);
     return (v>=grenze3)?2:((v>=grenze2)?1:0);
-  });
+  }, {aufNull:'halten'});
   if(!kf.length) return null;
   var farben=[farbe1,farbe2,farbe3];
   var r=[],g=[],b=[],letzte=-1;
@@ -74,7 +74,7 @@ function zonenDeckkraft(daten, wertFn, grenze2, grenze3){
   var kf=buildKeyframeList(daten,function(p,i){
     var v=wertFn(p,i);
     return (v>=grenze3)?2:((v>=grenze2)?1:0);
-  });
+  }, {aufNull:'halten'});
   if(!kf.length) return null;
   var aus=[[],[],[]], letzte=-1;
   for(var i=0;i<kf.length;i++){
@@ -92,9 +92,12 @@ function zonenDeckkraft(daten, wertFn, grenze2, grenze3){
 // optionen.indizes: Array, in das die verwendeten Quellindizes geschrieben werden.
 // optionen.aufNull: Faengt die Aufzeichnung vor dem Video an, liegt der erste
 //   Keyframe hinter Bild 0 und das Overlay zeigt bis dahin einen spaeteren
-//   Messwert. Mit dieser Angabe wird der Wert fuer Bild 0 aus den beiden
-//   umgebenden Messwerten gemittelt. Nur fuer stetige Groessen setzen - ein
-//   Zonenindex oder ein Winkel in Grad vertraegt das nicht.
+//   Messwert. Mit 'mitteln' (oder true) wird der Wert fuer Bild 0 aus den beiden
+//   umgebenden Messwerten gemittelt, mit 'halten' der fruehere uebernommen.
+//   Gemittelt wird nur fuer stetige Groessen - ein Zonenindex, ein Punktindex
+//   oder ein Winkel in Grad vertraegt das nicht. Und auch dort nicht ueber eine
+//   Aufnahmegrenze hinweg: Faellt Bild 0 in eine Pause, stuende der Wert sonst
+//   zwischen zwei Stellen, an denen nie etwas aufgezeichnet wurde.
 function buildKeyframeList(dataArr, valueFn, optionen){
   var c=cfg();
   if(!dataArr || !dataArr.length) return [];
@@ -112,8 +115,15 @@ function buildKeyframeList(dataArr, valueFn, optionen){
     if(o.aufNull && !out.length && fr>0 && letzterVor>=0){
       var fv=bild(letzterVor), vv=valueFn(dataArr[letzterVor], letzterVor);
       var nv=valueFn(dataArr[i], i);
-      if(typeof vv==='number' && typeof nv==='number' && isFinite(vv) && isFinite(nv) && fr>fv){
-        out.push([0, vv+(nv-vv)*((0-fv)/(fr-fv))]);
+      var quelle=(typeof rawPoints!=='undefined')?rawPoints:null;
+      var halten=(o.aufNull==='halten')
+        || grenzeZwischen(dataArr[letzterVor].time, dataArr[i].time, quelle);
+      var wert=null;
+      if(halten) wert=vv;
+      else if(typeof vv==='number' && typeof nv==='number'
+              && isFinite(vv) && isFinite(nv) && fr>fv) wert=vv+(nv-vv)*((0-fv)/(fr-fv));
+      if(wert!==null){
+        out.push([0, wert]);
         if(o.indizes) o.indizes.push(letzterVor);
         lf=0;
       }
@@ -965,7 +975,7 @@ function buildCompassSetting(){
   var maxSpd=parseFloat(c.maxSpeed)||9;
   var einheit=unitDisplay(c.unit);
   var richtung=stetigerWinkel(headingData);
-  var winkelKF=buildKeyframeList(richtung,function(p){ return -p.deg; });
+  var winkelKF=buildKeyframeList(richtung,function(p){ return -p.deg; }, {aufNull:'halten'});
   var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); }, {aufNull:true});
   var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); }, {aufNull:true});
   if(!winkelKF.length||!tempoKF.length) return null;

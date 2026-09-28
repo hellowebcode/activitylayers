@@ -37,8 +37,18 @@ function promptSupport(){
     setStatus('Downloaded '+spec[2]+'_AE.jsx','ok');
   });
 });
-document.getElementById('btnSetting').addEventListener('click',function(){dl(buildSetting(),makeFilename('Speed_Overlay','setting'));setStatus('Downloaded Speed_Overlay.setting','ok');});
-document.getElementById('btnRouteSetting').addEventListener('click',function(){dl(buildRouteSetting(),makeFilename('Route_Overlay','setting'));setStatus('Downloaded Route_Overlay.setting','ok');});
+document.getElementById('btnSetting').addEventListener('click',function(){
+  var t=buildSetting();
+  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
+  dl(t,makeFilename('Speed_Overlay','setting'));
+  setStatus('Downloaded Speed_Overlay.setting','ok');
+});
+document.getElementById('btnRouteSetting').addEventListener('click',function(){
+  var t=buildRouteSetting();
+  if(!t){ setStatus('No data for this overlay in this file','err'); return; }
+  dl(t,makeFilename('Route_Overlay','setting'));
+  setStatus('Downloaded Route_Overlay.setting','ok');
+});
 document.getElementById('btnDiscSetting').addEventListener('click',function(){
   var t=buildRouteDiscSetting();
   if(!t){ setStatus('No data for this overlay in this file','err'); return; }

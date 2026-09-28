@@ -183,7 +183,7 @@ function aeRoutePoints(c,pad){
 }
 
 function aePathKeys(dataArr, pts){
-  var idx=buildKeyframeList(dataArr,function(p,i){return i;});
+  var idx=buildKeyframeList(dataArr,function(p,i){return i;}, {aufNull:'halten'});
   var out=[], benutzt=[];
   for(var i=0;i<idx.length;i++){
     var j=idx[i][1], p=pts[j];
@@ -376,7 +376,7 @@ function buildCompassJsx(){
   var einheit=unitDisplay(c.unit);
 
   var richtung=stetigerWinkel(headingData);
-  var winkelKF=buildKeyframeList(richtung,function(p){ return p.deg; });
+  var winkelKF=buildKeyframeList(richtung,function(p){ return p.deg; }, {aufNull:'halten'});
   var tempoKF=buildKeyframeList(speedData,function(p){ return Math.max(0,Math.min(100,p.spd/maxSpd*100)); }, {aufNull:true});
   var zahlKF=buildKeyframeList(speedData,function(p){ return Math.min(p.spd,maxSpd); }, {aufNull:true});
   if(!winkelKF.length||!tempoKF.length) return null;

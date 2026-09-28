@@ -40,6 +40,19 @@ function segmentLaeufe(pts){
   return laeufe;
 }
 
+// Liegt zwischen zwei Zeitpunkten eine Aufnahmegrenze? Abgeleitete Reihen wie
+// die Geschwindigkeit tragen dieselben Zeitstempel wie die Punkte, damit laesst
+// sich die Frage auch fuer sie beantworten.
+function grenzeZwischen(vonZeit, bisZeit, pts){
+  if(!pts||pts.length<2) return false;
+  for(var i=1;i<pts.length;i++){
+    if(pts[i].time<=vonZeit) continue;
+    if(pts[i-1].time>=bisZeit) break;
+    if(istGrenze(pts[i-1],pts[i])) return true;
+  }
+  return false;
+}
+
 // An einer Aufnahmegrenze haelt der Punkt an der letzten aufgezeichneten Stelle
 // und springt erst im naechsten Bild weiter. Ohne diesen Halt faehrt er die
 // ganze Pause ueber die unsichtbare Verbindung - bei fuenf Minuten Pause

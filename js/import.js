@@ -87,9 +87,14 @@ function resetTrackState(){
 
 // Ein FileReader kann abbrechen - ein entzogener Datentraeger, eine seit dem
 // Auswaehlen geloeschte Datei. Ohne Behandlung bliebe "Reading ..." stehen.
-function leseFehler(reader, file){
-  reader.onerror=function(){ setStatus('Could not read '+file.name,'err'); };
-  reader.onabort=function(){ setStatus('Cancelled reading '+file.name,'err'); };
+// Nur der jeweils letzte Lesevorgang darf noch melden - sonst ueberschreibt der
+// verspaetete Fehler eines aelteren Versuchs den Erfolg des neueren.
+function leseFehler(reader, file, nochAktuell){
+  function melde(text){
+    return function(){ if(nochAktuell && !nochAktuell()) return; setStatus(text,'err'); };
+  }
+  reader.onerror=melde('Could not read '+file.name);
+  reader.onabort=melde('Cancelled reading '+file.name);
 }
 
 function handleFile(file){
@@ -106,7 +111,7 @@ function handleFile(file){
   // jeweils letzte Anforderung darf noch etwas uebernehmen.
   var meine=++ladeLauf;
   var reader=new FileReader();
-  leseFehler(reader, file);
+  leseFehler(reader, file, function(){ return meine===ladeLauf; });
   function fertig(verarbeite){
     return function(e){
       if(meine!==ladeLauf) return;
@@ -143,7 +148,8 @@ function handleGhostFile(file){
   }
   setStatus('Reading '+file.name+'...');
   var reader=new FileReader();
-  leseFehler(reader, file);
+  var meine=++geistLauf;
+  leseFehler(reader, file, function(){ return meine===geistLauf; });
   function lies(inhalt){
     var merk={rawPoints:rawPoints, lapData:lapData, totalDistM:totalDistM, currentFilename:currentFilename};
     importZiel='geist'; geistKandidat=null;
@@ -167,7 +173,6 @@ function handleGhostFile(file){
     }
     geistKandidat=null;
   }
-  var meine=++geistLauf;
   reader.onload=function(e){ if(meine!==geistLauf) return; lies(e.target.result); };
   if(name.endsWith('.fit')) reader.readAsArrayBuffer(file); else reader.readAsText(file);
 }
