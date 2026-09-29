@@ -70,21 +70,34 @@ selben Entwurfsmaß 1920×1080 und mit demselben Faktor wie die
 After-Effects-Ausgabe — sonst säße dasselbe Overlay im Video woanders als in der
 exportierten Ebene.
 
-Zwei Formate, beide im Browser des Nutzers aufgenommen, ohne Upload:
+Ausgegeben wird ein **WebM mit echtem Deckkraftkanal** (VP9). Das zieht man über
+sein Material, ohne etwas freizustellen. Ein MP4 mit Transparenz gibt es nicht:
+H.264 hat keinen Deckkraftkanal, die freie Fläche würde schwarz.
 
-| Datei | Wofür |
-|---|---|
-| `.webm` (VP9) | echter Deckkraftkanal, ohne Freistellen. Shotcut, Kdenlive, OBS, Web |
-| `.mp4` (H.264) auf Grün | für alles andere: ein Klick „Chroma Key" in CapCut, iMovie, Canva |
+Aufgenommen wird im Browser des Nutzers, ohne Upload.
 
-Ein MP4 mit Deckkraftkanal gibt es nicht — H.264 hat keinen. Deshalb die
-Stanzfarbe.
+### Warum es schneller als in Echtzeit geht
 
-Aufgenommen wird in Echtzeit: Der Browser stempelt die Bilder nach der Uhr,
-schnelleres Zuführen ergäbe eine Datei, die zu schnell abspielt. Deshalb lässt
-sich ein Ausschnitt wählen — meistens braucht niemand die ganze Fahrt.
+Der Browser stempelt aufgenommene Bilder nach der Uhr. Eine Aufnahme liefe
+deshalb erst einmal in Echtzeit — zwölf Minuten Overlay, zwölf Minuten warten.
+Drei Schritte machen daraus etwa ein Fünftel:
 
-## Externe Ressourcen
+1. **Vormessen.** Eine knappe Sekunde lang läuft die Aufnahme so schnell wie
+   möglich. Daraus ergibt sich, wieviele Bilder dieser Rechner mit diesem
+   Overlay je Sekunde schafft. Vier Fünftel davon werden genutzt.
+2. **Fester Takt.** Danach wird jedes Bild auf eine ganze Millisekunde genau
+   angefordert. Ohne festen Takt verschluckt der Kodierer Bilder — bei einer
+   Millisekunde Abstand kamen in einem Versuch nur 31 von 151 an.
+3. **Zeitmaßstab strecken.** WebM hat im Kopf ein einziges Feld,
+   `TimecodeScale`, das für sämtliche Zeitstempel gilt. Es wird um denselben
+   Faktor gestreckt. Zusätzlich werden die Zeitstempel der einzelnen Bilder auf
+   das exakte Raster gesetzt, damit keine Unregelmäßigkeit übrigbleibt.
+
+Gemessen an einer Fahrt mit 29,97 Bildern je Sekunde: 60 Sekunden Overlay
+entstehen in 12 Sekunden, 1799 von 1799 Bildern, sämtliche Abstände exakt
+33,367 ms. Zum Schluss wird nachgezählt; fehlen Bilder, sagt die Meldung es.
+
+## Externe Ressourcen## Externe Ressourcen
 
 Beim Aufruf der Seite werden keine externen Ressourcen angefordert. Erst
 nachdem eine Datei geladen wurde, holt die Kartenvorschau Kartenkacheln von
@@ -113,7 +126,7 @@ deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt zwanzig Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 646 Einträge:
+den Prüfsummen in `tools/golden.json` — 650 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen

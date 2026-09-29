@@ -896,7 +896,7 @@
     <span class="how-arrow" id="dlVideoArrow" aria-hidden="true">▾</span>
   </button>
   <div id="dlVideoBody" style="display:none">
-    <p class="card-note">For anyone without DaVinci Resolve or After Effects. The video is recorded in your browser &mdash; your recording still never leaves your device. A transparent .webm drops straight onto your footage; the .mp4 comes on green for the chroma key every editor has. Recording runs in real time, so pick the stretch you actually need.</p>
+    <p class="card-note">For anyone without DaVinci Resolve or After Effects. The video is recorded in your browser &mdash; your recording still never leaves your device. The .webm carries a real alpha channel: drop it straight onto your footage, nothing to key out. Pick the stretch you need; recording a long ride takes a while.</p>
     <div class="grid3">
       <div class="field"><label for="videoOverlay">Overlay</label>
         <select id="videoOverlay"></select></div>
@@ -906,10 +906,7 @@
         <input type="number" id="videoBis" min="0" step="1" placeholder="end"></div>
     </div>
     <p class="card-note" id="videoSpanne">&nbsp;</p>
-    <div class="dl-split">
-      <button type="button" class="dl-all-btn dl-all-secondary" id="btnVideoWebm" disabled>Transparent .webm</button>
-      <button type="button" class="dl-all-btn dl-all-secondary" id="btnVideoMp4" disabled>.mp4 on green</button>
-    </div>
+    <button type="button" class="dl-all-btn dl-all-secondary" id="btnVideoWebm" disabled>Record transparent .webm</button>
     <button type="button" class="reset-btn" id="btnVideoStop" style="margin-top:10px;display:none">Stop recording</button>
     <div class="export-progress-wrap" id="videoProgressWrap" style="display:none">
       <div class="export-progress-track"><div class="export-progress-fill" id="videoProgressFill"></div></div>

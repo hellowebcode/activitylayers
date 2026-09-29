@@ -161,8 +161,7 @@ var UI_DE={
   'copy':'kopieren',
   'Download single overlays':'Einzelne Overlays herunterladen',
   'Video for other editors':'Video für andere Schnittprogramme',
-  'Transparent .webm':'Transparentes .webm',
-  '.mp4 on green':'.mp4 auf Grün',
+  'Record transparent .webm':'Transparentes .webm aufnehmen',
   'Stop recording':'Aufnahme abbrechen',
   'Overlay':'Overlay',
   'From (seconds)':'Von (Sekunden)',
@@ -366,6 +365,9 @@ function localizeRuntimeText(message){
   if(message.indexOf('Reading ')===0) return 'Datei wird gelesen: '+message.slice(8);
   if(/^[0-9]+ track points loaded$/.test(message)) return message.replace(' track points loaded',' Routenpunkte geladen');
   if(message.indexOf('Ready — ')===0) return 'Bereit — '+message.slice(8).replace(' points · ',' Punkte · ');
+  if(message.indexOf(' — but frames were dropped')>0)
+    return message.slice(11, message.indexOf(' — but'))
+         + ' heruntergeladen — es fehlen aber Bilder, die Bewegung kann stocken';
   if(message.indexOf('Downloaded ')===0) return message.slice(11)+' heruntergeladen';
   if(message.indexOf('FIT parse error: ')===0) return 'FIT-Verarbeitungsfehler: '+message.slice(17);
   if(message.indexOf('Export failed: ')===0) return 'Export fehlgeschlagen: '+message.slice(15);
@@ -392,16 +394,15 @@ function localizeRuntimeText(message){
     var z=message.match(/(\d+) and (\d+)/);
     if(z) return 'Die Aufzeichnung liegt zwischen Sekunde '+z[1]+' und '+z[2]+' des Videos';
   }
-  if(message.indexOf('Recording in real time — ')===0)
-    return 'Aufnahme in Echtzeit — noch '+parseInt(message.slice(24),10)+' Sekunden';
-  if(message.indexOf('Recording ')===0 && message.indexOf(' — this takes ')>0){
-    var t=message.slice(10).split(' — this takes ');
-    return t[0]+' wird aufgenommen — das dauert '+parseInt(t[1],10)+' Sekunden';
+  if(message==='Recording…') return 'Wird aufgenommen …';
+  if(message.indexOf('Recording ')===0 && message.indexOf(' seconds of overlay')>0){
+    var t=message.slice(10).split(' — ');
+    return t[0]+' wird aufgenommen — '+parseInt(t[1],10)+' Sekunden Overlay';
   }
   if(message.indexOf('Recording failed: ')===0)
     return 'Aufnahme fehlgeschlagen: '+message.slice(18);
   if(message==='This browser cannot record that format')
-    return 'Dieser Browser kann dieses Format nicht aufnehmen';
+    return 'Dieser Browser kann kein WebM aufnehmen';
   if(message==='The chosen stretch is empty')
     return 'Der gewählte Ausschnitt ist leer';
   if(message.indexOf('Could not read ')===0)

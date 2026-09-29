@@ -7,10 +7,8 @@
    Leinwand gelegt wie in After Effects - sonst saesse dasselbe Overlay im Video
    woanders als in der exportierten Ebene. */
 
-var VIDEO_FORMATE={
-  webm:{ mime:'video/webm;codecs=vp9', endung:'webm', hintergrund:null },
-  mp4: { mime:'video/mp4;codecs=avc1.640028', endung:'mp4', hintergrund:'#00b140' }
-};
+// Nur WebM: Ein MP4 mit Deckkraftkanal gibt es nicht, H.264 hat keinen.
+var VIDEO_FORMAT={ mime:'video/webm;codecs=vp9', endung:'webm' };
 
 function vFaktor(c){ return Math.min(c.W/ENTWURF_W, c.H/ENTWURF_H); }
 function vPunkt(c,x,y){ var k=vFaktor(c); return [x*k, c.H-(ENTWURF_H-y)*k]; }
@@ -389,56 +387,212 @@ function videoOverlay(id){
   return null;
 }
 
-/* ---------- Aufnahme ---------- */
+/* ---------- Aufnahme ----------
 
-// Aufgenommen wird in Echtzeit: Der Browser stempelt die Bilder nach der Uhr,
-// schnelleres Zufuettern ergaebe eine Datei, die zu schnell abspielt. Deshalb
-// gibt es den Ausschnitt - meistens braucht niemand die ganze Fahrt.
+   Der Browser stempelt die Bilder nach der Uhr - eine Aufnahme laeuft also
+   erst einmal in Echtzeit. Schneller geht es mit einem Kunstgriff: Der Inhalt
+   laeuft um einen festen Faktor voraus, und hinterher wird der Zeitmassstab in
+   der fertigen Datei um denselben Faktor gestreckt. WebM hat dafuer ein
+   einziges Feld im Kopf, TimecodeScale, das fuer saemtliche Zeitstempel gilt.
+
+   Das Ergebnis muss dabei so fluessig sein wie ein gewoehnlicher Export -
+   kein verschlucktes Bild, keine ungleichen Abstaende. Deshalb zwei Vorkehrungen:
+
+   Erstens misst eine kurze Probeaufnahme, wieviele Bilder dieser Rechner mit
+   diesem Overlay je Sekunde schafft. Daraus ergibt sich das Tempo, mit
+   Sicherheitsabstand. Zweitens laeuft die Aufnahme danach in festem Takt, nicht
+   so schnell wie moeglich - nur dann liegen die Zeitstempel gleichmaessig und
+   die gestreckte Datei hat wirklich die eingestellte Bildrate.
+
+   Zum Schluss wird nachgezaehlt. Fehlt etwas, sagt die Meldung es. */
+
+var VIDEO_MAX_TEMPO=8;          // darueber wird der Zeitmassstab unhandlich
+var VIDEO_SICHERHEIT=0.8;       // nur vier Fuenftel der gemessenen Leistung nutzen
+var VIDEO_PROBE_SEK=0.9;        // so lange wird vorgemessen
 var videoLaeuft=false, videoAbbrechen=false;
 
-function videoAufnahme(overlayId, formatId, vonSek, bisSek, melde){
-  return new Promise(function(fertig, fehler){
-    var art=videoOverlay(overlayId), fmt=VIDEO_FORMATE[formatId];
-    if(!art||!fmt){ fehler(new Error('unknown format')); return; }
-    var c=cfg();
-    if(!art.hat()){ fehler(new Error('no data')); return; }
-    if(typeof MediaRecorder==='undefined' || !MediaRecorder.isTypeSupported(fmt.mime)){
-      fehler(new Error('unsupported')); return;
+/* ---------- WebM: lesen und den Zeitmassstab strecken ---------- */
+
+function webmLauf(puffer, aufElement){
+  var b=new Uint8Array(puffer), p=0;
+  function vint(gross){
+    var e=b[p], len=1;
+    for(var m=0x80; m && !(e&m); m>>=1) len++;
+    if(len>8) return null;
+    var w=gross?e:(e & (0xFF>>len));
+    for(var i=1;i<len;i++) w=w*256+b[p+i];
+    p+=len; return w;
+  }
+  function lauf(ende){
+    while(p<ende-1){
+      var id=vint(true); if(id===null) return;
+      var gr=vint(false); if(gr===null) return;
+      var inhalt=p, naechste=p+gr;
+      // Nur in die Behaelter hineinsehen, die uns angehen.
+      if(id===0x18538067||id===0x1549A966||id===0x1F43B675||id===0xA0) lauf(Math.min(naechste,ende));
+      else aufElement(id, inhalt, gr, b);
+      p=naechste;
     }
-    var fps=Math.max(1, Math.min(60, parseFloat(c.fps)||30));
-    var leinwand=document.createElement('canvas');
-    leinwand.width=c.W; leinwand.height=c.H;
-    var ctx=leinwand.getContext('2d',{alpha:true});
-    var strom=leinwand.captureStream(fps);
-    var mr=new MediaRecorder(strom,{mimeType:fmt.mime, videoBitsPerSecond:16e6});
-    var teile=[];
+  }
+  lauf(b.length);
+}
+
+// Zaehlt die Bilder in der Datei. Bei VP9 mit Deckkraft steckt jedes Bild in
+// einer BlockGroup, nicht in einem SimpleBlock - beide werden gezaehlt.
+function webmBilder(puffer){
+  var n=0;
+  webmLauf(puffer, function(id){ if(id===0xA3||id===0xA1) n++; });
+  return n;
+}
+
+function webmZeitStrecken(puffer, faktor){
+  var feld=null;
+  webmLauf(puffer, function(id, inhalt, gr, b){
+    if(id!==0x2AD7B1 || feld) return;
+    var wert=0;
+    for(var i=0;i<gr;i++) wert=wert*256+b[inhalt+i];
+    feld={stelle:inhalt, laenge:gr, wert:wert};
+  });
+  if(!feld || !feld.wert) return false;
+  var neu=Math.round(feld.wert*faktor);
+  if(neu >= Math.pow(256, feld.laenge)) return false;
+  var b2=new Uint8Array(puffer);
+  for(var k=feld.laenge-1;k>=0;k--){ b2[feld.stelle+k]=neu & 255; neu=Math.floor(neu/256); }
+  return true;
+}
+
+// Die Bilder liegen nach der Aufnahme fast, aber nicht ganz im Takt: Ein
+// verzoegerter Anstoss verschiebt einen Zeitstempel um eine Millisekunde, und
+// das Strecken vergroessert den Fehler. Da jedes Bild seinen Platz kennt -
+// Bild i gehoert auf i mal Takt -, werden die Stempel danach genau daraufgesetzt.
+function webmZeitVergleichmaessigen(puffer, taktMs){
+  var b=new Uint8Array(puffer), p=0, nr=0, clusterZeit=0, geaendert=0, ausserhalb=0;
+  function vint(gross){
+    var e=b[p], len=1;
+    for(var m=0x80; m && !(e&m); m>>=1) len++;
+    if(len>8) return null;
+    var w=gross?e:(e & (0xFF>>len));
+    for(var i=1;i<len;i++) w=w*256+b[p+i];
+    p+=len; return w;
+  }
+  function lauf(ende){
+    while(p<ende-1){
+      var id=vint(true); if(id===null) return;
+      var gr=vint(false); if(gr===null) return;
+      var inhalt=p, naechste=p+gr;
+      if(id===0x18538067||id===0x1F43B675||id===0xA0) lauf(Math.min(naechste,ende));
+      else if(id===0xE7){
+        var t=0; for(var i=0;i<gr;i++) t=t*256+b[inhalt+i];
+        clusterZeit=t;
+      } else if(id===0xA3||id===0xA1){
+        var q=inhalt, e2=b[q], l=1;
+        for(var m2=0x80; m2 && !(e2&m2); m2>>=1) l++;
+        q+=l;
+        var soll=Math.round(nr*taktMs)-clusterZeit;
+        if(soll>=-32768 && soll<=32767){
+          b[q]=(soll>>8)&255; b[q+1]=soll&255; geaendert++;
+        } else ausserhalb++;
+        nr++;
+      }
+      p=naechste;
+    }
+  }
+  lauf(b.length);
+  return { gesetzt:geaendert, ausserhalb:ausserhalb };
+}
+
+/* ---------- Aufnehmen ---------- */
+
+// Ein Durchlauf. takt=0 bedeutet: so schnell wie moeglich (fuer die Vormessung),
+// sonst wird jedes Bild auf seinen Zeitpunkt gewartet.
+function videoLauf(c, art, vonSek, bisSek, fps, takt, melde){
+  return new Promise(function(fertig, fehler){
+    var lein=document.createElement('canvas');
+    lein.width=c.W; lein.height=c.H;
+    var ctx=lein.getContext('2d',{alpha:true});
+    var strom=lein.captureStream(0);
+    var spur=strom.getVideoTracks()[0];
+    if(!spur||!spur.requestFrame){ fehler(new Error('unsupported')); return; }
+    var mr;
+    try{ mr=new MediaRecorder(strom,{mimeType:VIDEO_FORMAT.mime, videoBitsPerSecond:16e6}); }
+    catch(e){ fehler(new Error('unsupported')); return; }
+    var teile=[], angefordert=0, laeuft=true, t0=0, tEnde=0;
     mr.ondataavailable=function(e){ if(e.data&&e.data.size) teile.push(e.data); };
     mr.onerror=function(e){ laeuft=false; fehler(e.error||new Error('recorder')); };
-    var laeuft=true, t0=0;
     mr.onstop=function(){
       strom.getTracks().forEach(function(s){ s.stop(); });
-      fertig(new Blob(teile,{type:fmt.mime.split(';')[0]}));
+      new Blob(teile,{type:'video/webm'}).arrayBuffer().then(function(puffer){
+        fertig({ puffer:puffer, angefordert:angefordert,
+                 sekunden:(tEnde-t0)/1000, bilder:webmBilder(puffer) });
+      })['catch'](fehler);
     };
-    function bild(){
+    var i=0;
+    function schritt(){
       if(!laeuft) return;
-      var jetzt=(performance.now()-t0)/1000;
-      var sek=vonSek+jetzt;
+      var sek=vonSek+i/fps;
       if(sek>=bisSek || videoAbbrechen){
-        laeuft=false;
-        setTimeout(function(){ if(mr.state!=='inactive') mr.stop(); }, 120);
+        laeuft=false; tEnde=performance.now();
+        setTimeout(function(){ if(mr.state!=='inactive') mr.stop(); }, 180);
         return;
       }
       ctx.clearRect(0,0,c.W,c.H);
-      if(fmt.hintergrund){ ctx.fillStyle=fmt.hintergrund; ctx.fillRect(0,0,c.W,c.H); }
       try{ art.zeichne(ctx, c, videoZuAufnahme(c, sek)); }catch(e){}
+      spur.requestFrame();
+      angefordert++; i++;
       if(melde) melde((sek-vonSek)/(bisSek-vonSek));
-      requestAnimationFrame(bild);
+      if(takt>0){
+        // Der Abstand muss genau stimmen, sonst ruckelt die gestreckte Datei.
+        // setTimeout rastet bei etwa vier Millisekunden ein, deshalb die letzte
+        // Strecke eng auswarten.
+        var ziel=t0+i*takt;
+        var warte=function(){
+          if(!laeuft) return;
+          var rest=ziel-performance.now();
+          if(rest>2){ setTimeout(warte,0); return; }
+          while(performance.now()<ziel){ /* die letzten Millisekunden */ }
+          schritt();
+        };
+        warte();
+      } else setTimeout(schritt,0);
     }
     videoAbbrechen=false;
-    t0=performance.now();
+    t0=performance.now(); tEnde=t0;
     mr.start();
-    requestAnimationFrame(bild);
+    setTimeout(schritt,0);
   });
+}
+
+function videoAufnahme(overlayId, vonSek, bisSek, melde){
+  var art=videoOverlay(overlayId);
+  if(!art) return Promise.reject(new Error('unknown format'));
+  var c=cfg();
+  if(!art.hat()) return Promise.reject(new Error('no data'));
+  if(typeof MediaRecorder==='undefined' || !MediaRecorder.isTypeSupported(VIDEO_FORMAT.mime))
+    return Promise.reject(new Error('unsupported'));
+
+  var fps=Math.max(1, Math.min(60, parseFloat(c.fps)||30));
+  // Vormessung: ein kurzes Stueck so schnell wie moeglich, um die Leistung
+  // dieses Rechners zu kennen. Das Ergebnis wird verworfen.
+  return videoLauf(c, art, vonSek, Math.min(bisSek, vonSek+VIDEO_PROBE_SEK*6), fps, 0, null)
+    .then(function(probe){
+      var proSek=probe.sekunden>0 ? probe.bilder/probe.sekunden : fps;
+      // Der Takt ist eine ganze Millisekunde, weil die Zeitstempel in der Datei
+      // ganze Millisekunden sind. Der Streckfaktor folgt aus dem Takt, dann
+      // liegt jedes Bild hinterher genau auf seinem Platz.
+      var rohTempo=Math.max(1, Math.min(VIDEO_MAX_TEMPO, proSek*VIDEO_SICHERHEIT/fps));
+      var takt=Math.max(1, Math.round(1000/(fps*rohTempo)));
+      var tempo=1000/(fps*takt);
+      return videoLauf(c, art, vonSek, bisSek, fps, takt, melde)
+        .then(function(r){
+          var erwartet=r.angefordert;
+          var glatt=webmZeitVergleichmaessigen(r.puffer, takt);
+          var ok=webmZeitStrecken(r.puffer, tempo);
+          return { datei:new Blob([r.puffer],{type:'video/webm'}),
+                   gestreckt:ok, tempo:tempo, bilder:r.bilder, erwartet:erwartet,
+                   gemessenProSek:Math.round(proSek), taktMs:takt, glatt:glatt,
+                   vollstaendig:r.bilder>=erwartet };
+        });
+    });
 }
 
 /* ---------- Bedienung ---------- */
@@ -487,14 +641,14 @@ function videoAuswahlFuellen(){
 
   var stop=document.getElementById('btnVideoStop');
   function knoepfe(sperren){
-    ['btnVideoWebm','btnVideoMp4'].forEach(function(id){
+    ['btnVideoWebm'].forEach(function(id){
       var el=document.getElementById(id);
       if(el) el.disabled=sperren||!rawPoints.length;
     });
     if(stop) stop.style.display=sperren?'inline-flex':'none';
   }
 
-  function starte(formatId){
+  function starte(){
     if(videoLaeuft) return;
     var art=videoOverlay(sel.value);
     if(!art){ setStatus('No data for this overlay in this file','err'); return; }
@@ -508,17 +662,19 @@ function videoAuswahlFuellen(){
     var bis=isFinite(bisFeld)?Math.min(spanne.bis, bisFeld):spanne.bis;
     if(!(bis>von)){ setStatus('The chosen stretch is empty','err'); return; }
     videoLaeuft=true; knoepfe(true);
-    var dauer=Math.round(bis-von);
-    videoFortschritt(0,'Recording in real time — '+dauer+' seconds to go');
-    setStatus('Recording '+art.datei+' — this takes '+dauer+' seconds','ok');
-    videoAufnahme(sel.value, formatId, von, bis, function(a){ videoFortschritt(a); })
-      .then(function(blob){
-        var fmt=VIDEO_FORMATE[formatId];
-        var name=makeFilename(art.datei, fmt.endung);
-        var u=URL.createObjectURL(blob), a=document.createElement('a');
+    var laenge=Math.round(bis-von);
+    videoFortschritt(0,'Recording…');
+    setStatus('Recording '+art.datei+' — '+laenge+' seconds of overlay','ok');
+    videoAufnahme(sel.value, von, bis, function(a){ videoFortschritt(a); })
+      .then(function(erg){
+        var name=makeFilename(art.datei, VIDEO_FORMAT.endung);
+        var u=URL.createObjectURL(erg.datei), a=document.createElement('a');
         a.href=u; a.download=name; document.body.appendChild(a); a.click();
         document.body.removeChild(a); URL.revokeObjectURL(u);
-        setStatus('Downloaded '+name,'ok');
+        if(!erg.vollstaendig)
+          setStatus('Downloaded '+name+' — but frames were dropped, the motion may stutter','err');
+        else
+          setStatus('Downloaded '+name,'ok');
       })
       ['catch'](function(e){
         setStatus(e&&e.message==='unsupported'
@@ -531,8 +687,6 @@ function videoAuswahlFuellen(){
   }
 
   var w=document.getElementById('btnVideoWebm');
-  var m=document.getElementById('btnVideoMp4');
-  if(w) w.addEventListener('click',function(){ starte('webm'); });
-  if(m) m.addEventListener('click',function(){ starte('mp4'); });
+  if(w) w.addEventListener('click', starte);
   if(stop) stop.addEventListener('click',function(){ videoAbbrechen=true; });
 })();
