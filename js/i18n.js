@@ -159,7 +159,6 @@ var UI_DE={
   'Distance':'Distanz',
   'Peak speed':'Höchstgeschwindigkeit',
   'copy':'kopieren',
-  'Speedometer preview':'Tacho-Vorschau',
   'Download single overlays':'Einzelne Overlays herunterladen',
   'Video for other editors':'Video für andere Schnittprogramme',
   'Transparent .webm':'Transparentes .webm',

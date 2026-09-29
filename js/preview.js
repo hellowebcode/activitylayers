@@ -207,61 +207,6 @@ function showMapPreview(){
   }
 }
 
-function drawGauge(){
-  var wrap=document.getElementById('gaugeWrap'), c=document.getElementById('gaugeCanvas');
-  if(!wrap||!c) return;
-  var maxSpd=parseFloat(document.getElementById('maxSpeed').value)||9;
-  var unit=document.getElementById('unit').value;
-  var curSpd=speedData.length?Math.min(speedData[Math.floor(speedData.length*0.25)].spd,maxSpd):maxSpd*0.4;
-  wrap.style.display='block';
-  var S=200,cx=100,cy=100;
-  var ctx=setupHiDPICanvas(c,S,S);
-  ctx.clearRect(0,0,S,S);
-
-  var bgColor=document.getElementById('gaugeBgColor').value;
-
-  ctx.beginPath(); ctx.arc(cx,cy,cx,0,Math.PI*2); ctx.fillStyle=bgColor; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx,cy,cx-4,0,Math.PI*2); ctx.fillStyle=bgColor; ctx.globalAlpha=0.85; ctx.fill(); ctx.globalAlpha=1;
-
-  var R=74, trackW=10, speedW=12;
-  var TAU=Math.PI*2;
-
-  var startAng = TAU * (245/360);
-  var endAng   = TAU * (295/360);
-
-  var ringColor=document.getElementById('gaugeRingColor').value;
-  var arcColor=document.getElementById('gaugeArcColor').value;
-  var numColor=document.getElementById('gaugeNumberColor').value;
-  var unitColor=document.getElementById('gaugeUnitColor').value;
-
-  ctx.beginPath();
-  ctx.arc(cx,cy,R,startAng,endAng,false);
-  ctx.strokeStyle=ringColor;
-  ctx.lineWidth=trackW;
-  ctx.lineCap='round';
-  ctx.stroke();
-
-  var totalSweep = TAU*(310/360);
-  var frac=maxSpd>0?curSpd/maxSpd:0;
-  if(frac>0.001){
-    ctx.beginPath();
-    ctx.arc(cx,cy,R,startAng,startAng+totalSweep*frac,false);
-    ctx.strokeStyle=arcColor;
-    ctx.lineWidth=speedW;
-    ctx.lineCap='round';
-    ctx.stroke();
-  }
-
-  ctx.fillStyle=numColor;
-  ctx.font='bold 38px DM Mono,monospace';
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.fillText(curSpd.toFixed(1),cx,cy-6);
-
-  ctx.fillStyle=unitColor;
-  ctx.font='bold 12px DM Sans,sans-serif';
-  ctx.fillText(unit.toUpperCase(),cx,cy+26);
-}
 
 function drawSpeed(maxSpd){
   var c=document.getElementById('speedCanvas'),W=c.offsetWidth||620;

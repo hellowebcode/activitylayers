@@ -29,9 +29,6 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
   var gf=document.getElementById('ghostColor');
   if(gf) gf.addEventListener('change',function(){ if(rawPoints.length) resetMapPreview(); });
 })();
-['gaugeBgColor','gaugeRingColor','gaugeArcColor','gaugeNumberColor','gaugeUnitColor'].forEach(function(id){
-  document.getElementById(id).addEventListener('input',function(){if(speedData.length) drawGauge();});
-});
 ['elevColor','elevFillColor','elevFill','elevDotColor'].forEach(function(id){
   var el=document.getElementById(id);
   if(el) el.addEventListener('input',function(){if(rawPoints.length) drawElev();});
@@ -87,10 +84,6 @@ function resetTrackState(){
   });
   var mw=document.getElementById('mapPreviewWrap');
   if(mw) mw.style.display='none';
-  var gw=document.getElementById('gaugeWrap');
-  if(gw) gw.style.display='none';
-  var gc=document.getElementById('gaugeCanvas');
-  if(gc){ var gx=gc.getContext('2d'); if(gx) gx.clearRect(0,0,gc.width,gc.height); }
 }
 
 // Ein FileReader kann abbrechen - ein entzogener Datentraeger, eine seit dem

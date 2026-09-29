@@ -345,7 +345,7 @@ function reprocess(){
   document.getElementById('statSpd').textContent=maxSpd.toFixed(1)+' '+unitDisplay(unit);
   document.getElementById('maxSpeed').value=(Math.max(0.5,Math.ceil(maxSpd*2)/2)).toFixed(1);
   document.getElementById('statsWrap').style.display='block';
-  drawRoute(); drawGauge(); drawSpeed(maxSpd); drawElev(); drawHR(); resetMapPreview(); setEnabled(true);
+  drawRoute(); drawSpeed(maxSpd); drawElev(); drawHR(); resetMapPreview(); setEnabled(true);
   setStatus('Ready — '+rawPoints.length+' points · '+tc+' · '+distDisplay,'ok');
 }
 

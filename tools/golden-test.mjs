@@ -590,7 +590,7 @@ function driftFeld() {
 // Vorschau am Zug haengt, muss der Knopf sie selbst neu zeichnen.
 function resetVorschau() {
   const quelle = fs.readFileSync(path.join(WURZEL, 'js', 'settings.js'), 'utf8');
-  const noetig = { resetVideo: 'reprocess', resetRoute: 'drawRoute', resetGauge: 'drawGauge',
+  const noetig = { resetVideo: 'reprocess', resetRoute: 'drawRoute',
                    resetHR: 'drawHR', resetElev: 'drawElev' };
   const fehlt = [];
   for (const knopf of Object.keys(noetig)) {
@@ -604,7 +604,8 @@ function resetVorschau() {
     }
     if (quelle.slice(i, j).indexOf(noetig[knopf]) < 0) fehlt.push(knopf + ' ruft ' + noetig[knopf] + ' nicht');
   }
-  return { '__resetvorschau__': fehlt.length ? 'FEHLT \u2014 ' + fehlt.join('; ') : 'alle f\u00fcnf zeichnen neu' };
+  return { '__resetvorschau__': fehlt.length ? 'FEHLT \u2014 ' + fehlt.join('; ')
+    : 'alle ' + Object.keys(noetig).length + ' zeichnen neu' };
 }
 
 // Das Video zeichnet dieselben Overlays noch einmal auf eine Leinwand. Gezaehlt

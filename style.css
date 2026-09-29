@@ -150,8 +150,8 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
 .stat-label,.preview-label{margin-bottom:7px;color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
 .stat-value{color:var(--accent);font-family:var(--mono);font-size:21px;font-weight:600}
 .copy-btn{position:absolute;right:9px;top:9px;padding:3px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--muted);font-family:var(--mono);font-size:9px;opacity:0;transition:opacity .15s,color .15s}.stat:hover .copy-btn{opacity:1}.copy-btn:hover{color:var(--accent)}
-.preview-wrap,#gaugeWrap{margin:10px 0;padding:14px;border:1px solid var(--border);border-radius:15px;background:var(--surface);box-shadow:var(--shadow)}
-canvas{display:block;width:100%}#gaugeWrap{display:none;text-align:center}#gaugeCanvas{display:inline-block}
+.preview-wrap{margin:10px 0;padding:14px;border:1px solid var(--border);border-radius:15px;background:var(--surface);box-shadow:var(--shadow)}
+canvas{display:block;width:100%}
 
 .dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .dl-btn,.dl-all-btn,.modal-btn{min-height:58px;padding:10px 12px;border:1px solid var(--border);border-radius:13px;background:var(--surface2);color:var(--text);font-size:13px;font-weight:650;line-height:1.35;text-align:left;transition:background .16s,border-color .16s,transform .12s,box-shadow .16s}

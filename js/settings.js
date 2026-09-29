@@ -611,7 +611,7 @@ document.getElementById('resetRoute').addEventListener('click',function(){
   applyDefaults(DEF_ROUTE);
   if(rawPoints.length){ drawRoute(); resetMapPreview(); }
 });
-document.getElementById('resetGauge').addEventListener('click',function(){applyDefaults(DEF_GAUGE);positionZuruecksetzen('speed');if(speedData.length)drawGauge();});
+document.getElementById('resetGauge').addEventListener('click',function(){applyDefaults(DEF_GAUGE);positionZuruecksetzen('speed');});
 document.getElementById('resetHR').addEventListener('click',function(){
   positionZuruecksetzen('hr');
   document.getElementById('hrColor').value='#ef4444';
