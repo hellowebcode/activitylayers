@@ -93,9 +93,18 @@ Drei Schritte machen daraus etwa ein Fünftel:
    Faktor gestreckt. Zusätzlich werden die Zeitstempel der einzelnen Bilder auf
    das exakte Raster gesetzt, damit keine Unregelmäßigkeit übrigbleibt.
 
-Gemessen an einer Fahrt mit 29,97 Bildern je Sekunde: 60 Sekunden Overlay
-entstehen in 12 Sekunden, 1799 von 1799 Bildern, sämtliche Abstände exakt
+Gemessen an einer Fahrt mit 29,97 Bildern je Sekunde: 120 Sekunden Overlay
+entstehen in 26 Sekunden, 3597 von 3597 Bildern, sämtliche Abstände exakt
 33,367 ms. Zum Schluss wird nachgezählt; fehlen Bilder, sagt die Meldung es.
+
+### Warum höchstens zehn Minuten am Stück
+
+Die fertige Datei, ihr zusammenhängender Puffer und die Bruchstücke der Aufnahme
+liegen zwischendurch gleichzeitig vor. Bei einer Fahrt über eine halbe Stunde
+warf der Browser die Seite deshalb weg: „Diese Webseite wurde neu geladen, weil
+sie sehr viel Speicher benötigte." Die Zwischenstufen werden jetzt freigegeben,
+sobald sie nicht mehr gebraucht werden, und länger als zehn Minuten am Stück
+nimmt das Werkzeug nicht auf. Wer mehr braucht, nimmt mehrere Ausschnitte.
 
 ## Externe Ressourcen## Externe Ressourcen
 

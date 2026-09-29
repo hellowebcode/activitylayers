@@ -394,7 +394,16 @@ function localizeRuntimeText(message){
     var z=message.match(/(\d+) and (\d+)/);
     if(z) return 'Die Aufzeichnung liegt zwischen Sekunde '+z[1]+' und '+z[2]+' des Videos';
   }
-  if(message==='Recording…') return 'Wird aufgenommen …';
+  if(message==='Measuring…') return 'Wird gemessen …';
+  if(message.indexOf('Recording — about ')===0)
+    return 'Aufnahme — noch etwa '+message.slice(18).replace(' left','');
+  if(message.indexOf('That stretch is ')===0 && message.indexOf(' minutes at a time')>0){
+    var z=message.match(/(\d+) minutes? — at most (\d+)/);
+    if(z) return 'Der Ausschnitt ist '+z[1]+' Minuten lang — höchstens '+z[2]
+      +' Minuten am Stück, trag Von und Bis ein';
+    return 'Der Ausschnitt ist zu lang — höchstens '
+      +(message.match(/at most (\d+)/)||[0,'10'])[1]+' Minuten am Stück';
+  }
   if(message.indexOf('Recording ')===0 && message.indexOf(' seconds of overlay')>0){
     var t=message.slice(10).split(' — ');
     return t[0]+' wird aufgenommen — '+parseInt(t[1],10)+' Sekunden Overlay';

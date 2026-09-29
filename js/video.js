@@ -407,8 +407,15 @@ function videoOverlay(id){
    Zum Schluss wird nachgezaehlt. Fehlt etwas, sagt die Meldung es. */
 
 var VIDEO_MAX_TEMPO=8;          // darueber wird der Zeitmassstab unhandlich
-var VIDEO_SICHERHEIT=0.8;       // nur vier Fuenftel der gemessenen Leistung nutzen
+// Zwei Drittel der gemessenen Leistung. Bei vier Fuenfteln gingen auf laengeren
+// Strecken vereinzelt Bilder verloren - der Rechner wird waermer, anderes
+// draengt sich dazwischen.
+var VIDEO_SICHERHEIT=0.65;
 var VIDEO_PROBE_SEK=0.9;        // so lange wird vorgemessen
+// Laenger als zehn Minuten am Stueck geht nicht: Die fertige Datei und ihre
+// Zwischenstufen liegen alle gleichzeitig im Speicher, und darueber warf der
+// Browser die Seite weg. Zehn Minuten sind rund 40 MB und etwa 100 MB Spitze.
+var VIDEO_MAX_SEK=600;
 var videoLaeuft=false, videoAbbrechen=false;
 
 /* ---------- WebM: lesen und den Zeitmassstab strecken ---------- */
@@ -521,7 +528,12 @@ function videoLauf(c, art, vonSek, bisSek, fps, takt, melde){
     mr.onerror=function(e){ laeuft=false; fehler(e.error||new Error('recorder')); };
     mr.onstop=function(){
       strom.getTracks().forEach(function(s){ s.stop(); });
-      new Blob(teile,{type:'video/webm'}).arrayBuffer().then(function(puffer){
+      // Die Bruchstuecke werden sofort losgelassen, sobald der zusammenhaengende
+      // Puffer steht - sonst liegt die Datei doppelt im Speicher.
+      var roh=new Blob(teile,{type:'video/webm'});
+      teile=[];
+      roh.arrayBuffer().then(function(puffer){
+        roh=null;
         fertig({ puffer:puffer, angefordert:angefordert,
                  sekunden:(tEnde-t0)/1000, bilder:webmBilder(puffer) });
       })['catch'](fehler);
@@ -557,7 +569,7 @@ function videoLauf(c, art, vonSek, bisSek, fps, takt, melde){
     }
     videoAbbrechen=false;
     t0=performance.now(); tEnde=t0;
-    mr.start();
+    mr.start(2000);
     setTimeout(schritt,0);
   });
 }
@@ -569,6 +581,8 @@ function videoAufnahme(overlayId, vonSek, bisSek, melde){
   if(!art.hat()) return Promise.reject(new Error('no data'));
   if(typeof MediaRecorder==='undefined' || !MediaRecorder.isTypeSupported(VIDEO_FORMAT.mime))
     return Promise.reject(new Error('unsupported'));
+
+  if(bisSek-vonSek > VIDEO_MAX_SEK) return Promise.reject(new Error('too long'));
 
   var fps=Math.max(1, Math.min(60, parseFloat(c.fps)||30));
   // Vormessung: ein kurzes Stueck so schnell wie moeglich, um die Leistung
@@ -582,12 +596,15 @@ function videoAufnahme(overlayId, vonSek, bisSek, melde){
       var rohTempo=Math.max(1, Math.min(VIDEO_MAX_TEMPO, proSek*VIDEO_SICHERHEIT/fps));
       var takt=Math.max(1, Math.round(1000/(fps*rohTempo)));
       var tempo=1000/(fps*takt);
+      if(melde) melde(0, tempo);
       return videoLauf(c, art, vonSek, bisSek, fps, takt, melde)
         .then(function(r){
           var erwartet=r.angefordert;
           var glatt=webmZeitVergleichmaessigen(r.puffer, takt);
           var ok=webmZeitStrecken(r.puffer, tempo);
-          return { datei:new Blob([r.puffer],{type:'video/webm'}),
+          var datei=new Blob([r.puffer],{type:'video/webm'});
+          r.puffer=null;
+          return { datei:datei,
                    gestreckt:ok, tempo:tempo, bilder:r.bilder, erwartet:erwartet,
                    gemessenProSek:Math.round(proSek), taktMs:takt, glatt:glatt,
                    vollstaendig:r.bilder>=erwartet };
@@ -596,6 +613,13 @@ function videoAufnahme(overlayId, vonSek, bisSek, melde){
 }
 
 /* ---------- Bedienung ---------- */
+
+// Sekunden als "3:20" oder "45 s" - im Fortschritt liest sich das besser.
+function videoZeitText(sek){
+  if(sek<60) return Math.max(0,sek)+' s';
+  var m=Math.floor(sek/60), r=sek%60;
+  return m+':'+(r<10?'0':'')+r+' min';
+}
 
 function videoFortschritt(anteil, text){
   var wrap=document.getElementById('videoProgressWrap');
@@ -663,9 +687,20 @@ function videoAuswahlFuellen(){
     if(!(bis>von)){ setStatus('The chosen stretch is empty','err'); return; }
     videoLaeuft=true; knoepfe(true);
     var laenge=Math.round(bis-von);
-    videoFortschritt(0,'Recording…');
+    if(laenge>VIDEO_MAX_SEK){
+      setStatus('That stretch is '+Math.round(laenge/60)+' minutes — at most '
+        +(VIDEO_MAX_SEK/60)+' minutes at a time, set From and To','err');
+      videoLaeuft=false; knoepfe(false);
+      return;
+    }
+    var t0=Date.now(), tempo=0;
+    videoFortschritt(0,'Measuring…');
     setStatus('Recording '+art.datei+' — '+laenge+' seconds of overlay','ok');
-    videoAufnahme(sel.value, von, bis, function(a){ videoFortschritt(a); })
+    videoAufnahme(sel.value, von, bis, function(a, neuesTempo){
+      if(neuesTempo){ tempo=neuesTempo; return; }
+      var rest=tempo ? Math.round((bis-von)*(1-a)/tempo) : 0;
+      videoFortschritt(a, 'Recording — about '+videoZeitText(rest)+' left');
+    })
       .then(function(erg){
         var name=makeFilename(art.datei, VIDEO_FORMAT.endung);
         var u=URL.createObjectURL(erg.datei), a=document.createElement('a');
@@ -677,9 +712,10 @@ function videoAuswahlFuellen(){
           setStatus('Downloaded '+name,'ok');
       })
       ['catch'](function(e){
-        setStatus(e&&e.message==='unsupported'
-          ? 'This browser cannot record that format'
-          : 'Recording failed: '+((e&&e.message)||e),'err');
+        var m=(e&&e.message)||String(e);
+        setStatus(m==='unsupported' ? 'This browser cannot record that format'
+          : m==='too long' ? 'That stretch is too long — at most '+(VIDEO_MAX_SEK/60)+' minutes at a time'
+          : 'Recording failed: '+m,'err');
       })
       ['finally'](function(){
         videoLaeuft=false; knoepfe(false); videoFortschritt(null);
