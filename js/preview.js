@@ -47,7 +47,6 @@ function drawRoute(){
   var massstab=H/1080;
   var tW=Math.max(1, zahl('trackW',4)*massstab*4);
   var dR=Math.max(2, zahl('dotR',8)*massstab*4);
-  var sOf=zahl('shadowOffset',5)*massstab*4;
   var gW=Math.max(1, zahl('ghostW',4)*massstab*4);
   var gA=Math.max(0.05, Math.min(1, zahl('ghostAlpha',0.55)));
 
@@ -72,9 +71,11 @@ function drawRoute(){
     ctx.strokeStyle=farbe; ctx.lineWidth=breite; ctx.lineJoin='round'; ctx.lineCap='round';
     ctx.stroke(); ctx.restore();
   }
+  // Die Vorschau zeigt den Verlauf, nicht den Schatten. In dieser Groesse steht
+  // der versetzte Schatten neben der Linie und sieht aus wie eine zweite Spur -
+  // im Export bleibt er selbstverstaendlich.
   var geist=alle.slice(rawPoints.length), spur=alle.slice(0,rawPoints.length);
   linie(geist, ghostPoints, wert('ghostColor','#8892a4'), gW, gA);
-  if(sOf>0) linie(spur, rawPoints, wert('shadowColor','#000000'), tW*SHADOW_WIDTH_RATIO, 0.55, sOf, sOf);
   linie(spur, rawPoints, wert('trackColor','#ff6600'), tW, 1);
   if(spur.length){
     var d=auf(spur[0]);
