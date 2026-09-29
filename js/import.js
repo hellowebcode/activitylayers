@@ -49,7 +49,9 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
 
 function setStatus(msg,cls){statusEl.textContent=localizeRuntimeText(msg);statusEl.className='status'+(cls?' '+cls:'');}
 function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).disabled=!on;});
-  ['btnDownloadAll','btnDownloadFusion','btnDownloadAe'].forEach(function(id){document.getElementById(id).disabled=!on;});}
+  ['btnDownloadAll','btnDownloadFusion','btnDownloadAe','btnVideoWebm','btnVideoMp4'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.disabled=!on;
+  });}
 
 var MAX_FILE_BYTES=32*1024*1024;
 

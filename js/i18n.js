@@ -161,6 +161,13 @@ var UI_DE={
   'copy':'kopieren',
   'Speedometer preview':'Tacho-Vorschau',
   'Download single overlays':'Einzelne Overlays herunterladen',
+  'Video for other editors':'Video für andere Schnittprogramme',
+  'Transparent .webm':'Transparentes .webm',
+  '.mp4 on green':'.mp4 auf Grün',
+  'Stop recording':'Aufnahme abbrechen',
+  'Overlay':'Overlay',
+  'From (seconds)':'Von (Sekunden)',
+  'To (seconds)':'Bis (Sekunden)',
   'Route preview':'Routenvorschau',
   'Speed curve':'Geschwindigkeitskurve',
   'Heart rate':'Herzfrequenz',
@@ -311,6 +318,9 @@ function applyUILanguage(language){
   if(typeof vorlagenListeFuellen==='function'){
     try{ vorlagenListeFuellen(document.getElementById('presetList').value); }catch(e){}
   }
+  // Dasselbe gilt fuer die Videoauswahl und den Hinweis zur Zeitspanne.
+  if(typeof videoAuswahlFuellen==='function'){ try{ videoAuswahlFuellen(); }catch(e){} }
+  if(typeof videoSpanneAnzeigen==='function'){ try{ videoSpanneAnzeigen(); }catch(e){} }
   try{localStorage.setItem('overlayUILanguage',uiLanguage);}catch(e){}
 }
 
@@ -379,6 +389,22 @@ function localizeRuntimeText(message){
   if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
   if(message.indexOf('Drift factor adjusted to ')===0)
     return 'Abweichungsfaktor auf '+message.slice(25)+' angepasst — erlaubt sind 0,9 bis 1,1';
+  if(message.indexOf('Recording sits between ')===0){
+    var z=message.match(/(\d+) and (\d+)/);
+    if(z) return 'Die Aufzeichnung liegt zwischen Sekunde '+z[1]+' und '+z[2]+' des Videos';
+  }
+  if(message.indexOf('Recording in real time — ')===0)
+    return 'Aufnahme in Echtzeit — noch '+parseInt(message.slice(24),10)+' Sekunden';
+  if(message.indexOf('Recording ')===0 && message.indexOf(' — this takes ')>0){
+    var t=message.slice(10).split(' — this takes ');
+    return t[0]+' wird aufgenommen — das dauert '+parseInt(t[1],10)+' Sekunden';
+  }
+  if(message.indexOf('Recording failed: ')===0)
+    return 'Aufnahme fehlgeschlagen: '+message.slice(18);
+  if(message==='This browser cannot record that format')
+    return 'Dieser Browser kann dieses Format nicht aufnehmen';
+  if(message==='The chosen stretch is empty')
+    return 'Der gewählte Ausschnitt ist leer';
   if(message.indexOf('Could not read ')===0)
     return message.slice(15)+' konnte nicht gelesen werden';
   if(message.indexOf('Cancelled reading ')===0)

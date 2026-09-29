@@ -58,7 +58,31 @@ einer später eingebundenen Datei auf.
 | `fusion.js` | Ausgabe für DaVinci Resolve |
 | `after-effects.js` | Ausgabe für After Effects |
 | `text-overlays.js` | Overlays, die beide Formate aus einer Vorlage erzeugen |
+| `video.js` | dieselben Overlays als Bilder, aufgenommen im Browser |
 | `export.js` | Herunterladen einzelner Dateien und als ZIP |
+
+## Video für andere Schnittprogramme
+
+Die eigentliche Ausgabe sind editierbare Ebenen. Wer weder DaVinci Resolve noch
+After Effects hat, kann ein Overlay stattdessen als Video mitnehmen. `video.js`
+zeichnet dafür dieselben dreizehn Overlays noch einmal auf eine Leinwand, im
+selben Entwurfsmaß 1920×1080 und mit demselben Faktor wie die
+After-Effects-Ausgabe — sonst säße dasselbe Overlay im Video woanders als in der
+exportierten Ebene.
+
+Zwei Formate, beide im Browser des Nutzers aufgenommen, ohne Upload:
+
+| Datei | Wofür |
+|---|---|
+| `.webm` (VP9) | echter Deckkraftkanal, ohne Freistellen. Shotcut, Kdenlive, OBS, Web |
+| `.mp4` (H.264) auf Grün | für alles andere: ein Klick „Chroma Key" in CapCut, iMovie, Canva |
+
+Ein MP4 mit Deckkraftkanal gibt es nicht — H.264 hat keinen. Deshalb die
+Stanzfarbe.
+
+Aufgenommen wird in Echtzeit: Der Browser stempelt die Bilder nach der Uhr,
+schnelleres Zuführen ergäbe eine Datei, die zu schnell abspielt. Deshalb lässt
+sich ein Ausschnitt wählen — meistens braucht niemand die ganze Fahrt.
 
 ## Externe Ressourcen
 
@@ -89,7 +113,7 @@ deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt zwanzig Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 641 Einträge:
+den Prüfsummen in `tools/golden.json` — 646 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen

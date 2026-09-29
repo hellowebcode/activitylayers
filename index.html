@@ -895,6 +895,31 @@
     <div class="export-progress-track"><div class="export-progress-fill" id="exportProgressFill"></div></div>
     <div class="export-progress-label" id="exportProgressLabel">Preparing files…</div>
   </div>
+  <button type="button" class="card-title how-header" id="dlVideoHeader" aria-expanded="false" aria-controls="dlVideoBody" style="font-size:.78rem;color:var(--muted);margin-top:18px;font-family:'DM Mono',monospace;font-weight:500">
+    Video for other editors
+    <span class="how-arrow" id="dlVideoArrow" aria-hidden="true">▾</span>
+  </button>
+  <div id="dlVideoBody" style="display:none">
+    <p class="card-note">For anyone without DaVinci Resolve or After Effects. The video is recorded in your browser &mdash; your recording still never leaves your device. A transparent .webm drops straight onto your footage; the .mp4 comes on green for the chroma key every editor has. Recording runs in real time, so pick the stretch you actually need.</p>
+    <div class="grid3">
+      <div class="field"><label for="videoOverlay">Overlay</label>
+        <select id="videoOverlay"></select></div>
+      <div class="field"><label for="videoVon">From (seconds)</label>
+        <input type="number" id="videoVon" min="0" step="1" placeholder="start"></div>
+      <div class="field"><label for="videoBis">To (seconds)</label>
+        <input type="number" id="videoBis" min="0" step="1" placeholder="end"></div>
+    </div>
+    <p class="card-note" id="videoSpanne">&nbsp;</p>
+    <div class="dl-split">
+      <button type="button" class="dl-all-btn dl-all-secondary" id="btnVideoWebm" disabled>Transparent .webm</button>
+      <button type="button" class="dl-all-btn dl-all-secondary" id="btnVideoMp4" disabled>.mp4 on green</button>
+    </div>
+    <button type="button" class="reset-btn" id="btnVideoStop" style="margin-top:10px;display:none">Stop recording</button>
+    <div class="export-progress-wrap" id="videoProgressWrap" style="display:none">
+      <div class="export-progress-track"><div class="export-progress-fill" id="videoProgressFill"></div></div>
+      <div class="export-progress-label" id="videoProgressLabel">Recording…</div>
+    </div>
+  </div>
   <div class="status" id="status"></div>
 </div>
 
@@ -922,6 +947,7 @@
 <script src="js/fusion.js"></script>
 <script src="js/after-effects.js"></script>
 <script src="js/text-overlays.js"></script>
+<script src="js/video.js"></script>
 <script src="js/export.js"></script>
 </body>
 </html>

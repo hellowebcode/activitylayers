@@ -101,18 +101,22 @@ function element(id) {
   };
   return el;
 }
+// Zeichenbefehle werden mitgezaehlt: So laesst sich pruefen, ob ein Overlay
+// ueberhaupt etwas malt - eine Ausnahme oder ein stilles Nichts faellt auf.
+const MAL_VERBEN = /^(fill|stroke|arc|rect|moveTo|lineTo|fillText|closePath|drawImage|ellipse|beginPath)/;
 function kontext() {
   const c = new Proxy({}, { get: (t, p) => {
     if (p === 'canvas') return { width: 800, height: 300 };
     if (p === 'measureText') return () => ({ width: 10 });
     if (p === 'createLinearGradient') return () => ({ addColorStop(){} });
     if (p === 'getImageData') return () => ({ data: [] });
+    if (typeof p === 'string' && MAL_VERBEN.test(p)) return () => { protokoll.malrufe++; };
     return () => {};
   }, set: () => true });
   return c;
 }
 
-const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0, kartenFarben: [], sitzungSperrt: false };
+const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0, kartenFarben: [], sitzungSperrt: false, malrufe: 0 };
 const cacheEl = new Map();
 const document = {
   getElementById(id) { if (!cacheEl.has(id)) cacheEl.set(id, element(id)); return cacheEl.get(id); },
@@ -603,6 +607,70 @@ function resetVorschau() {
   return { '__resetvorschau__': fehlt.length ? 'FEHLT \u2014 ' + fehlt.join('; ') : 'alle f\u00fcnf zeichnen neu' };
 }
 
+// Das Video zeichnet dieselben Overlays noch einmal auf eine Leinwand. Gezaehlt
+// werden die Zeichenbefehle: Eine Ausnahme oder ein Overlay, das stillschweigend
+// nichts malt, faellt damit auf. Und jedes Overlay, das es als Datei gibt, muss
+// es auch als Bild geben.
+function videoZeichnen() {
+  feldZurueck();
+  ctx.resetTrackState();
+  ctx.ghostPoints = [];
+  fitLesen('demo-ride.fit');
+  const c = ctx.cfg();
+  const g = ctx.document.createElement('canvas').getContext('2d');
+  const ts = ctx.videoZuAufnahme(c, 300);
+  const raus = {};
+  const teile = [];
+  for (const o of ctx.VIDEO_OVERLAYS) {
+    protokoll.malrufe = 0;
+    let stand;
+    try {
+      o.zeichne(g, c, ts);
+      stand = o.hat() ? (protokoll.malrufe ? String(protokoll.malrufe) : 'MALT NICHTS') : 'keine Daten';
+    } catch (e) { stand = 'AUSNAHME: ' + e.message; }
+    teile.push(o.id + '=' + stand);
+  }
+  raus['__videoZeichnen__'] = teile.join(' ');
+
+  // Jeder Generator braucht sein Gegenstueck im Video.
+  const ausDatei = GENERATOREN.filter(([n]) => n.endsWith('.setting'))
+    .map(([n]) => n.replace('_Overlay.setting', '').replace('.setting', ''));
+  const ausVideo = ctx.VIDEO_OVERLAYS.map((o) => o.datei.replace('_Overlay', ''));
+  const fehlt = ausDatei.filter((n) => ausVideo.indexOf(n) < 0);
+  raus['__videoVollstaendig__'] = fehlt.length
+    ? 'OHNE VIDEO: ' + fehlt.join(', ')
+    : ausDatei.length + ' Overlays, alle auch als Video';
+
+  // Die Spanne haengt an Versatz und Abweichungsfaktor. Mit den Vorgabewerten
+  // faellt ein Rechenfehler nicht auf, deshalb mehrere Einstellungen.
+  const spannen = [];
+  for (const [versatz, faktor] of [['0', '1.0'], ['-120', '1.0'], ['45', '1.0'], ['0', '0.94'], ['-60', '1.1']]) {
+    setzeFeld('offset', versatz); setzeFeld('driftFactor', faktor);
+    const sp = ctx.videoZeitspanne(ctx.cfg());
+    spannen.push('v=' + versatz + ',f=' + faktor + ' \u2192 '
+      + (sp ? sp.von.toFixed(1) + '..' + sp.bis.toFixed(1) : 'keine'));
+  }
+  // Und die Umrechnung von Videozeit in Aufnahmezeit, die dahintersteckt.
+  const t0 = +ctx.rawPoints[0].time;
+  const zeiten = [];
+  for (const [versatz, faktor, sek] of [['0','1.0',60], ['-120','1.0',60], ['45','1.0',60], ['0','0.94',60], ['-60','1.1',300]]) {
+    setzeFeld('offset', versatz); setzeFeld('driftFactor', faktor);
+    zeiten.push('v=' + versatz + ',f=' + faktor + ',s=' + sek + ' \u2192 '
+      + ((ctx.videoZuAufnahme(ctx.cfg(), sek) - t0) / 1000).toFixed(1) + ' s');
+  }
+  feldZurueck();
+  raus['__videoSpanne__'] = spannen.join('  ');
+  raus['__videoZeit__'] = zeiten.join('  ');
+
+  // Zwischen zwei Messwerten wird gemischt, ueber eine Pause hinweg gehalten.
+  const reihe = [{ time: T0, v: 10 }, { time: T0 + 2000, v: 20 },
+                 { time: T0 + 302000, v: 100 }, { time: T0 + 304000, v: 110 }];
+  const proben = [0, 1000, 2000, 150000, 302000, 303000].map((ms) =>
+    (ms / 1000) + 's=' + ctx.wertBei(reihe, 'v', T0 + ms));
+  raus['__videoWert__'] = proben.join(' ');
+  return raus;
+}
+
 // Der erste Punkt nach einer Pause hat kein eigenes Tempo. Er darf nicht das
 // vom letzten Punkt davor bekommen.
 function tempoNachPause() {
@@ -709,10 +777,16 @@ function dauerAnzeige() {
 }
 
 async function lauf() {
-  let alles = Object.assign(abgleich(), driftWerte(), driftFeld(),
-                            vorlagenNamen(), resetVorschau(), dauerAnzeige(),
-                            tempoNachPause(), kartenFarbe(), sitzungGesperrt(),
-                            startMitGespeichertenEinstellungen());
+  // Faellt eine Einzelpruefung aus, soll der Bericht das sagen und nicht mit
+  // einem Stapelabzug abbrechen.
+  const einzeln = [abgleich, driftWerte, driftFeld, vorlagenNamen, resetVorschau,
+                   dauerAnzeige, tempoNachPause, kartenFarbe, sitzungGesperrt,
+                   videoZeichnen, startMitGespeichertenEinstellungen];
+  let alles = {};
+  for (const pruefung of einzeln) {
+    try { alles = Object.assign(alles, pruefung()); }
+    catch (e) { alles['__' + pruefung.name + '__'] = 'FEHLER: ' + e.message; }
+  }
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }
