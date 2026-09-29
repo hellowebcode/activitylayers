@@ -101,22 +101,18 @@ function element(id) {
   };
   return el;
 }
-// Zeichenbefehle werden mitgezaehlt: So laesst sich pruefen, ob ein Overlay
-// ueberhaupt etwas malt - eine Ausnahme oder ein stilles Nichts faellt auf.
-const MAL_VERBEN = /^(fill|stroke|arc|rect|moveTo|lineTo|fillText|closePath|drawImage|ellipse|beginPath)/;
 function kontext() {
   const c = new Proxy({}, { get: (t, p) => {
     if (p === 'canvas') return { width: 800, height: 300 };
     if (p === 'measureText') return () => ({ width: 10 });
     if (p === 'createLinearGradient') return () => ({ addColorStop(){} });
     if (p === 'getImageData') return () => ({ data: [] });
-    if (typeof p === 'string' && MAL_VERBEN.test(p)) return () => { protokoll.malrufe++; };
     return () => {};
   }, set: () => true });
   return c;
 }
 
-const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0, kartenFarben: [], sitzungSperrt: false, malrufe: 0 };
+const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0, kartenFarben: [], sitzungSperrt: false };
 const cacheEl = new Map();
 const document = {
   getElementById(id) { if (!cacheEl.has(id)) cacheEl.set(id, element(id)); return cacheEl.get(id); },
@@ -608,109 +604,6 @@ function resetVorschau() {
     : 'alle ' + Object.keys(noetig).length + ' zeichnen neu' };
 }
 
-// Das Video zeichnet dieselben Overlays noch einmal auf eine Leinwand. Gezaehlt
-// werden die Zeichenbefehle: Eine Ausnahme oder ein Overlay, das stillschweigend
-// nichts malt, faellt damit auf. Und jedes Overlay, das es als Datei gibt, muss
-// es auch als Bild geben.
-function videoZeichnen() {
-  feldZurueck();
-  ctx.resetTrackState();
-  ctx.ghostPoints = [];
-  fitLesen('demo-ride.fit');
-  const c = ctx.cfg();
-  const g = ctx.document.createElement('canvas').getContext('2d');
-  const ts = ctx.videoZuAufnahme(c, 300);
-  const raus = {};
-  const teile = [];
-  for (const o of ctx.VIDEO_OVERLAYS) {
-    protokoll.malrufe = 0;
-    let stand;
-    try {
-      o.zeichne(g, c, ts);
-      stand = o.hat() ? (protokoll.malrufe ? String(protokoll.malrufe) : 'MALT NICHTS') : 'keine Daten';
-    } catch (e) { stand = 'AUSNAHME: ' + e.message; }
-    teile.push(o.id + '=' + stand);
-  }
-  raus['__videoZeichnen__'] = teile.join(' ');
-
-  // Jeder Generator braucht sein Gegenstueck im Video.
-  const ausDatei = GENERATOREN.filter(([n]) => n.endsWith('.setting'))
-    .map(([n]) => n.replace('_Overlay.setting', '').replace('.setting', ''));
-  const ausVideo = ctx.VIDEO_OVERLAYS.map((o) => o.datei.replace('_Overlay', ''));
-  const fehlt = ausDatei.filter((n) => ausVideo.indexOf(n) < 0);
-  raus['__videoVollstaendig__'] = fehlt.length
-    ? 'OHNE VIDEO: ' + fehlt.join(', ')
-    : ausDatei.length + ' Overlays, alle auch als Video';
-
-  // Die Spanne haengt an Versatz und Abweichungsfaktor. Mit den Vorgabewerten
-  // faellt ein Rechenfehler nicht auf, deshalb mehrere Einstellungen.
-  const spannen = [];
-  for (const [versatz, faktor] of [['0', '1.0'], ['-120', '1.0'], ['45', '1.0'], ['0', '0.94'], ['-60', '1.1']]) {
-    setzeFeld('offset', versatz); setzeFeld('driftFactor', faktor);
-    const sp = ctx.videoZeitspanne(ctx.cfg());
-    spannen.push('v=' + versatz + ',f=' + faktor + ' \u2192 '
-      + (sp ? sp.von.toFixed(1) + '..' + sp.bis.toFixed(1) : 'keine'));
-  }
-  // Und die Umrechnung von Videozeit in Aufnahmezeit, die dahintersteckt.
-  const t0 = +ctx.rawPoints[0].time;
-  const zeiten = [];
-  for (const [versatz, faktor, sek] of [['0','1.0',60], ['-120','1.0',60], ['45','1.0',60], ['0','0.94',60], ['-60','1.1',300]]) {
-    setzeFeld('offset', versatz); setzeFeld('driftFactor', faktor);
-    zeiten.push('v=' + versatz + ',f=' + faktor + ',s=' + sek + ' \u2192 '
-      + ((ctx.videoZuAufnahme(ctx.cfg(), sek) - t0) / 1000).toFixed(1) + ' s');
-  }
-  feldZurueck();
-  raus['__videoSpanne__'] = spannen.join('  ');
-  raus['__videoZeit__'] = zeiten.join('  ');
-
-  // Zwischen zwei Messwerten wird gemischt, ueber eine Pause hinweg gehalten.
-  const reihe = [{ time: T0, v: 10 }, { time: T0 + 2000, v: 20 },
-                 { time: T0 + 302000, v: 100 }, { time: T0 + 304000, v: 110 }];
-  const proben = [0, 1000, 2000, 150000, 302000, 303000].map((ms) =>
-    (ms / 1000) + 's=' + ctx.wertBei(reihe, 'v', T0 + ms));
-  raus['__videoWert__'] = proben.join(' ');
-  return raus;
-}
-
-// Die WebM-Nachbearbeitung arbeitet auf Bytes: Sie streckt den Zeitmassstab im
-// Kopf und setzt die Zeitstempel der Bilder auf das Raster. Geprueft wird an
-// einer von Hand gebauten Datei mit bekanntem Inhalt.
-function webmNachbearbeitung() {
-  const el = (id, inhalt) => [...id, 0x80 | inhalt.length, ...inhalt];
-  const block = (rel) => el([0xA0], el([0xA1], [0x81, (rel >> 8) & 255, rel & 255, 0x00]));
-  const info = el([0x15, 0x49, 0xA9, 0x66], el([0x2A, 0xD7, 0xB1], [0x0F, 0x42, 0x40]));
-  const cluster = el([0x1F, 0x43, 0xB6, 0x75],
-    [...el([0xE7], [0x00]), ...block(0), ...block(9), ...block(17)]);
-  const segment = el([0x18, 0x53, 0x80, 0x67], [...info, ...cluster]);
-  const puffer = new Uint8Array(segment).buffer;
-  const raus = {};
-
-  raus['__webmBilder__'] = String(ctx.webmBilder(puffer));
-
-  const glatt = ctx.webmZeitVergleichmaessigen(puffer, 8);
-  const v = new Uint8Array(puffer);
-  const stempel = [];
-  for (let i = 0; i < v.length - 4; i++) {
-    if (v[i] === 0xA1 && v[i + 1] === 0x84 && v[i + 2] === 0x81) {
-      stempel.push((v[i + 3] << 8) | v[i + 4]);
-    }
-  }
-  raus['__webmRaster__'] = 'gesetzt=' + glatt.gesetzt + ' ausserhalb=' + glatt.ausserhalb
-    + ' stempel=' + stempel.join(',');
-
-  const ok = ctx.webmZeitStrecken(puffer, 5);
-  let skala = null;
-  for (let i = 0; i < v.length - 6; i++) {
-    if (v[i] === 0x2A && v[i + 1] === 0xD7 && v[i + 2] === 0xB1 && v[i + 3] === 0x83) {
-      skala = (v[i + 4] << 16) | (v[i + 5] << 8) | v[i + 6];
-    }
-  }
-  raus['__webmMassstab__'] = (ok ? 'gestreckt' : 'NICHT GESTRECKT') + ' auf ' + skala + ' ns';
-  raus['__webmGrenze__'] = ctx.webmZeitStrecken(puffer, 1000)
-    ? 'UEBERLAUF ZUGELASSEN' : 'zu grosser Faktor abgelehnt';
-  return raus;
-}
-
 // Der erste Punkt nach einer Pause hat kein eigenes Tempo. Er darf nicht das
 // vom letzten Punkt davor bekommen.
 function tempoNachPause() {
@@ -817,16 +710,10 @@ function dauerAnzeige() {
 }
 
 async function lauf() {
-  // Faellt eine Einzelpruefung aus, soll der Bericht das sagen und nicht mit
-  // einem Stapelabzug abbrechen.
-  const einzeln = [abgleich, driftWerte, driftFeld, vorlagenNamen, resetVorschau,
-                   dauerAnzeige, tempoNachPause, kartenFarbe, sitzungGesperrt,
-                   videoZeichnen, webmNachbearbeitung, startMitGespeichertenEinstellungen];
-  let alles = {};
-  for (const pruefung of einzeln) {
-    try { alles = Object.assign(alles, pruefung()); }
-    catch (e) { alles['__' + pruefung.name + '__'] = 'FEHLER: ' + e.message; }
-  }
+  let alles = Object.assign(abgleich(), driftWerte(), driftFeld(),
+                            vorlagenNamen(), resetVorschau(), dauerAnzeige(),
+                            tempoNachPause(), kartenFarbe(), sitzungGesperrt(),
+                            startMitGespeichertenEinstellungen());
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }

@@ -46,9 +46,7 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
 
 function setStatus(msg,cls){statusEl.textContent=localizeRuntimeText(msg);statusEl.className='status'+(cls?' '+cls:'');}
 function setEnabled(on){btnIds.forEach(function(id){document.getElementById(id).disabled=!on;});
-  ['btnDownloadAll','btnDownloadFusion','btnDownloadAe','btnVideoWebm'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.disabled=!on;
-  });}
+  ['btnDownloadAll','btnDownloadFusion','btnDownloadAe'].forEach(function(id){document.getElementById(id).disabled=!on;});}
 
 var MAX_FILE_BYTES=32*1024*1024;
 
@@ -84,11 +82,6 @@ function resetTrackState(){
   });
   var mw=document.getElementById('mapPreviewWrap');
   if(mw) mw.style.display='none';
-  // Der Ausschnitt fuer das Video gehoert zur alten Aufzeichnung.
-  ['videoVon','videoBis'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.value='';
-  });
-  if(typeof videoSpanneAnzeigen==='function'){ try{ videoSpanneAnzeigen(); }catch(e){} }
 }
 
 // Ein FileReader kann abbrechen - ein entzogener Datentraeger, eine seit dem

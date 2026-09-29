@@ -58,55 +58,9 @@ einer später eingebundenen Datei auf.
 | `fusion.js` | Ausgabe für DaVinci Resolve |
 | `after-effects.js` | Ausgabe für After Effects |
 | `text-overlays.js` | Overlays, die beide Formate aus einer Vorlage erzeugen |
-| `video.js` | dieselben Overlays als Bilder, aufgenommen im Browser |
 | `export.js` | Herunterladen einzelner Dateien und als ZIP |
 
-## Video für andere Schnittprogramme
-
-Die eigentliche Ausgabe sind editierbare Ebenen. Wer weder DaVinci Resolve noch
-After Effects hat, kann ein Overlay stattdessen als Video mitnehmen. `video.js`
-zeichnet dafür dieselben dreizehn Overlays noch einmal auf eine Leinwand, im
-selben Entwurfsmaß 1920×1080 und mit demselben Faktor wie die
-After-Effects-Ausgabe — sonst säße dasselbe Overlay im Video woanders als in der
-exportierten Ebene.
-
-Ausgegeben wird ein **WebM mit echtem Deckkraftkanal** (VP9). Das zieht man über
-sein Material, ohne etwas freizustellen. Ein MP4 mit Transparenz gibt es nicht:
-H.264 hat keinen Deckkraftkanal, die freie Fläche würde schwarz.
-
-Aufgenommen wird im Browser des Nutzers, ohne Upload.
-
-### Warum es schneller als in Echtzeit geht
-
-Der Browser stempelt aufgenommene Bilder nach der Uhr. Eine Aufnahme liefe
-deshalb erst einmal in Echtzeit — zwölf Minuten Overlay, zwölf Minuten warten.
-Drei Schritte machen daraus etwa ein Fünftel:
-
-1. **Vormessen.** Eine knappe Sekunde lang läuft die Aufnahme so schnell wie
-   möglich. Daraus ergibt sich, wieviele Bilder dieser Rechner mit diesem
-   Overlay je Sekunde schafft. Vier Fünftel davon werden genutzt.
-2. **Fester Takt.** Danach wird jedes Bild auf eine ganze Millisekunde genau
-   angefordert. Ohne festen Takt verschluckt der Kodierer Bilder — bei einer
-   Millisekunde Abstand kamen in einem Versuch nur 31 von 151 an.
-3. **Zeitmaßstab strecken.** WebM hat im Kopf ein einziges Feld,
-   `TimecodeScale`, das für sämtliche Zeitstempel gilt. Es wird um denselben
-   Faktor gestreckt. Zusätzlich werden die Zeitstempel der einzelnen Bilder auf
-   das exakte Raster gesetzt, damit keine Unregelmäßigkeit übrigbleibt.
-
-Gemessen an einer Fahrt mit 29,97 Bildern je Sekunde: 120 Sekunden Overlay
-entstehen in 26 Sekunden, 3597 von 3597 Bildern, sämtliche Abstände exakt
-33,367 ms. Zum Schluss wird nachgezählt; fehlen Bilder, sagt die Meldung es.
-
-### Warum höchstens zehn Minuten am Stück
-
-Die fertige Datei, ihr zusammenhängender Puffer und die Bruchstücke der Aufnahme
-liegen zwischendurch gleichzeitig vor. Bei einer Fahrt über eine halbe Stunde
-warf der Browser die Seite deshalb weg: „Diese Webseite wurde neu geladen, weil
-sie sehr viel Speicher benötigte." Die Zwischenstufen werden jetzt freigegeben,
-sobald sie nicht mehr gebraucht werden, und länger als zehn Minuten am Stück
-nimmt das Werkzeug nicht auf. Wer mehr braucht, nimmt mehrere Ausschnitte.
-
-## Externe Ressourcen## Externe Ressourcen
+## Externe Ressourcen
 
 Beim Aufruf der Seite werden keine externen Ressourcen angefordert. Erst
 nachdem eine Datei geladen wurde, holt die Kartenvorschau Kartenkacheln von
@@ -135,7 +89,7 @@ deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt zwanzig Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 650 Einträge:
+den Prüfsummen in `tools/golden.json` — 641 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen

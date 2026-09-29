@@ -160,12 +160,6 @@ var UI_DE={
   'Peak speed':'Höchstgeschwindigkeit',
   'copy':'kopieren',
   'Download single overlays':'Einzelne Overlays herunterladen',
-  'Video for other editors':'Video für andere Schnittprogramme',
-  'Record transparent .webm':'Transparentes .webm aufnehmen',
-  'Stop recording':'Aufnahme beenden',
-  'Overlay':'Overlay',
-  'From (seconds)':'Von (Sekunden)',
-  'To (seconds)':'Bis (Sekunden)',
   'Route preview':'Routenvorschau',
   'Speed curve':'Geschwindigkeitskurve',
   'Heart rate':'Herzfrequenz',
@@ -316,9 +310,6 @@ function applyUILanguage(language){
   if(typeof vorlagenListeFuellen==='function'){
     try{ vorlagenListeFuellen(document.getElementById('presetList').value); }catch(e){}
   }
-  // Dasselbe gilt fuer die Videoauswahl und den Hinweis zur Zeitspanne.
-  if(typeof videoAuswahlFuellen==='function'){ try{ videoAuswahlFuellen(); }catch(e){} }
-  if(typeof videoSpanneAnzeigen==='function'){ try{ videoSpanneAnzeigen(); }catch(e){} }
   try{localStorage.setItem('overlayUILanguage',uiLanguage);}catch(e){}
 }
 
@@ -365,9 +356,6 @@ function localizeRuntimeText(message){
   if(message.indexOf('Reading ')===0) return 'Datei wird gelesen: '+message.slice(8);
   if(/^[0-9]+ track points loaded$/.test(message)) return message.replace(' track points loaded',' Routenpunkte geladen');
   if(message.indexOf('Ready — ')===0) return 'Bereit — '+message.slice(8).replace(' points · ',' Punkte · ');
-  if(message.indexOf(' — but frames were dropped')>0)
-    return message.slice(11, message.indexOf(' — but'))
-         + ' heruntergeladen — es fehlen aber Bilder, die Bewegung kann stocken';
   if(message.indexOf('Downloaded ')===0) return message.slice(11)+' heruntergeladen';
   if(message.indexOf('FIT parse error: ')===0) return 'FIT-Verarbeitungsfehler: '+message.slice(17);
   if(message.indexOf('Export failed: ')===0) return 'Export fehlgeschlagen: '+message.slice(15);
@@ -390,32 +378,6 @@ function localizeRuntimeText(message){
   if(message.indexOf('Presets could not be saved')===0) return 'Vorlagen konnten nicht gespeichert werden \u2014 der Speicher dieses Browsers ist voll';
   if(message.indexOf('Drift factor adjusted to ')===0)
     return 'Abweichungsfaktor auf '+message.slice(25)+' angepasst — erlaubt sind 0,9 bis 1,1';
-  if(message.indexOf('Recording sits between ')===0){
-    var z=message.match(/(\d+) and (\d+)/);
-    var g=message.match(/at most (\d+) minutes per file/);
-    if(z) return 'Die Aufzeichnung liegt zwischen Sekunde '+z[1]+' und '+z[2]+' des Videos'
-      +(g?' — höchstens '+g[1]+' Minuten je Datei':'');
-  }
-  if(message==='Measuring…') return 'Wird gemessen …';
-  if(message.indexOf('Recording — about ')===0)
-    return 'Aufnahme — noch etwa '+message.slice(18).replace(' left','');
-  if(message.indexOf('That stretch is ')===0 && message.indexOf(' minutes at a time')>0){
-    var z=message.match(/(\d+) minutes? — at most (\d+)/);
-    if(z) return 'Der Ausschnitt ist '+z[1]+' Minuten lang — höchstens '+z[2]
-      +' Minuten am Stück, trag Von und Bis ein';
-    return 'Der Ausschnitt ist zu lang — höchstens '
-      +(message.match(/at most (\d+)/)||[0,'10'])[1]+' Minuten am Stück';
-  }
-  if(message.indexOf('Recording ')===0 && message.indexOf(' seconds of overlay')>0){
-    var t=message.slice(10).split(' — ');
-    return t[0]+' wird aufgenommen — '+parseInt(t[1],10)+' Sekunden Overlay';
-  }
-  if(message.indexOf('Recording failed: ')===0)
-    return 'Aufnahme fehlgeschlagen: '+message.slice(18);
-  if(message==='This browser cannot record that format')
-    return 'Dieser Browser kann kein WebM aufnehmen';
-  if(message==='The chosen stretch is empty')
-    return 'Der gewählte Ausschnitt ist leer';
   if(message.indexOf('Could not read ')===0)
     return message.slice(15)+' konnte nicht gelesen werden';
   if(message.indexOf('Cancelled reading ')===0)
