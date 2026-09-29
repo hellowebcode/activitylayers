@@ -53,16 +53,6 @@ function grenzeZwischen(vonZeit, bisZeit, pts){
   return false;
 }
 
-// Der Abweichungsfaktor kommt aus einem Feld, das 0,9 bis 1,1 zulaesst. Ein
-// gespeicherter, getippter oder aus einer Vorlage geladener Wert kann daran
-// vorbeikommen - null liesse die Zeit stehen, ein negativer sie rueckwaerts
-// laufen. Gelesen wird er deshalb nur hier.
-function driftWert(roh){
-  var d=parseFloat(roh);
-  if(!isFinite(d)||d<=0) return 1.0;
-  return Math.max(DRIFT_MIN, Math.min(DRIFT_MAX, d));
-}
-
 // Zeitpunkte, an denen die Aufzeichnung nach einer Pause wieder einsetzt.
 // Die Antwort haengt nur an den Punkten, wird aber von jedem Generator
 // gebraucht - deshalb einmal gerechnet und gemerkt.
@@ -134,7 +124,12 @@ function computeSpeeds(pts,unit){
       if(i<pts.length-1&&!istGrenze(p,pts[i+1])){
         var dt=(pts[i+1].time-p.time)/1000;
         spd=dt>0?haversine(p.lat,p.lon,pts[i+1].lat,pts[i+1].lon)/dt:0;
-      } else spd=result.length?result[result.length-1].rawSpd:0;
+      } else {
+        // Zurueckgegriffen wird nur innerhalb eines Abschnitts. Der erste Punkt
+        // nach einer Pause hat kein Tempo - er bekommt nicht das von vorher.
+        var vor=result.length?result[result.length-1]:null;
+        spd=(vor&&vor.lauf===lauf[i])?vor.rawSpd:0;
+      }
     }
     result.push({time:p.time,rawSpd:spd,lauf:lauf[i],
                  spd:Math.max(0,unit==='mph'?spd*2.23694:spd*3.6)});

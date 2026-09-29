@@ -6,13 +6,23 @@ function dl(content,filename){
   promptSupport();
 }
 
-var supportPromptTimer=null;
+// Der Sitzungsspeicher kann gesperrt sein - in manchen Browsern wirft schon der
+// Zugriff. Ein Hinweisfenster darf einen gelungenen Export nicht in eine
+// Fehlermeldung verwandeln, deshalb faengt jeder Zugriff ab.
+var supportPromptTimer=null, supportSchonGezeigt=false;
+function sitzungGelesen(schluessel){
+  try{ return sessionStorage.getItem(schluessel); }catch(e){ return null; }
+}
+function sitzungGemerkt(schluessel, wert){
+  try{ sessionStorage.setItem(schluessel, wert); }catch(e){}
+}
 function promptSupport(){
-  if(sessionStorage.getItem('supportModalShown')==='true') return;
+  if(supportSchonGezeigt || sitzungGelesen('supportModalShown')==='true') return;
   clearTimeout(supportPromptTimer);
   supportPromptTimer=setTimeout(function(){
+    supportSchonGezeigt=true;
     openSupportModal();
-    sessionStorage.setItem('supportModalShown','true');
+    sitzungGemerkt('supportModalShown','true');
   },700);
 }
 

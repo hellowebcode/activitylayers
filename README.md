@@ -89,7 +89,7 @@ deterministisch, derselbe Lauf liefert dieselben Bytes.
 
 `tools/golden-test.mjs` schickt zwanzig Fälle durch alle sechsundzwanzig
 Generatoren und vergleicht die Ausgaben, dazu die gerechneten Reihen selbst, mit
-den Prüfsummen in `tools/golden.json` — 637 Einträge:
+den Prüfsummen in `tools/golden.json` — 641 Einträge:
 
     node tools/golden-test.mjs            prüfen
     node tools/golden-test.mjs --write     Prüfsummen neu aufnehmen
@@ -110,6 +110,12 @@ Overlayzahlen der Beispieldateien gegen die Tabelle oben — beides war schon
 einmal auseinandergelaufen. Dazu der Abweichungsfaktor für acht Eingaben und
 die angezeigte Dauer bei Bildraten, bei denen das Aufrunden eine Bildnummer
 ergab, die es nicht gibt.
+
+Ein Eintrag stellt einen zweiten Besuch nach: Er füllt den Speicher mit
+Einstellungen und lädt alle Dateien in einen frischen Raum. Greift eine Datei
+beim Laden auf etwas zu, das erst später definiert wird, bricht die
+Einrichtung ab — für einen neuen Besucher unsichtbar, für einen
+wiederkehrenden fatal.
 
 Dazu kommen drei Fälle, die nicht die Generatoren prüfen, sondern die
 Oberfläche: Sie lösen die echten Klickbehandler aller sechsundzwanzig

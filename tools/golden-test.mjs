@@ -112,7 +112,7 @@ function kontext() {
   return c;
 }
 
-const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0 };
+const protokoll = { dateien: [], zipDateien: 0, zipErzeugt: 0, kartenFarben: [], sitzungSperrt: false };
 const cacheEl = new Map();
 const document = {
   getElementById(id) { if (!cacheEl.has(id)) cacheEl.set(id, element(id)); return cacheEl.get(id); },
@@ -125,10 +125,22 @@ const document = {
   body: element('body'), documentElement: element('html'),
   title: '',
 };
-const speicher = { getItem(){ return null; }, setItem(){}, removeItem(){} };
+// Ein echter Speicher, damit sich ein zweiter Besuch nachstellen laesst.
+const speicherInhalt = new Map();
+const speicher = {
+  getItem(k){ return speicherInhalt.has(k) ? speicherInhalt.get(k) : null; },
+  setItem(k, v){ speicherInhalt.set(k, String(v)); },
+  removeItem(k){ speicherInhalt.delete(k); },
+};
+// Manche Browser sperren den Sitzungsspeicher - dort wirft schon der Zugriff.
+const sitzungSpeicher = {
+  getItem(k){ if (protokoll.sitzungSperrt) throw new Error('access denied'); return speicher.getItem('s:' + k); },
+  setItem(k, v){ if (protokoll.sitzungSperrt) throw new Error('access denied'); speicher.setItem('s:' + k, v); },
+  removeItem(k){ if (protokoll.sitzungSperrt) throw new Error('access denied'); speicher.removeItem('s:' + k); },
+};
 const fensterListe = [];
 const window = {
-  document, localStorage: speicher, sessionStorage: speicher,
+  document, localStorage: speicher, sessionStorage: sitzungSpeicher,
   addEventListener(){}, removeEventListener(){},
   matchMedia(){ return { matches: false, addEventListener(){}, addListener(){} }; },
   requestAnimationFrame(f){ fensterListe.push(f); return 1; },
@@ -141,7 +153,7 @@ const window = {
 window.window = window;
 
 const sandbox = {
-  document, window, localStorage: speicher, sessionStorage: speicher,
+  document, window, localStorage: speicher, sessionStorage: sitzungSpeicher,
   navigator: window.navigator, location: window.location,
   console: { log(){}, warn(){}, error(){}, info(){} },
   setTimeout(){ return 0; }, clearTimeout(){}, setInterval(){ return 0; }, clearInterval(){},
@@ -157,7 +169,8 @@ const sandbox = {
     generateAsync(){ protokoll.zipErzeugt++; return Promise.resolve({ parts: [''] }); }
   },
   L: { map(){ return { setView(){ return this; }, remove(){}, fitBounds(){}, addLayer(){}, removeLayer(){}, invalidateSize(){} }; },
-       tileLayer(){ return { addTo(){} }; }, polyline(){ return { addTo(){} }; },
+       tileLayer(){ return { addTo(){} }; },
+       polyline(pts, opt){ protokoll.kartenFarben.push(opt && opt.color); return { addTo(){} }; },
        circleMarker(){ return { addTo(){} }; }, latLngBounds(){ return {}; },
        layerGroup(){ return { addTo(){ return this; } }; } },
   NodeFilter: { SHOW_ALL:0xFFFFFFFF, SHOW_ELEMENT:1, SHOW_TEXT:4, FILTER_ACCEPT:1, FILTER_REJECT:2, FILTER_SKIP:3 },
@@ -171,6 +184,10 @@ const sandbox = {
 sandbox.globalThis = sandbox;
 sandbox.self = sandbox;
 
+// Eine unberuehrte Kopie, bevor die Dateien laufen: Ein zweiter Besuch muss
+// mit leerem globalen Raum starten, sonst ist alles schon definiert und der
+// Test misst nichts.
+const sandkastenVorlage = Object.assign({}, sandbox);
 const ctx = vm.createContext(sandbox);
 // Dieselbe Reihenfolge wie in index.html. Sie aus dem Markup zu lesen haelt
 // Test und Seite zusammen: eine neue Datei wirkt hier ohne weiteres Zutun.
@@ -586,6 +603,85 @@ function resetVorschau() {
   return { '__resetvorschau__': fehlt.length ? 'FEHLT \u2014 ' + fehlt.join('; ') : 'alle f\u00fcnf zeichnen neu' };
 }
 
+// Der erste Punkt nach einer Pause hat kein eigenes Tempo. Er darf nicht das
+// vom letzten Punkt davor bekommen.
+function tempoNachPause() {
+  const pts = [];
+  for (let i = 0; i < 5; i++) {
+    pts.push({ lat: 50 + i * 0.000101, lon: 7, ele: 100, time: new Date(T0 + i * 1000),
+               seg: 0, segHart: true, dist: null, genau: 3, speed: null });
+  }
+  pts.push({ lat: 51, lon: 9, ele: 100, time: new Date(T0 + 600000),
+             seg: 1, segHart: true, dist: null, genau: 3, speed: null });
+  const sp = ctx.computeSpeeds(pts, 'kph');
+  return { '__tempoNachPause__': sp.map((x) => x.spd.toFixed(1)).join(' ')
+    + ' | letzter Abschnitt beginnt bei ' + sp[sp.length - 1].spd.toFixed(1) };
+}
+
+// Die Geisterfarbe steckt in der fertigen Leaflet-Ebene. Aendert sie sich, muss
+// die Karte neu aufgebaut werden - der Zwischenspeicher darf nicht abkuerzen.
+function kartenFarbe() {
+  feldZurueck();
+  ctx.resetTrackState();
+  ctx.ghostPoints = [];
+  fitLesen('demo-ride.fit');
+  const gf = ctx.document.getElementById('ghostColor');
+  ctx.ghostPoints = ctx.rawPoints.slice(0, 50).map((p) => ({ lat: p.lat + 0.001, lon: p.lon, time: p.time, seg: p.seg }));
+  protokoll.kartenFarben = [];
+  ctx.resetMapPreview();
+  const ersteRunde = protokoll.kartenFarben.slice();
+  gf.value = '#ff00ff';
+  protokoll.kartenFarben = [];
+  ctx.resetMapPreview();
+  const zweiteRunde = protokoll.kartenFarben.slice();
+  const drin = (liste, farbe) => liste.indexOf(farbe) >= 0;
+  return { '__kartenfarbe__': !ersteRunde.length ? 'keine Karte gezeichnet'
+    : (drin(zweiteRunde, '#ff00ff') ? 'neue Farbe uebernommen'
+       : (zweiteRunde.length ? 'FALSCHE FARBE: ' + zweiteRunde.join(',') : 'KARTE NICHT NEU AUFGEBAUT')) };
+}
+
+// Ein gesperrter Sitzungsspeicher darf einen gelungenen Export nicht in einen
+// Fehler verwandeln.
+function sitzungGesperrt() {
+  protokoll.sitzungSperrt = true;
+  let ergebnis;
+  try { ctx.promptSupport(); ergebnis = 'promptSupport laeuft durch'; }
+  catch (e) { ergebnis = 'AUSNAHME: ' + e.message; }
+  protokoll.sitzungSperrt = false;
+  return { '__sitzungGesperrt__': ergebnis };
+}
+
+// Ein zweiter Besuch: Beim Laden liegen Einstellungen im Speicher, und die
+// Wiederherstellung laeuft, waehrend erst ein Teil der Dateien geladen ist. Ein
+// Zugriff auf etwas, das erst spaeter definiert wird, bricht dabei alles ab.
+function startMitGespeichertenEinstellungen() {
+  const vorher = new Map(speicherInhalt);
+  feldZurueck();
+  speicherInhalt.set('activitylayersSettings', JSON.stringify({
+    fps: '25', unit: 'kph', driftFactor: '2.5', offset: '-12',
+    trackColor: '#00aa00', smooth: '5',
+  }));
+  speicherInhalt.set('activitylayersPresets', JSON.stringify({ Testvorlage: { fps: '50' } }));
+  const zweiter = Object.assign({}, sandkastenVorlage);
+  zweiter.globalThis = zweiter; zweiter.self = zweiter;
+  const ctx2 = vm.createContext(zweiter);
+  let fehler = null;
+  for (const datei of DATEIEN) {
+    try { vm.runInContext(fs.readFileSync(path.join(WURZEL, datei), 'utf8'), ctx2, { filename: datei }); }
+    catch (e) { fehler = datei + ': ' + e.message; break; }
+  }
+  const nachher = fehler ? '-' : [
+    'fps=' + ctx2.document.getElementById('fps').value,
+    'drift=' + ctx2.document.getElementById('driftFactor').value,
+    'spur=' + ctx2.document.getElementById('trackColor').value,
+    'knopfliste=' + (Array.isArray(ctx2.btnIds) ? ctx2.btnIds.length : 'fehlt'),
+  ].join(' ');
+  speicherInhalt.clear();
+  for (const [k, v] of vorher) speicherInhalt.set(k, v);
+  feldZurueck();
+  return { '__startMitSpeicher__': fehler ? 'ABBRUCH beim Laden \u2014 ' + fehler : nachher };
+}
+
 // Die angezeigte Dauer als Timecode. Endet sie kurz vor einer vollen Sekunde,
 // ergab das Aufrunden eine Bildnummer, die es bei der Bildrate nicht gibt.
 function dauerAnzeige() {
@@ -614,7 +710,9 @@ function dauerAnzeige() {
 
 async function lauf() {
   let alles = Object.assign(abgleich(), driftWerte(), driftFeld(),
-                            vorlagenNamen(), resetVorschau(), dauerAnzeige());
+                            vorlagenNamen(), resetVorschau(), dauerAnzeige(),
+                            tempoNachPause(), kartenFarbe(), sitzungGesperrt(),
+                            startMitGespeichertenEinstellungen());
   for (const [praefix, vorbereiten] of FAELLE) {
     try { alles = Object.assign(alles, laufFall(praefix, vorbereiten)); }
     catch (e) { alles[praefix + '__fall__'] = 'FEHLER: ' + e.message; }

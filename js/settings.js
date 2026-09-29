@@ -5,6 +5,18 @@
 // nichts verlaesst das Geraet. Die Sprache hat ihren eigenen Schluessel.
 var EINSTELLUNGEN_SCHLUESSEL='activitylayersSettings';
 
+// Der Abweichungsfaktor: Das Feld laesst 0,9 bis 1,1 zu. Ein gespeicherter,
+// getippter oder aus einer Vorlage geladener Wert kann daran vorbeikommen -
+// null liesse die Zeit stehen, ein negativer sie rueckwaerts laufen. Gelesen
+// wird er deshalb nur hier. Beides steht bewusst ganz oben: Die
+// Wiederherstellung weiter unten braucht es schon beim Laden der Datei.
+var DRIFT_MIN=0.9, DRIFT_MAX=1.1;
+function driftWert(roh){
+  var d=parseFloat(roh);
+  if(!isFinite(d)||d<=0) return 1.0;
+  return Math.max(DRIFT_MIN, Math.min(DRIFT_MAX, d));
+}
+
 // Jedes Bedienelement, das ein Generator liest, gehoert in diese Liste.
 var CONTROL_IDS=[
   'cadColor',
@@ -138,7 +150,6 @@ var btnIds=['btnSetting','btnRouteSetting','btnDiscSetting','btnDiscJsx','btnCom
   'btnCadSetting','btnPowerSetting','btnTempSetting','btnPaceSetting','btnLapSetting',
   'btnSpeedJsx','btnRouteJsx','btnElevJsx','btnHRJsx','btnInclineJsx','btnMileJsx',
   'btnCadJsx','btnPowerJsx','btnTempJsx','btnPaceJsx','btnLapJsx'];
-var DRIFT_MIN=0.9, DRIFT_MAX=1.1;
 var syncCalcResult={offset:null,drift:null};
 var syncDialogSchliessen=function(){};
 
@@ -510,7 +521,7 @@ document.getElementById('syncCalc').addEventListener('click',function(){
   if(!isNaN(v2)&&!isNaN(g2)&&g2!==g1){
     roh=Math.round(((v2-v1)/(g2-g1))*100000)/100000;
   }
-  var drift=(!isFinite(roh)||roh<=0)?1.0:Math.max(DRIFT_MIN, Math.min(DRIFT_MAX, roh));
+  var drift=driftWert(roh);
   var begrenzt=(drift!==roh);
   var offset=Math.round((v1-drift*g1)*100)/100;
   syncCalcResult={offset:offset,drift:drift};

@@ -23,6 +23,12 @@ fileInput.addEventListener('change',function(){if(fileInput.files[0])handleFile(
   el.addEventListener('input',function(){if(rawPoints.length) drawRoute();});
   el.addEventListener('change',function(){if(rawPoints.length) drawRoute();});
 });
+// Die Geisterfarbe steckt auch in der Karte. Neu aufgebaut wird sie erst beim
+// Loslassen, nicht bei jedem Zwischenwert des Farbwaehlers.
+(function(){
+  var gf=document.getElementById('ghostColor');
+  if(gf) gf.addEventListener('change',function(){ if(rawPoints.length) resetMapPreview(); });
+})();
 ['gaugeBgColor','gaugeRingColor','gaugeArcColor','gaugeNumberColor','gaugeUnitColor'].forEach(function(id){
   document.getElementById(id).addEventListener('input',function(){if(speedData.length) drawGauge();});
 });

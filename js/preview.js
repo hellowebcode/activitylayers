@@ -153,8 +153,13 @@ function trackKennung(){
     return h;
   }
   var h=falte(falte(0x811c9dc5, rawPoints), ghostPoints);
+  // Die Geisterfarbe gehoert dazu: Sie steckt in der fertigen Leaflet-Ebene.
+  // Ohne sie in der Kennung bliebe die Karte nach einer Farbaenderung oder nach
+  // dem Zuruecksetzen stehen, weil der Neuaufbau als unnoetig gilt.
+  var gf=document.getElementById('ghostColor');
   return rawPoints.length+'|'+rawPoints[0].time+'|'+rawPoints[rawPoints.length-1].time
-       +'|'+h.toString(16)+'|'+currentFilename+'|'+ghostPoints.length+'|'+ghostFilename;
+       +'|'+h.toString(16)+'|'+currentFilename+'|'+ghostPoints.length+'|'+ghostFilename
+       +'|'+((gf&&gf.value)||'');
 }
 
 function showMapPreview(){
