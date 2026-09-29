@@ -631,13 +631,24 @@ function videoFortschritt(anteil, text){
   if(label&&text) label.textContent=localizeRuntimeText(text);
 }
 
+// Zeigt, wo die Aufzeichnung im Video liegt, und schlaegt einen Ausschnitt vor,
+// der aufnehmbar ist. Wer die Felder schon gefuellt hat, behaelt seine Werte.
 function videoSpanneAnzeigen(){
   var hin=document.getElementById('videoSpanne');
   if(!hin) return;
   var s=rawPoints.length?videoZeitspanne(cfg()):null;
-  hin.textContent=s
-    ? localizeRuntimeText('Recording sits between '+Math.round(s.von)+' and '+Math.round(s.bis)+' seconds of the video')
-    : ' ';
+  if(!s){ hin.textContent=' '; return; }
+  var vonFeld=document.getElementById('videoVon');
+  var bisFeld=document.getElementById('videoBis');
+  var laenge=s.bis-s.von;
+  if(vonFeld && !vonFeld.value.trim()) vonFeld.value=Math.round(s.von);
+  if(bisFeld && !bisFeld.value.trim())
+    bisFeld.value=Math.round(Math.min(s.bis, s.von+VIDEO_MAX_SEK));
+  hin.textContent=localizeRuntimeText(
+    laenge>VIDEO_MAX_SEK
+      ? 'Recording sits between '+Math.round(s.von)+' and '+Math.round(s.bis)
+        +' seconds of the video, at most '+(VIDEO_MAX_SEK/60)+' minutes per file'
+      : 'Recording sits between '+Math.round(s.von)+' and '+Math.round(s.bis)+' seconds of the video');
 }
 
 function videoAuswahlFuellen(){

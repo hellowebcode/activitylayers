@@ -84,6 +84,11 @@ function resetTrackState(){
   });
   var mw=document.getElementById('mapPreviewWrap');
   if(mw) mw.style.display='none';
+  // Der Ausschnitt fuer das Video gehoert zur alten Aufzeichnung.
+  ['videoVon','videoBis'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  if(typeof videoSpanneAnzeigen==='function'){ try{ videoSpanneAnzeigen(); }catch(e){} }
 }
 
 // Ein FileReader kann abbrechen - ein entzogener Datentraeger, eine seit dem

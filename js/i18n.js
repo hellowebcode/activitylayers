@@ -162,7 +162,7 @@ var UI_DE={
   'Download single overlays':'Einzelne Overlays herunterladen',
   'Video for other editors':'Video für andere Schnittprogramme',
   'Record transparent .webm':'Transparentes .webm aufnehmen',
-  'Stop recording':'Aufnahme abbrechen',
+  'Stop recording':'Aufnahme beenden',
   'Overlay':'Overlay',
   'From (seconds)':'Von (Sekunden)',
   'To (seconds)':'Bis (Sekunden)',
@@ -392,7 +392,9 @@ function localizeRuntimeText(message){
     return 'Abweichungsfaktor auf '+message.slice(25)+' angepasst — erlaubt sind 0,9 bis 1,1';
   if(message.indexOf('Recording sits between ')===0){
     var z=message.match(/(\d+) and (\d+)/);
-    if(z) return 'Die Aufzeichnung liegt zwischen Sekunde '+z[1]+' und '+z[2]+' des Videos';
+    var g=message.match(/at most (\d+) minutes per file/);
+    if(z) return 'Die Aufzeichnung liegt zwischen Sekunde '+z[1]+' und '+z[2]+' des Videos'
+      +(g?' — höchstens '+g[1]+' Minuten je Datei':'');
   }
   if(message==='Measuring…') return 'Wird gemessen …';
   if(message.indexOf('Recording — about ')===0)
